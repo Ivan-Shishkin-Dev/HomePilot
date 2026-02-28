@@ -59,11 +59,11 @@ export function ListingsScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0F1E]">
+    <div className="min-h-screen bg-background">
       {/* Page Header */}
-      <div className="border-b border-white/[0.06] px-6 lg:px-10 py-5 lg:py-6">
+      <div className="border-b border-border px-6 lg:px-10 py-5 lg:py-6">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-white text-[24px] lg:text-[28px] mb-4" style={{ fontWeight: 700 }}>
+          <h1 className="text-foreground text-[24px] lg:text-[28px] mb-4" style={{ fontWeight: 700 }}>
             Listings
           </h1>
 
@@ -72,24 +72,24 @@ export function ListingsScreen() {
             <div className="flex-1 relative max-w-xl">
               <Search
                 size={16}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6B7280]"
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
               />
               <input
                 type="text"
                 placeholder="Search city, neighborhood, address..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#111827] border border-white/[0.06] rounded-xl pl-11 pr-4 py-2.5 text-white text-[14px] placeholder:text-[#4B5563] focus:outline-none focus:border-[#3B82F6]/40 transition-colors"
+                className="w-full bg-card border border-border rounded-xl pl-11 pr-4 py-2.5 text-foreground text-[14px] placeholder:text-muted-foreground focus:outline-none focus:border-[#10B981]/40 transition-colors"
               />
             </div>
-            <button className="w-11 h-11 bg-[#111827] border border-white/[0.06] rounded-xl flex items-center justify-center hover:bg-white/[0.06] transition-colors">
-              <SlidersHorizontal size={16} className="text-[#8B95A5]" />
+            <button className="w-11 h-11 bg-card border border-border rounded-xl flex items-center justify-center hover:bg-muted transition-colors">
+              <SlidersHorizontal size={16} className="text-muted-foreground" />
             </button>
-            <div className="hidden sm:flex bg-[#111827] border border-white/[0.06] rounded-xl overflow-hidden">
+            <div className="hidden sm:flex bg-card border border-border rounded-xl overflow-hidden">
               <button
                 onClick={() => setViewMode("grid")}
                 className={`w-10 h-10 flex items-center justify-center transition-colors ${
-                  viewMode === "grid" ? "bg-[#3B82F6]/15 text-[#3B82F6]" : "text-[#6B7280] hover:text-white"
+                  viewMode === "grid" ? "bg-[#10B981]/15 text-[#10B981]" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Grid2x2 size={16} />
@@ -97,7 +97,7 @@ export function ListingsScreen() {
               <button
                 onClick={() => setViewMode("list")}
                 className={`w-10 h-10 flex items-center justify-center transition-colors ${
-                  viewMode === "list" ? "bg-[#3B82F6]/15 text-[#3B82F6]" : "text-[#6B7280] hover:text-white"
+                  viewMode === "list" ? "bg-[#10B981]/15 text-[#10B981]" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <LayoutList size={16} />
@@ -107,8 +107,8 @@ export function ListingsScreen() {
 
           {/* Location + Filters */}
           <div className="flex items-center gap-1.5 mb-4">
-            <MapPin size={13} className="text-[#3B82F6]" />
-            <span className="text-[#8B95A5] text-[13px]">
+            <MapPin size={13} className="text-[#10B981]" />
+            <span className="text-muted-foreground text-[13px]">
               Searching within 25mi of {profile?.preferred_cities?.[0] || "your area"}
             </span>
           </div>
@@ -119,8 +119,8 @@ export function ListingsScreen() {
                 onClick={() => setActiveFilter(f)}
                 className={`px-4 py-1.5 rounded-lg text-[13px] whitespace-nowrap transition-all ${
                   activeFilter === f
-                    ? "bg-[#3B82F6] text-white"
-                    : "bg-white/[0.05] text-[#8B95A5] hover:bg-white/[0.08]"
+                    ? "bg-[#10B981] text-white"
+                    : "bg-muted text-muted-foreground hover:bg-accent"
                 }`}
                 style={{ fontWeight: 500 }}
               >
@@ -133,7 +133,7 @@ export function ListingsScreen() {
 
       {/* Results */}
       <div className="px-6 lg:px-10 py-6 max-w-7xl mx-auto">
-        <p className="text-[#6B7280] text-[13px] mb-4">
+        <p className="text-muted-foreground text-[13px] mb-4">
           {filteredListings.length} listings found
         </p>
 

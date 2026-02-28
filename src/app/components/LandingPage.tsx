@@ -25,15 +25,15 @@ export function LandingPage() {
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#111117] to-[#0a0a0f] text-white">
       {/* Ambient blobs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-purple-500/15 rounded-full blur-[150px]" />
-        <div className="absolute top-[40%] -left-40 w-[400px] h-[400px] bg-blue-500/15 rounded-full blur-[150px]" />
+        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-emerald-500/15 rounded-full blur-[150px]" />
+        <div className="absolute top-[40%] -left-40 w-[400px] h-[400px] bg-green-500/15 rounded-full blur-[150px]" />
         <div className="absolute bottom-0 right-[30%] w-[300px] h-[300px] bg-emerald-500/10 rounded-full blur-[120px]" />
       </div>
 
       {/* Navigation */}
       <nav className="relative z-20 container mx-auto px-6 py-5 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
             <Zap className="w-5 h-5" />
           </div>
           <span className="text-[20px]" style={{ fontWeight: 700 }}>
@@ -60,8 +60,8 @@ export function LandingPage() {
             Sign In
           </Link>
           <Link
-            to="/signup"
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 transition-all text-[14px] shadow-lg shadow-purple-500/20"
+            to="/onboarding"
+            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 transition-all text-[14px] shadow-lg shadow-emerald-500/20"
             style={{ fontWeight: 600 }}
           >
             Get Started
@@ -78,13 +78,13 @@ export function LandingPage() {
           className="max-w-4xl mx-auto text-center"
         >
           <div className="inline-flex items-center gap-2 bg-white/[0.06] border border-white/10 rounded-full px-4 py-1.5 mb-8">
-            <Sparkles size={14} className="text-purple-400" />
+            <Sparkles size={14} className="text-emerald-400" />
             <span className="text-[13px] text-gray-300" style={{ fontWeight: 500 }}>
               AI-powered rental intelligence for Gen Z
             </span>
           </div>
           <h1
-            className="text-[44px] sm:text-[56px] md:text-[72px] mb-6 bg-gradient-to-r from-white via-blue-100 to-purple-200 bg-clip-text text-transparent"
+            className="text-[44px] sm:text-[56px] md:text-[72px] mb-6 bg-gradient-to-r from-white via-emerald-100 to-green-200 bg-clip-text text-transparent"
             style={{ fontWeight: 800, lineHeight: 1.05 }}
           >
             AI That Hunts
@@ -97,7 +97,7 @@ export function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               to="/onboarding"
-              className="inline-flex items-center gap-2.5 px-8 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 transition-all shadow-xl shadow-purple-500/25 hover:shadow-purple-500/40 text-[16px]"
+              className="inline-flex items-center gap-2.5 px-8 py-4 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 transition-all shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 text-[16px]"
               style={{ fontWeight: 600 }}
             >
               Create Renter Passport
@@ -215,7 +215,7 @@ export function LandingPage() {
           >
             Everything you need to
             <br />
-            <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">
               win your next apartment
             </span>
           </motion.h2>
@@ -309,7 +309,7 @@ export function LandingPage() {
           style={{ fontWeight: 700 }}
         >
           Three steps to your{" "}
-          <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">
             dream apartment
           </span>
         </motion.h2>
@@ -342,10 +342,10 @@ export function LandingPage() {
               transition={{ duration: 0.5, delay: i * 0.15 }}
               className="text-center"
             >
-              <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/15 to-purple-500/15 border border-white/10 mb-6">
-                <item.icon size={32} className="text-blue-400" />
+              <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500/15 to-green-500/15 border border-white/10 mb-6">
+                <item.icon size={32} className="text-emerald-400" />
                 <span
-                  className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white text-[12px] flex items-center justify-center"
+                  className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-gradient-to-br from-emerald-500 to-green-600 text-white text-[12px] flex items-center justify-center"
                   style={{ fontWeight: 700 }}
                 >
                   {item.step}
@@ -379,7 +379,7 @@ export function LandingPage() {
                 viewport={{ once: true }}
               >
                 <p
-                  className="text-[32px] md:text-[40px] bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
+                  className="text-[32px] md:text-[40px] bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent"
                   style={{ fontWeight: 800, lineHeight: 1 }}
                 >
                   {stat.value}
@@ -444,7 +444,7 @@ export function LandingPage() {
                 "{testimonial.text}"
               </p>
               <div className="flex items-center gap-3 pt-4 border-t border-white/[0.06]">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-[13px] text-white" style={{ fontWeight: 700 }}>
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-[13px] text-white" style={{ fontWeight: 700 }}>
                   {testimonial.name.split(" ").map((n) => n[0]).join("")}
                 </div>
                 <div className="flex-1">
@@ -499,9 +499,9 @@ export function LandingPage() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="max-w-4xl mx-auto rounded-2xl bg-gradient-to-br from-blue-600/20 via-purple-600/15 to-blue-600/10 p-12 md:p-16 text-center border border-white/10 relative overflow-hidden"
+          className="max-w-4xl mx-auto rounded-2xl bg-gradient-to-br from-emerald-600/20 via-green-600/15 to-emerald-600/10 p-12 md:p-16 text-center border border-white/10 relative overflow-hidden"
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/5" />
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-green-500/5" />
           <div className="relative z-10">
             <h2 className="text-[32px] md:text-[44px] mb-4" style={{ fontWeight: 700 }}>
               Ready to find your
@@ -513,7 +513,7 @@ export function LandingPage() {
             </p>
             <Link
               to="/onboarding"
-              className="inline-flex items-center gap-2.5 px-10 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 transition-all shadow-xl shadow-purple-500/25 text-[16px]"
+              className="inline-flex items-center gap-2.5 px-10 py-4 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 transition-all shadow-xl shadow-emerald-500/25 text-[16px]"
               style={{ fontWeight: 600 }}
             >
               Get Started Free
@@ -530,7 +530,7 @@ export function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
                   <Zap className="w-4 h-4" />
                 </div>
                 <span className="text-[16px]" style={{ fontWeight: 700 }}>

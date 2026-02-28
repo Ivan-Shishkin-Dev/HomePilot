@@ -44,7 +44,7 @@ export function ScoreRing({
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="rgba(255,255,255,0.08)"
+            className="stroke-muted"
             strokeWidth={strokeWidth}
           />
           <circle
@@ -62,7 +62,7 @@ export function ScoreRing({
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span
-            className="text-white"
+            className="text-foreground"
             style={{ fontSize: size * 0.28, fontWeight: 700, lineHeight: 1 }}
           >
             {score}
@@ -70,7 +70,7 @@ export function ScoreRing({
         </div>
       </div>
       {label && (
-        <span className="text-[11px] text-[#8B95A5] tracking-wide uppercase">
+        <span className="text-[11px] text-muted-foreground tracking-wide uppercase">
           {label}
         </span>
       )}
