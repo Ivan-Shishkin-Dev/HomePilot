@@ -1,9 +1,32 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase, type Listing, type UserDocument, type ProfileSuggestion, type UserAlert } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { getStaticListings } from "../data/staticListings";
 
-// Hook to fetch listings (static JSON-backed; no Supabase)
+// Score calculation constants
+const DOCUMENT_SCORE_VALUES: Record<string, number> = {
+  id: 130,
+  income: 150,
+  credit: 140,
+  bank: 130,
+  employment: 110,
+  references: 80,
+};
+const BASE_RENTER_SCORE = 72;
+
+export function calculateRenterScore(documents: UserDocument[]): number {
+  return BASE_RENTER_SCORE + documents
+    .filter(d => d.status !== "missing")
+    .reduce((sum, d) => sum + (DOCUMENT_SCORE_VALUES[d.icon] || 0), 0);
+}
+
+export function calculateProfileCompletion(documents: UserDocument[]): number {
+  if (documents.length === 0) return 0;
+  const uploaded = documents.filter(d => d.status !== "missing").length;
+  return Math.round((uploaded / documents.length) * 100);
+}
+
+// Hook to fetch listings
 export function useListings() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,31 +78,31 @@ export function useUserDocuments() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  const fetchDocuments = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from("documents")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      setDocuments(data || []);
+    } catch (err) {
+      setError(err as Error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
   useEffect(() => {
     if (!user) {
       setLoading(false);
       return;
     }
-
-    async function fetchDocuments() {
-      try {
-        const { data, error } = await supabase
-          .from("documents")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: true });
-
-        if (error) throw error;
-        setDocuments(data || []);
-      } catch (err) {
-        setError(err as Error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchDocuments();
-  }, [user]);
+  }, [user, fetchDocuments]);
 
   // Create default documents if none exist
   useEffect(() => {
@@ -108,7 +131,136 @@ export function useUserDocuments() {
     createDefaultDocuments();
   }, [user, loading, documents.length]);
 
-  return { documents, loading, error };
+  return { documents, setDocuments, loading, error, refetch: fetchDocuments };
+}
+
+// Hook for document upload with file picker
+export function useDocumentUpload() {
+  const { user, refreshProfile } = useAuth();
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const pendingDocIdRef = useRef<string | null>(null);
+  const onCompleteRef = useRef<(() => void) | null>(null);
+
+  const triggerUpload = (docId: string, onComplete?: () => void) => {
+    pendingDocIdRef.current = docId;
+    onCompleteRef.current = onComplete || null;
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const docId = pendingDocIdRef.current;
+    if (!file || !docId || !user) {
+      // Reset input so the same file can be re-selected
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // Update document status to pending
+      const { error: docError } = await supabase
+        .from("documents")
+        .update({ status: "pending", uploaded_at: new Date().toISOString() })
+        .eq("id", docId);
+
+      if (docError) throw docError;
+
+      // Fetch all documents to recalculate score
+      const { data: allDocs, error: fetchError } = await supabase
+        .from("documents")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (fetchError) throw fetchError;
+
+      const docs = allDocs || [];
+      const newScore = calculateRenterScore(docs);
+      const newCompletion = calculateProfileCompletion(docs);
+
+      // Update profile with new score and completion
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          renter_score: newScore,
+          profile_completion: newCompletion,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id);
+
+      if (profileError) throw profileError;
+
+      // Refresh profile in auth context
+      await refreshProfile();
+
+      // Call completion callback (e.g., refetch documents)
+      const onComplete = onCompleteRef.current;
+      onComplete?.();
+
+      // Simulate verification after 5 seconds
+      const verifyDocId = docId;
+      const verifyUserId = user.id;
+      setTimeout(async () => {
+        try {
+          await supabase
+            .from("documents")
+            .update({ status: "verified", verified_at: new Date().toISOString() })
+            .eq("id", verifyDocId);
+          onComplete?.();
+        } catch (err) {
+          console.error("Auto-verify error:", err);
+        }
+      }, 5000);
+    } catch (err) {
+      console.error("Document upload error:", err);
+    } finally {
+      setUploading(false);
+      pendingDocIdRef.current = null;
+      onCompleteRef.current = null;
+      // Reset input so the same file can be re-selected
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const removeDocument = async (docId: string, onComplete?: () => void) => {
+    if (!user) return;
+    try {
+      const { error: docError } = await supabase
+        .from("documents")
+        .update({ status: "missing", uploaded_at: null, verified_at: null })
+        .eq("id", docId);
+
+      if (docError) throw docError;
+
+      const { data: allDocs, error: fetchError } = await supabase
+        .from("documents")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (fetchError) throw fetchError;
+
+      const docs = allDocs || [];
+      const newScore = calculateRenterScore(docs);
+      const newCompletion = calculateProfileCompletion(docs);
+
+      await supabase
+        .from("profiles")
+        .update({
+          renter_score: newScore,
+          profile_completion: newCompletion,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id);
+
+      await refreshProfile();
+      onComplete?.();
+    } catch (err) {
+      console.error("Remove document error:", err);
+    }
+  };
+
+  return { triggerUpload, uploading, fileInputRef, handleFileChange, removeDocument };
 }
 
 // Hook to fetch profile suggestions

@@ -22,8 +22,8 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!user) {
-    // Save the attempted URL for redirecting after login
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    // Redirect to landing page when not authenticated
+    return <Navigate to="/" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;
