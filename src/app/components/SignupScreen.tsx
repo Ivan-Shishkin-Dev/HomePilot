@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
-import { Eye, EyeOff, Home, Loader2, Check } from "lucide-react";
+import { Eye, EyeOff, Loader2, Check, Sun, Moon, ArrowLeft } from "lucide-react";
+import { Logo } from "./Logo";
 import { useAuth } from "../../contexts/AuthContext";
+import { useTheme } from "./ThemeProvider";
 
 export function SignupScreen() {
   const [firstName, setFirstName] = useState("");
@@ -13,6 +15,7 @@ export function SignupScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const passwordRequirements = [
@@ -53,26 +56,56 @@ export function SignupScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Background gradient */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
+      </div>
+
+      {/* Header with logo - same as onboarding */}
+      <div className="relative z-10 px-6 py-5 flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-2.5">
+          <Logo className="w-8 h-8" />
+          <span className="text-[18px] text-foreground" style={{ fontWeight: 700 }}>
+            HomePilot
+          </span>
+        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="w-10 h-10 rounded-xl bg-muted hover:bg-accent transition-colors flex items-center justify-center"
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {theme === "dark" ? (
+              <Sun size={18} className="text-muted-foreground" />
+            ) : (
+              <Moon size={18} className="text-muted-foreground" />
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Nav row - same layout as onboarding (Home left) */}
+      <div className="relative z-10 px-6 py-4">
+        <div className="max-w-md mx-auto flex items-center justify-between">
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-[14px]"
+          >
+            <ArrowLeft size={16} />
+            Home
+          </Link>
+        </div>
       </div>
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md relative z-10"
+        className="relative z-10 flex-1 flex items-center justify-center p-4"
       >
-        {/* Logo */}
-        <Link to="/" className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
-            <Home className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-2xl font-bold text-white">HomePilot</span>
-        </Link>
-
+        <div className="w-full max-w-md">
         {/* Card */}
         <div className="bg-card border border-border rounded-2xl p-8">
           <h1 className="text-2xl font-bold text-white text-center mb-2">
@@ -219,10 +252,11 @@ export function SignupScreen() {
           </div>
         </div>
 
-        <p className="text-center text-gray-500 text-sm mt-6">
+        <p className="text-center text-muted-foreground text-sm mt-6">
           By creating an account, you agree to our Terms of Service and Privacy
           Policy
         </p>
+        </div>
       </motion.div>
     </div>
   );

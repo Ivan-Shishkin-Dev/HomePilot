@@ -7,8 +7,8 @@ export function TopBar() {
   const navigate = useNavigate();
 
   return (
-    <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-xl border-b border-border">
-      <div className="flex items-center justify-end gap-3 px-6 lg:px-10 py-3">
+    <div className="sticky top-4 z-30 w-full px-4 lg:px-6">
+      <div className="mx-auto max-w-6xl min-h-[52px] rounded-2xl border border-white/10 bg-background/70 dark:bg-background/50 dark:border-white/5 shadow-lg shadow-black/5 dark:shadow-black/20 backdrop-blur-xl flex items-center justify-end gap-3 px-4 lg:px-6 py-2.5">
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
