@@ -19,11 +19,13 @@ import {
   Coffee,
   Loader2,
   X,
-} from "lucide-react";
-import { useUserDocuments, useDocumentUpload } from "../../hooks/useSupabaseData";
   Sun,
   Moon,
 } from "lucide-react";
+import {
+  useUserDocuments,
+  useDocumentUpload,
+} from "../../hooks/useSupabaseData";
 import { Logo } from "./Logo";
 import { useTheme } from "./ThemeProvider";
 import { useAuth } from "../../contexts/AuthContext";
@@ -44,8 +46,14 @@ export function OnboardingScreen() {
   useEffect(() => {
     if (!name.trim() || !email.trim()) {
       const fullName =
-        [profile?.first_name, profile?.last_name].filter(Boolean).join(" ").trim() ||
-        [user?.user_metadata?.first_name, user?.user_metadata?.last_name].filter(Boolean).join(" ").trim();
+        [profile?.first_name, profile?.last_name]
+          .filter(Boolean)
+          .join(" ")
+          .trim() ||
+        [user?.user_metadata?.first_name, user?.user_metadata?.last_name]
+          .filter(Boolean)
+          .join(" ")
+          .trim();
       const emailValue = profile?.email ?? user?.email ?? "";
       if (fullName && !name.trim()) setName(fullName);
       if (emailValue && !email.trim()) setEmail(emailValue);
@@ -59,12 +67,15 @@ export function OnboardingScreen() {
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [localUploadedDocs, setLocalUploadedDocs] = useState<string[]>([]);
 
-  // Auth context
-  const { user } = useAuth();
-
   // Document upload from Supabase
   const { documents: dbDocuments, refetch: refetchDocs } = useUserDocuments();
-  const { triggerUpload, uploading, fileInputRef, handleFileChange, removeDocument } = useDocumentUpload();
+  const {
+    triggerUpload,
+    uploading,
+    fileInputRef,
+    handleFileChange,
+    removeDocument,
+  } = useDocumentUpload();
 
   // Map onboarding doc IDs to DB icon keys
   const onboardingToDbIcon: Record<string, string> = {
@@ -98,7 +109,7 @@ export function OnboardingScreen() {
 
   const toggleAmenity = (id: string) => {
     setSelectedAmenities((prev) =>
-      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id],
     );
   };
 
@@ -106,7 +117,7 @@ export function OnboardingScreen() {
     if (hasDbDocs) {
       // Supabase flow: open file picker and update DB
       const dbIcon = onboardingToDbIcon[onboardingId];
-      const dbDoc = dbDocuments.find(d => d.icon === dbIcon);
+      const dbDoc = dbDocuments.find((d) => d.icon === dbIcon);
       if (dbDoc && dbDoc.status === "missing") {
         triggerUpload(dbDoc.id, refetchDocs);
       }
@@ -115,8 +126,10 @@ export function OnboardingScreen() {
       await refetchDocs();
     } else {
       // Fallback: local toggle (user not authenticated)
-      setLocalUploadedDocs(prev =>
-        prev.includes(onboardingId) ? prev.filter(d => d !== onboardingId) : [...prev, onboardingId]
+      setLocalUploadedDocs((prev) =>
+        prev.includes(onboardingId)
+          ? prev.filter((d) => d !== onboardingId)
+          : [...prev, onboardingId],
       );
     }
   };
@@ -124,14 +137,14 @@ export function OnboardingScreen() {
   const isDocUploaded = (onboardingId: string) => {
     if (hasDbDocs) {
       const dbIcon = onboardingToDbIcon[onboardingId];
-      const dbDoc = dbDocuments.find(d => d.icon === dbIcon);
+      const dbDoc = dbDocuments.find((d) => d.icon === dbIcon);
       return dbDoc ? dbDoc.status !== "missing" : false;
     }
     return localUploadedDocs.includes(onboardingId);
   };
 
   const uploadedCount = hasDbDocs
-    ? dbDocuments.filter(d => d.status !== "missing").length
+    ? dbDocuments.filter((d) => d.status !== "missing").length
     : localUploadedDocs.length;
 
   const progress = ((step + 1) / TOTAL_STEPS) * 100;
@@ -162,7 +175,10 @@ export function OnboardingScreen() {
       <div className="relative z-10 px-6 py-5 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <Logo className="w-8 h-8" />
-          <span className="text-[18px] text-foreground" style={{ fontWeight: 700 }}>
+          <span
+            className="text-[18px] text-foreground"
+            style={{ fontWeight: 700 }}
+          >
             HomePilot
           </span>
         </div>
@@ -171,7 +187,9 @@ export function OnboardingScreen() {
             type="button"
             onClick={toggleTheme}
             className="w-10 h-10 rounded-xl bg-muted hover:bg-accent transition-colors flex items-center justify-center"
-            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label={
+              theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+            }
           >
             {theme === "dark" ? (
               <Sun size={18} className="text-muted-foreground" />
@@ -195,7 +213,9 @@ export function OnboardingScreen() {
             <span className="text-gray-500 text-[13px]">
               Step {step + 1} of {TOTAL_STEPS}
             </span>
-            <span className="text-gray-500 text-[13px]">{Math.round(progress)}%</span>
+            <span className="text-gray-500 text-[13px]">
+              {Math.round(progress)}%
+            </span>
           </div>
           <div className="w-full h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
             <motion.div
@@ -220,7 +240,10 @@ export function OnboardingScreen() {
                 exit={{ opacity: 0, x: -30 }}
                 transition={{ duration: 0.3 }}
               >
-                <h2 className="text-[28px] md:text-[36px] mb-2" style={{ fontWeight: 700 }}>
+                <h2
+                  className="text-[28px] md:text-[36px] mb-2"
+                  style={{ fontWeight: 700 }}
+                >
                   Let's get started
                 </h2>
                 <p className="text-gray-400 text-[16px] mb-10">
@@ -228,7 +251,10 @@ export function OnboardingScreen() {
                 </p>
                 <div className="space-y-5">
                   <div>
-                    <label className="text-[14px] text-gray-300 mb-2 block" style={{ fontWeight: 500 }}>
+                    <label
+                      className="text-[14px] text-gray-300 mb-2 block"
+                      style={{ fontWeight: 500 }}
+                    >
                       Full Name
                     </label>
                     <input
@@ -240,7 +266,10 @@ export function OnboardingScreen() {
                     />
                   </div>
                   <div>
-                    <label className="text-[14px] text-gray-300 mb-2 block" style={{ fontWeight: 500 }}>
+                    <label
+                      className="text-[14px] text-gray-300 mb-2 block"
+                      style={{ fontWeight: 500 }}
+                    >
                       Email Address
                     </label>
                     <input
@@ -264,7 +293,10 @@ export function OnboardingScreen() {
                 exit={{ opacity: 0, x: -30 }}
                 transition={{ duration: 0.3 }}
               >
-                <h2 className="text-[28px] md:text-[36px] mb-2" style={{ fontWeight: 700 }}>
+                <h2
+                  className="text-[28px] md:text-[36px] mb-2"
+                  style={{ fontWeight: 700 }}
+                >
                   Where are you looking?
                 </h2>
                 <p className="text-gray-400 text-[16px] mb-10">
@@ -272,8 +304,14 @@ export function OnboardingScreen() {
                 </p>
                 <div className="space-y-5">
                   <div>
-                    <label className="text-[14px] text-gray-300 mb-2 block" style={{ fontWeight: 500 }}>
-                      <MapPin size={14} className="inline mr-1.5 text-blue-400" />
+                    <label
+                      className="text-[14px] text-gray-300 mb-2 block"
+                      style={{ fontWeight: 500 }}
+                    >
+                      <MapPin
+                        size={14}
+                        className="inline mr-1.5 text-blue-400"
+                      />
                       City or Neighborhood
                     </label>
                     <input
@@ -286,8 +324,14 @@ export function OnboardingScreen() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-[14px] text-gray-300 mb-2 block" style={{ fontWeight: 500 }}>
-                        <DollarSign size={14} className="inline mr-1 text-green-400" />
+                      <label
+                        className="text-[14px] text-gray-300 mb-2 block"
+                        style={{ fontWeight: 500 }}
+                      >
+                        <DollarSign
+                          size={14}
+                          className="inline mr-1 text-green-400"
+                        />
                         Min Budget
                       </label>
                       <input
@@ -299,7 +343,10 @@ export function OnboardingScreen() {
                       />
                     </div>
                     <div>
-                      <label className="text-[14px] text-gray-300 mb-2 block" style={{ fontWeight: 500 }}>
+                      <label
+                        className="text-[14px] text-gray-300 mb-2 block"
+                        style={{ fontWeight: 500 }}
+                      >
                         Max Budget
                       </label>
                       <input
@@ -313,8 +360,14 @@ export function OnboardingScreen() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-[14px] text-gray-300 mb-2 block" style={{ fontWeight: 500 }}>
-                        <Bed size={14} className="inline mr-1.5 text-emerald-400" />
+                      <label
+                        className="text-[14px] text-gray-300 mb-2 block"
+                        style={{ fontWeight: 500 }}
+                      >
+                        <Bed
+                          size={14}
+                          className="inline mr-1.5 text-emerald-400"
+                        />
                         Bedrooms
                       </label>
                       <div className="flex gap-2">
@@ -335,7 +388,10 @@ export function OnboardingScreen() {
                       </div>
                     </div>
                     <div>
-                      <label className="text-[14px] text-gray-300 mb-2 block" style={{ fontWeight: 500 }}>
+                      <label
+                        className="text-[14px] text-gray-300 mb-2 block"
+                        style={{ fontWeight: 500 }}
+                      >
                         Move-in Date
                       </label>
                       <input
@@ -359,11 +415,15 @@ export function OnboardingScreen() {
                 exit={{ opacity: 0, x: -30 }}
                 transition={{ duration: 0.3 }}
               >
-                <h2 className="text-[28px] md:text-[36px] mb-2" style={{ fontWeight: 700 }}>
+                <h2
+                  className="text-[28px] md:text-[36px] mb-2"
+                  style={{ fontWeight: 700 }}
+                >
                   What matters most?
                 </h2>
                 <p className="text-gray-400 text-[16px] mb-10">
-                  Select the amenities that are most important to you. AI will prioritize matches accordingly.
+                  Select the amenities that are most important to you. AI will
+                  prioritize matches accordingly.
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {amenities.map((amenity) => {
@@ -380,20 +440,29 @@ export function OnboardingScreen() {
                       >
                         <amenity.icon
                           size={20}
-                          className={selected ? "text-blue-400" : "text-gray-500"}
+                          className={
+                            selected ? "text-blue-400" : "text-gray-500"
+                          }
                         />
-                        <span className="text-[14px]" style={{ fontWeight: 500 }}>
+                        <span
+                          className="text-[14px]"
+                          style={{ fontWeight: 500 }}
+                        >
                           {amenity.label}
                         </span>
                         {selected && (
-                          <CheckCircle2 size={16} className="ml-auto text-blue-400" />
+                          <CheckCircle2
+                            size={16}
+                            className="ml-auto text-blue-400"
+                          />
                         )}
                       </button>
                     );
                   })}
                 </div>
                 <p className="text-gray-600 text-[13px] mt-4">
-                  {selectedAmenities.length} selected — you can change these later
+                  {selectedAmenities.length} selected — you can change these
+                  later
                 </p>
               </motion.div>
             )}
@@ -407,16 +476,24 @@ export function OnboardingScreen() {
                 exit={{ opacity: 0, x: -30 }}
                 transition={{ duration: 0.3 }}
               >
-                <h2 className="text-[28px] md:text-[36px] mb-2" style={{ fontWeight: 700 }}>
+                <h2
+                  className="text-[28px] md:text-[36px] mb-2"
+                  style={{ fontWeight: 700 }}
+                >
                   Build your Passport
                 </h2>
                 <p className="text-gray-400 text-[16px] mb-4">
-                  Upload documents to increase your approval rate. You can always add more later.
+                  Upload documents to increase your approval rate. You can
+                  always add more later.
                 </p>
                 <div className="bg-gradient-to-r from-[#10B981]/10 to-[#10B981]/5 rounded-xl px-4 py-3 border border-[#10B981]/15 flex items-center gap-3 mb-8">
                   <Shield size={18} className="text-[#10B981]" />
-                  <span className="text-[#10B981] text-[13px]" style={{ fontWeight: 500 }}>
-                    All documents are encrypted with AES-256 and never shared without consent
+                  <span
+                    className="text-[#10B981] text-[13px]"
+                    style={{ fontWeight: 500 }}
+                  >
+                    All documents are encrypted with AES-256 and never shared
+                    without consent
                   </span>
                 </div>
 
@@ -447,9 +524,15 @@ export function OnboardingScreen() {
                           }`}
                         >
                           {uploaded ? (
-                            <CheckCircle2 size={20} className="text-[#10B981]" />
+                            <CheckCircle2
+                              size={20}
+                              className="text-[#10B981]"
+                            />
                           ) : uploading ? (
-                            <Loader2 size={18} className="text-gray-500 animate-spin" />
+                            <Loader2
+                              size={18}
+                              className="text-gray-500 animate-spin"
+                            />
                           ) : (
                             <Upload size={18} className="text-gray-500" />
                           )}
@@ -462,7 +545,9 @@ export function OnboardingScreen() {
                             {doc.label}
                           </p>
                           <p className="text-[12px] text-gray-500">
-                            {uploaded ? "Uploaded — Pending verification" : "Click to upload"}
+                            {uploaded
+                              ? "Uploaded — Pending verification"
+                              : "Click to upload"}
                           </p>
                         </div>
                         {uploaded ? (
@@ -471,18 +556,29 @@ export function OnboardingScreen() {
                               e.stopPropagation();
                               if (hasDbDocs) {
                                 const dbIcon = onboardingToDbIcon[doc.id];
-                                const dbDoc = dbDocuments.find(d => d.icon === dbIcon);
-                                if (dbDoc) removeDocument(dbDoc.id, refetchDocs);
+                                const dbDoc = dbDocuments.find(
+                                  (d) => d.icon === dbIcon,
+                                );
+                                if (dbDoc)
+                                  removeDocument(dbDoc.id, refetchDocs);
                               } else {
-                                setLocalUploadedDocs(prev => prev.filter(d => d !== doc.id));
+                                setLocalUploadedDocs((prev) =>
+                                  prev.filter((d) => d !== doc.id),
+                                );
                               }
                             }}
                             className="p-1.5 rounded-lg hover:bg-white/[0.1] transition-colors"
                           >
-                            <X size={16} className="text-gray-400 hover:text-white" />
+                            <X
+                              size={16}
+                              className="text-gray-400 hover:text-white"
+                            />
                           </button>
                         ) : (
-                          <span className="text-blue-400 text-[13px]" style={{ fontWeight: 500 }}>
+                          <span
+                            className="text-blue-400 text-[13px]"
+                            style={{ fontWeight: 500 }}
+                          >
                             Upload
                           </span>
                         )}
