@@ -50,7 +50,7 @@ export function HomeScreen() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0F1E] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
       </div>
     );
@@ -73,7 +73,7 @@ export function HomeScreen() {
               className="relative w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center hover:bg-white/[0.1] transition-colors"
             >
               <Bell size={18} className="text-[#8B95A5]" />
-              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#EF4444] rounded-full border-2 border-[#0A0F1E]" />
+              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#EF4444] rounded-full border-2 border-background" />
             </button>
           </div>
         </div>

@@ -15,14 +15,19 @@ import {
   Lock,
   BarChart3,
   Eye,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { ScoreRing } from "./ScoreRing";
 import { listings } from "./data";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { useTheme } from "./ThemeProvider";
 
 export function LandingPage() {
+  const { theme, toggleTheme } = useTheme();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#111117] to-[#0a0a0f] text-white">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Ambient blobs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-emerald-500/15 rounded-full blur-[150px]" />
@@ -30,42 +35,56 @@ export function LandingPage() {
         <div className="absolute bottom-0 right-[30%] w-[300px] h-[300px] bg-emerald-500/10 rounded-full blur-[120px]" />
       </div>
 
-      {/* Navigation */}
-      <nav className="relative z-20 container mx-auto px-6 py-5 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <Zap className="w-5 h-5" />
+      {/* Navigation - full-width bar, sticky, content centered */}
+      <nav className="sticky top-0 z-30 w-full min-h-[72px] bg-background/80 backdrop-blur-md">
+        <div className="container mx-auto px-6 py-5 flex items-center justify-between h-full">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+              <Zap className="w-5 h-5" />
+            </div>
+            <span className="text-[20px] text-foreground" style={{ fontWeight: 700 }}>
+              HomePilot
+            </span>
           </div>
-          <span className="text-[20px]" style={{ fontWeight: 700 }}>
-            HomePilot
-          </span>
-        </div>
-        <div className="hidden md:flex items-center gap-8">
-          <a href="#features" className="text-[14px] text-gray-400 hover:text-white transition-colors">
-            Features
-          </a>
-          <a href="#how-it-works" className="text-[14px] text-gray-400 hover:text-white transition-colors">
-            How It Works
-          </a>
-          <a href="#social-proof" className="text-[14px] text-gray-400 hover:text-white transition-colors">
-            Testimonials
-          </a>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link
-            to="/login"
-            className="hidden sm:block px-4 py-2 rounded-lg text-[14px] text-gray-300 hover:text-white transition-colors"
-            style={{ fontWeight: 500 }}
-          >
-            Sign In
-          </Link>
-          <Link
-            to="/onboarding"
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 transition-all text-[14px] shadow-lg shadow-emerald-500/20"
-            style={{ fontWeight: 600 }}
-          >
-            Get Started
-          </Link>
+          <div className="hidden md:flex items-center gap-8">
+            <a href="#features" className="text-[14px] text-muted-foreground hover:text-foreground transition-colors">
+              Features
+            </a>
+            <a href="#how-it-works" className="text-[14px] text-muted-foreground hover:text-foreground transition-colors">
+              How It Works
+            </a>
+            <a href="#social-proof" className="text-[14px] text-muted-foreground hover:text-foreground transition-colors">
+              Testimonials
+            </a>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="w-10 h-10 rounded-xl bg-muted hover:bg-accent transition-colors flex items-center justify-center"
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === "dark" ? (
+                <Sun size={18} className="text-muted-foreground" />
+              ) : (
+                <Moon size={18} className="text-muted-foreground" />
+              )}
+            </button>
+            <Link
+              to="/login"
+              className="hidden sm:block px-4 py-2 rounded-lg text-[14px] text-muted-foreground hover:text-foreground transition-colors"
+              style={{ fontWeight: 500 }}
+            >
+              Sign In
+            </Link>
+            <Link
+              to="/onboarding"
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 transition-all text-[14px] text-white shadow-lg shadow-emerald-500/20"
+              style={{ fontWeight: 600 }}
+            >
+              Get Started
+            </Link>
+          </div>
         </div>
       </nav>
 
@@ -77,21 +96,21 @@ export function LandingPage() {
           transition={{ duration: 0.8 }}
           className="max-w-4xl mx-auto text-center"
         >
-          <div className="inline-flex items-center gap-2 bg-white/[0.06] border border-white/10 rounded-full px-4 py-1.5 mb-8">
+          <div className="inline-flex items-center gap-2 bg-muted border border-border rounded-full px-4 py-1.5 mb-8">
             <Sparkles size={14} className="text-emerald-400" />
-            <span className="text-[13px] text-gray-300" style={{ fontWeight: 500 }}>
+            <span className="text-[13px] text-muted-foreground" style={{ fontWeight: 500 }}>
               AI-powered rental intelligence for Gen Z
             </span>
           </div>
           <h1
-            className="text-[44px] sm:text-[56px] md:text-[72px] mb-6 bg-gradient-to-r from-white via-emerald-100 to-green-200 bg-clip-text text-transparent"
+            className="text-[44px] sm:text-[56px] md:text-[72px] mb-6 bg-gradient-to-r from-foreground via-emerald-700 to-green-800 dark:from-white dark:via-emerald-100 dark:to-green-200 bg-clip-text text-transparent"
             style={{ fontWeight: 800, lineHeight: 1.05 }}
           >
             AI That Hunts
             <br />
             Apartments For You.
           </h1>
-          <p className="text-[18px] md:text-[22px] text-gray-400 mb-10 max-w-2xl mx-auto" style={{ lineHeight: 1.5 }}>
+          <p className="text-[18px] md:text-[22px] text-muted-foreground mb-10 max-w-2xl mx-auto" style={{ lineHeight: 1.5 }}>
             HomePilot monitors listings, predicts approval odds, detects scams, and tells you exactly when to apply.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -105,7 +124,7 @@ export function LandingPage() {
             </Link>
             <Link
               to="/home"
-              className="inline-flex items-center gap-2 px-6 py-4 rounded-xl bg-white/[0.06] border border-white/10 hover:bg-white/[0.1] transition-all text-gray-300 text-[16px]"
+              className="inline-flex items-center gap-2 px-6 py-4 rounded-xl bg-muted border border-border hover:bg-accent transition-all text-muted-foreground hover:text-foreground text-[16px]"
               style={{ fontWeight: 500 }}
             >
               <Eye size={18} />
@@ -121,8 +140,8 @@ export function LandingPage() {
           transition={{ duration: 0.8, delay: 0.3 }}
           className="max-w-5xl mx-auto mt-20"
         >
-          <div className="rounded-2xl bg-gradient-to-b from-white/10 to-white/[0.03] p-[1px] shadow-2xl shadow-black/40">
-            <div className="rounded-2xl bg-gradient-to-br from-[#12131f] to-[#0c0d17] p-6 md:p-8 overflow-hidden">
+          <div className="rounded-2xl bg-gradient-to-b from-border to-border/50 p-[1px] shadow-2xl shadow-black/20 dark:shadow-black/40">
+            <div className="rounded-2xl bg-card p-6 md:p-8 overflow-hidden border border-border">
               {/* Browser chrome */}
               <div className="flex items-center gap-3 mb-6">
                 <div className="flex gap-1.5">
@@ -131,8 +150,8 @@ export function LandingPage() {
                   <div className="w-3 h-3 rounded-full bg-[#33C748]" />
                 </div>
                 <div className="flex-1 mx-4">
-                  <div className="bg-white/[0.06] rounded-lg px-4 py-1.5 max-w-xs">
-                    <span className="text-[12px] text-gray-500">homepilot.ai/dashboard</span>
+                  <div className="bg-muted rounded-lg px-4 py-1.5 max-w-xs">
+                    <span className="text-[12px] text-muted-foreground">homepilot.ai/dashboard</span>
                   </div>
                 </div>
               </div>
@@ -140,17 +159,17 @@ export function LandingPage() {
               {/* Mini dashboard */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Score card */}
-                <div className="bg-white/[0.04] rounded-xl p-5 border border-white/[0.06]">
+                <div className="bg-muted/50 rounded-xl p-5 border border-border">
                   <div className="flex items-center gap-4">
                     <ScoreRing score={847} size={72} strokeWidth={5} label="" />
                     <div>
                       <p className="text-[#10B981] text-[12px]" style={{ fontWeight: 600 }}>
                         Excellent
                       </p>
-                      <p className="text-white text-[20px]" style={{ fontWeight: 700 }}>
+                      <p className="text-foreground text-[20px]" style={{ fontWeight: 700 }}>
                         847
                       </p>
-                      <p className="text-gray-500 text-[11px]">Renter Score</p>
+                      <p className="text-muted-foreground text-[11px]">Renter Score</p>
                     </div>
                   </div>
                 </div>
@@ -159,7 +178,7 @@ export function LandingPage() {
                 {listings.slice(0, 2).map((l) => (
                   <div
                     key={l.id}
-                    className="bg-white/[0.04] rounded-xl overflow-hidden border border-white/[0.06]"
+                    className="bg-muted/50 rounded-xl overflow-hidden border border-border"
                   >
                     <div className="relative h-24">
                       <ImageWithFallback
@@ -174,10 +193,10 @@ export function LandingPage() {
                       </div>
                     </div>
                     <div className="p-3">
-                      <p className="text-white text-[13px] truncate" style={{ fontWeight: 600 }}>
+                      <p className="text-foreground text-[13px] truncate" style={{ fontWeight: 600 }}>
                         {l.title}
                       </p>
-                      <p className="text-gray-500 text-[11px]">${l.price.toLocaleString()}/mo</p>
+                      <p className="text-muted-foreground text-[11px]">${l.price.toLocaleString()}/mo</p>
                     </div>
                   </div>
                 ))}
@@ -188,14 +207,14 @@ export function LandingPage() {
       </section>
 
       {/* ═══════════ LOGOS / SOCIAL PROOF BAR ═══════════ */}
-      <section className="relative z-10 border-y border-white/[0.06] py-10">
+      <section className="relative z-10 border-y border-border py-10">
         <div className="container mx-auto px-6">
-          <p className="text-center text-gray-500 text-[13px] mb-6" style={{ fontWeight: 500 }}>
+          <p className="text-center text-muted-foreground text-[13px] mb-6" style={{ fontWeight: 500 }}>
             TRUSTED BY RENTERS AT
           </p>
-          <div className="flex items-center justify-center gap-10 md:gap-16 flex-wrap opacity-40">
+          <div className="flex items-center justify-center gap-10 md:gap-16 flex-wrap opacity-60">
             {["NYU", "Columbia", "MIT", "Stanford", "UT Austin", "UCLA"].map((name) => (
-              <span key={name} className="text-[16px] text-gray-300 tracking-wider" style={{ fontWeight: 700 }}>
+              <span key={name} className="text-[16px] text-muted-foreground tracking-wider" style={{ fontWeight: 700 }}>
                 {name}
               </span>
             ))}
@@ -210,7 +229,7 @@ export function LandingPage() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-[36px] md:text-[44px] mb-4"
+            className="text-[36px] md:text-[44px] mb-4 text-foreground"
             style={{ fontWeight: 700 }}
           >
             Everything you need to
@@ -219,7 +238,7 @@ export function LandingPage() {
               win your next apartment
             </span>
           </motion.h2>
-          <p className="text-gray-400 text-[18px] max-w-xl mx-auto">
+          <p className="text-muted-foreground text-[18px] max-w-xl mx-auto">
             Six powerful features working together so you never miss a listing again.
           </p>
         </div>
@@ -281,17 +300,17 @@ export function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.08 }}
-              className="rounded-2xl bg-gradient-to-br from-white/[0.05] to-white/[0.01] p-7 border border-white/[0.08] hover:border-white/[0.15] transition-all group"
+              className="rounded-2xl bg-card p-7 border border-border hover:border-border/80 transition-all group"
             >
               <div
                 className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-5 border ${feature.border} group-hover:scale-110 transition-transform`}
               >
                 <feature.icon className={`w-6 h-6 ${feature.iconColor}`} />
               </div>
-              <h3 className="text-[18px] mb-2" style={{ fontWeight: 600 }}>
+              <h3 className="text-[18px] mb-2 text-foreground" style={{ fontWeight: 600 }}>
                 {feature.title}
               </h3>
-              <p className="text-gray-400 text-[14px]" style={{ lineHeight: 1.6 }}>
+              <p className="text-muted-foreground text-[14px]" style={{ lineHeight: 1.6 }}>
                 {feature.desc}
               </p>
             </motion.div>
@@ -305,7 +324,7 @@ export function LandingPage() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-[36px] md:text-[44px] text-center mb-16"
+          className="text-[36px] md:text-[44px] text-center mb-16 text-foreground"
           style={{ fontWeight: 700 }}
         >
           Three steps to your{" "}
@@ -342,7 +361,7 @@ export function LandingPage() {
               transition={{ duration: 0.5, delay: i * 0.15 }}
               className="text-center"
             >
-              <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500/15 to-green-500/15 border border-white/10 mb-6">
+              <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500/15 to-green-500/15 border border-border mb-6">
                 <item.icon size={32} className="text-emerald-400" />
                 <span
                   className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-gradient-to-br from-emerald-500 to-green-600 text-white text-[12px] flex items-center justify-center"
@@ -351,10 +370,10 @@ export function LandingPage() {
                   {item.step}
                 </span>
               </div>
-              <h3 className="text-[20px] mb-3" style={{ fontWeight: 600 }}>
+              <h3 className="text-[20px] mb-3 text-foreground" style={{ fontWeight: 600 }}>
                 {item.title}
               </h3>
-              <p className="text-gray-400 text-[15px]" style={{ lineHeight: 1.6 }}>
+              <p className="text-muted-foreground text-[15px]" style={{ lineHeight: 1.6 }}>
                 {item.desc}
               </p>
             </motion.div>
@@ -363,7 +382,7 @@ export function LandingPage() {
       </section>
 
       {/* ═══════════ STATS BAR ═══════════ */}
-      <section className="relative z-10 border-y border-white/[0.06] py-16">
+      <section className="relative z-10 border-y border-border py-16">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto text-center">
             {[
@@ -384,7 +403,7 @@ export function LandingPage() {
                 >
                   {stat.value}
                 </p>
-                <p className="text-gray-500 text-[13px] mt-2">{stat.label}</p>
+                <p className="text-muted-foreground text-[13px] mt-2">{stat.label}</p>
               </motion.div>
             ))}
           </div>
@@ -397,12 +416,12 @@ export function LandingPage() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-[36px] md:text-[44px] text-center mb-4"
+          className="text-[36px] md:text-[44px] text-center mb-4 text-foreground"
           style={{ fontWeight: 700 }}
         >
           Loved by renters
         </motion.h2>
-        <p className="text-gray-400 text-[18px] text-center mb-14 max-w-xl mx-auto">
+        <p className="text-muted-foreground text-[18px] text-center mb-14 max-w-xl mx-auto">
           Hear from students and young professionals who found their home with HomePilot.
         </p>
 
@@ -433,31 +452,31 @@ export function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
-              className="bg-gradient-to-br from-white/[0.06] to-white/[0.02] rounded-2xl p-6 border border-white/[0.08]"
+              className="bg-card rounded-2xl p-6 border border-border"
             >
               <div className="flex items-center gap-1 mb-4">
                 {[1, 2, 3, 4, 5].map((s) => (
                   <Star key={s} size={14} className="text-yellow-400 fill-yellow-400" />
                 ))}
               </div>
-              <p className="text-gray-300 text-[14px] mb-6" style={{ lineHeight: 1.7 }}>
+              <p className="text-muted-foreground text-[14px] mb-6" style={{ lineHeight: 1.7 }}>
                 "{testimonial.text}"
               </p>
-              <div className="flex items-center gap-3 pt-4 border-t border-white/[0.06]">
+              <div className="flex items-center gap-3 pt-4 border-t border-border">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-[13px] text-white" style={{ fontWeight: 700 }}>
                   {testimonial.name.split(" ").map((n) => n[0]).join("")}
                 </div>
                 <div className="flex-1">
-                  <p className="text-white text-[14px]" style={{ fontWeight: 600 }}>
+                  <p className="text-foreground text-[14px]" style={{ fontWeight: 600 }}>
                     {testimonial.name}
                   </p>
-                  <p className="text-gray-500 text-[12px]">{testimonial.school}</p>
+                  <p className="text-muted-foreground text-[12px]">{testimonial.school}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-[#10B981] text-[16px]" style={{ fontWeight: 700 }}>
                     {testimonial.score}
                   </p>
-                  <p className="text-gray-500 text-[10px]">Score</p>
+                  <p className="text-muted-foreground text-[10px]">Score</p>
                 </div>
               </div>
             </motion.div>
@@ -472,10 +491,10 @@ export function LandingPage() {
             <Lock size={28} className="text-[#10B981]" />
           </div>
           <div className="flex-1 text-center md:text-left">
-            <h3 className="text-white text-[18px] mb-1" style={{ fontWeight: 600 }}>
+            <h3 className="text-foreground text-[18px] mb-1" style={{ fontWeight: 600 }}>
               Bank-level security, always
             </h3>
-            <p className="text-gray-400 text-[14px]">
+            <p className="text-muted-foreground text-[14px]">
               AES-256 encryption, SOC 2 compliant, and your data is never sold. Documents are only shared with your explicit consent.
             </p>
           </div>
@@ -499,33 +518,33 @@ export function LandingPage() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="max-w-4xl mx-auto rounded-2xl bg-gradient-to-br from-emerald-600/20 via-green-600/15 to-emerald-600/10 p-12 md:p-16 text-center border border-white/10 relative overflow-hidden"
+          className="max-w-4xl mx-auto rounded-2xl bg-gradient-to-br from-emerald-600/20 via-green-600/15 to-emerald-600/10 p-12 md:p-16 text-center border border-border relative overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-green-500/5" />
           <div className="relative z-10">
-            <h2 className="text-[32px] md:text-[44px] mb-4" style={{ fontWeight: 700 }}>
+            <h2 className="text-[32px] md:text-[44px] mb-4 text-foreground font-bold drop-shadow-sm [text-shadow:0_1px_2px_rgba(0,0,0,0.08)] dark:[text-shadow:0_1px_3px_rgba(0,0,0,0.3)]">
               Ready to find your
               <br />
               perfect apartment?
             </h2>
-            <p className="text-[18px] text-gray-300 mb-10 max-w-lg mx-auto">
+            <p className="text-[18px] text-foreground/90 mb-10 max-w-lg mx-auto font-medium">
               Join thousands of renters using AI to get approved faster. Set up your passport in under 5 minutes.
             </p>
             <Link
               to="/onboarding"
-              className="inline-flex items-center gap-2.5 px-10 py-4 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 transition-all shadow-xl shadow-emerald-500/25 text-[16px]"
+              className="inline-flex items-center gap-2.5 px-10 py-4 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 transition-all shadow-xl shadow-emerald-500/25 text-[16px] text-white font-semibold"
               style={{ fontWeight: 600 }}
             >
               Get Started Free
               <ArrowRight className="w-5 h-5" />
             </Link>
-            <p className="text-gray-500 text-[13px] mt-4">No credit card required</p>
+            <p className="text-foreground/80 text-[13px] mt-4 font-medium">No credit card required</p>
           </div>
         </motion.div>
       </section>
 
       {/* ═══════════ FOOTER ═══════════ */}
-      <footer className="relative z-10 border-t border-white/[0.06]">
+      <footer className="relative z-10 border-t border-border">
         <div className="container mx-auto px-6 py-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <div>
@@ -533,50 +552,50 @@ export function LandingPage() {
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
                   <Zap className="w-4 h-4" />
                 </div>
-                <span className="text-[16px]" style={{ fontWeight: 700 }}>
+                <span className="text-[16px] text-foreground" style={{ fontWeight: 700 }}>
                   HomePilot
                 </span>
               </div>
-              <p className="text-gray-500 text-[13px]">
+              <p className="text-muted-foreground text-[13px]">
                 AI-powered apartment hunting for the next generation.
               </p>
             </div>
             <div>
-              <h4 className="text-white text-[14px] mb-3" style={{ fontWeight: 600 }}>
+              <h4 className="text-foreground text-[14px] mb-3" style={{ fontWeight: 600 }}>
                 Product
               </h4>
               {["Dashboard", "Listings", "Passport", "AI Alerts"].map((item) => (
-                <p key={item} className="text-gray-500 text-[13px] mb-2 hover:text-gray-300 cursor-pointer transition-colors">
+                <p key={item} className="text-muted-foreground text-[13px] mb-2 hover:text-foreground cursor-pointer transition-colors">
                   {item}
                 </p>
               ))}
             </div>
             <div>
-              <h4 className="text-white text-[14px] mb-3" style={{ fontWeight: 600 }}>
+              <h4 className="text-foreground text-[14px] mb-3" style={{ fontWeight: 600 }}>
                 Resources
               </h4>
               {["Help Center", "Blog", "API Docs", "Status"].map((item) => (
-                <p key={item} className="text-gray-500 text-[13px] mb-2 hover:text-gray-300 cursor-pointer transition-colors">
+                <p key={item} className="text-muted-foreground text-[13px] mb-2 hover:text-foreground cursor-pointer transition-colors">
                   {item}
                 </p>
               ))}
             </div>
             <div>
-              <h4 className="text-white text-[14px] mb-3" style={{ fontWeight: 600 }}>
+              <h4 className="text-foreground text-[14px] mb-3" style={{ fontWeight: 600 }}>
                 Legal
               </h4>
               {["Privacy", "Terms", "Security", "Cookies"].map((item) => (
-                <p key={item} className="text-gray-500 text-[13px] mb-2 hover:text-gray-300 cursor-pointer transition-colors">
+                <p key={item} className="text-muted-foreground text-[13px] mb-2 hover:text-foreground cursor-pointer transition-colors">
                   {item}
                 </p>
               ))}
             </div>
           </div>
-          <div className="border-t border-white/[0.06] pt-8 flex flex-col md:flex-row items-center justify-between">
-            <p className="text-gray-600 text-[13px]">
+          <div className="border-t border-border pt-8 flex flex-col md:flex-row items-center justify-between">
+            <p className="text-muted-foreground text-[13px]">
               &copy; 2026 HomePilot, Inc. All rights reserved.
             </p>
-            <p className="text-gray-600 text-[12px] mt-2 md:mt-0">
+            <p className="text-muted-foreground text-[12px] mt-2 md:mt-0">
               AI-powered apartment hunting.
             </p>
           </div>

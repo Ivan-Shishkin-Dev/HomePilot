@@ -149,17 +149,19 @@ export function Sidebar() {
           </div>
         </nav>
 
-        {/* User */}
+        {/* User - from Supabase profile */}
         <div className="p-4 border-t border-sidebar-border">
           <div className="flex items-center gap-3 px-2">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#10B981] to-[#34D399] flex items-center justify-center text-white text-[13px]" style={{ fontWeight: 700 }}>
-              AC
+              {getUserInitials()}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sidebar-foreground text-[13px] truncate" style={{ fontWeight: 600 }}>
-                Alex Chen
+                {getUserDisplayName()}
               </p>
-              <p className="text-muted-foreground text-[11px] truncate">Score: 847</p>
+              <p className="text-muted-foreground text-[11px] truncate">
+                Score: {profile != null ? profile.renter_score : "—"}
+              </p>
             </div>
             <button
               onClick={handleSignOut}

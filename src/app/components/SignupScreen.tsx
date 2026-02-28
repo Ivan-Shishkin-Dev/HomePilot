@@ -36,21 +36,24 @@ export function SignupScreen() {
     }
 
     setLoading(true);
+    try {
+      const { error } = await signUp(email, password, firstName, lastName);
 
-    const { error } = await signUp(email, password, firstName, lastName);
-
-    if (error) {
-      setError(error.message);
+      if (error) {
+        setError(error.message);
+      } else {
+        setLoading(false);
+        navigate("/onboarding");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
       setLoading(false);
-    } else {
-      // Email confirmation is disabled, user is auto-logged in
-      // Redirect directly to onboarding
-      navigate("/onboarding");
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       {/* Background gradient */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
@@ -71,7 +74,7 @@ export function SignupScreen() {
         </Link>
 
         {/* Card */}
-        <div className="bg-[#12121a] border border-white/10 rounded-2xl p-8">
+        <div className="bg-card border border-border rounded-2xl p-8">
           <h1 className="text-2xl font-bold text-white text-center mb-2">
             Create your account
           </h1>

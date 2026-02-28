@@ -73,7 +73,7 @@ export function ProfileScreen() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0F1E] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
       </div>
     );

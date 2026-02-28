@@ -33,7 +33,7 @@ export function ListingDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0F1E] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
       </div>
     );
@@ -41,7 +41,7 @@ export function ListingDetail() {
 
   if (!listing) {
     return (
-      <div className="min-h-screen bg-[#0A0F1E] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <p className="text-white">Listing not found</p>
       </div>
     );
@@ -83,7 +83,7 @@ export function ListingDetail() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0A0F1E]">
+    <div className="min-h-screen bg-background">
       {/* Back bar */}
       <div className="border-b border-white/[0.06] px-6 lg:px-10 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -123,7 +123,7 @@ export function ListingDetail() {
                 alt={listing.title}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0A0F1E]/60 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
             </motion.div>
 
             {/* Title + Price */}
@@ -205,7 +205,7 @@ export function ListingDetail() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-[#111827] rounded-2xl p-5 lg:p-6 border border-white/[0.06]"
+              className="bg-card rounded-2xl p-5 lg:p-6 border border-border"
             >
               <h3 className="text-white text-[16px] mb-4" style={{ fontWeight: 600 }}>
                 Livability Analysis
@@ -241,7 +241,7 @@ export function ListingDetail() {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-[#111827] rounded-2xl p-5 border border-white/[0.06]"
+                className="bg-card rounded-2xl p-5 border border-border"
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
@@ -317,7 +317,7 @@ export function ListingDetail() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-[#111827] rounded-2xl p-5 border border-white/[0.06]"
+                className="bg-card rounded-2xl p-5 border border-border"
               >
                 <button
                   className="w-full bg-[#10B981] text-white py-3.5 rounded-xl text-[16px] flex items-center justify-center gap-2 hover:bg-[#059669] active:scale-[0.98] transition-all"
