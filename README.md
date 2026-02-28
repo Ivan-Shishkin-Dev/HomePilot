@@ -16,6 +16,12 @@ HomePilot is a proactive AI-powered rental platform that monitors listings, pred
 
 ---
 
+## Key Design Principle
+
+> The AI never waits for the user to ask. Every interface decision point surfaces pre-built action buttons — the user selects, the AI reacts.
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -33,44 +39,14 @@ HomePilot is a proactive AI-powered rental platform that monitors listings, pred
 
 ---
 
-## Project Structure
+## Build Phases
 
-```
-/app
-  /auth           → Sign up, login, OAuth callback
-  /onboarding     → 3-step renter profile setup
-  /dashboard      → Main listings + alert feed
-  /passport
-    /coach        → AI Document Coaching flow (core)
-    /review       → Passport strength review
-    /exported     → Post-export confirmation
-  /listings/[id]  → Listing detail modal
-  /strategy       → AI-ranked improvement suggestions
-/api
-  /coach          → Claude API route (server-side only)
-  /user           → Profile read/write
-  /listings       → Listings fetch + scoring
-  /passport       → Upload, export, signed URLs
-  /strategy       → Suggestions fetch + apply
-/components
-/lib
-  /supabase       → Client + server Supabase instances
-  /claude         → Claude API wrapper
-```
-
----
-
-## Environment Variables
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-ANTHROPIC_API_KEY=
-RESEND_API_KEY=
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-```
+1. **Foundation** — Supabase setup, auth, Next.js scaffold
+2. **Onboarding** — Profile flow, Renter Score calculation
+3. **Document Coaching** — AI coach, uploads, situation selector
+4. **Passport Export** — ZIP assembly, review screen, expiry emails
+5. **Listings & Alerts** — Scraper, scorer, realtime alert feed
+6. **Strategy & Polish** — Suggestions engine, nudge system, mobile
 
 ---
 
@@ -86,20 +62,3 @@ npm run dev
 # Deploy
 vercel --prod
 ```
-
----
-
-## Key Design Principle
-
-> The AI never waits for the user to ask. Every interface decision point surfaces pre-built action buttons — the user selects, the AI reacts.
-
----
-
-## Build Phases
-
-1. **Foundation** — Supabase setup, auth, Next.js scaffold
-2. **Onboarding** — Profile flow, Renter Score calculation
-3. **Document Coaching** — AI coach, uploads, situation selector
-4. **Passport Export** — ZIP assembly, review screen, expiry emails
-5. **Listings & Alerts** — Scraper, scorer, realtime alert feed
-6. **Strategy & Polish** — Suggestions engine, nudge system, mobile
