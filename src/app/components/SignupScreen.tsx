@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
-import { Eye, EyeOff, Home, Loader2, Check } from "lucide-react";
+import { Eye, EyeOff, Loader2, Check } from "lucide-react";
+import { Logo } from "./Logo";
 import { useAuth } from "../../contexts/AuthContext";
 
 export function SignupScreen() {
@@ -67,9 +68,7 @@ export function SignupScreen() {
       >
         {/* Logo */}
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
-            <Home className="w-5 h-5 text-white" />
-          </div>
+          <Logo className="w-10 h-10" />
           <span className="text-2xl font-bold text-white">HomePilot</span>
         </Link>
 

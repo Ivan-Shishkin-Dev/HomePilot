@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from "react-router";
-import { Home, Search, Shield, User, Zap, Bell, Menu, X, LogOut } from "lucide-react";
+import { Home, Search, Shield, User, Bell, Menu, X, LogOut } from "lucide-react";
+import { Logo } from "./Logo";
 import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -48,9 +49,7 @@ export function Sidebar() {
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-sidebar/95 backdrop-blur-xl border-b border-sidebar-border">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#10B981] to-[#059669] flex items-center justify-center">
-              <Zap size={16} className="text-white" />
-            </div>
+            <Logo className="w-8 h-8" />
             <span className="text-sidebar-foreground text-[18px]" style={{ fontWeight: 700 }}>
               HomePilot
             </span>
@@ -108,9 +107,7 @@ export function Sidebar() {
       <aside className="hidden lg:flex fixed top-0 left-0 bottom-0 w-[240px] bg-sidebar border-r border-sidebar-border flex-col z-40">
         {/* Logo */}
         <div className="flex items-center gap-3 px-6 py-6 border-b border-sidebar-border">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#10B981] to-[#059669] flex items-center justify-center shadow-lg shadow-[#10B981]/20">
-            <Zap size={20} className="text-white" />
-          </div>
+          <Logo className="w-9 h-9" />
           <span className="text-sidebar-foreground text-[20px]" style={{ fontWeight: 700 }}>
             HomePilot
           </span>

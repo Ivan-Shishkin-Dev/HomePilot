@@ -18,6 +18,7 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
+import { Logo } from "./Logo";
 import { ScoreRing } from "./ScoreRing";
 import { listings } from "./data";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
@@ -39,9 +40,7 @@ export function LandingPage() {
       <nav className="sticky top-0 z-30 w-full min-h-[72px] bg-background/80 backdrop-blur-md">
         <div className="container mx-auto px-6 py-5 flex items-center justify-between h-full">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <Zap className="w-5 h-5" />
-            </div>
+            <Logo className="w-9 h-9" />
             <span className="text-[20px] text-foreground" style={{ fontWeight: 700 }}>
               HomePilot
             </span>
@@ -549,9 +548,7 @@ export function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
-                  <Zap className="w-4 h-4" />
-                </div>
+                <Logo className="w-8 h-8" />
                 <span className="text-[16px] text-foreground" style={{ fontWeight: 700 }}>
                   HomePilot
                 </span>

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import {
-  Zap,
   ArrowRight,
   ArrowLeft,
   MapPin,
@@ -19,6 +18,7 @@ import {
   Dumbbell,
   Coffee,
 } from "lucide-react";
+import { Logo } from "./Logo";
 
 const TOTAL_STEPS = 4;
 
@@ -94,9 +94,7 @@ export function OnboardingScreen() {
       {/* Header with logo */}
       <div className="relative z-10 px-6 py-5 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
-            <Zap size={16} className="text-white" />
-          </div>
+          <Logo className="w-8 h-8" />
           <span className="text-[18px]" style={{ fontWeight: 700 }}>
             HomePilot
           </span>
