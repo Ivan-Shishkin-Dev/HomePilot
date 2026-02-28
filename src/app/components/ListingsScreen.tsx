@@ -5,7 +5,7 @@ import { useListings } from "../../hooks/useSupabaseData";
 import { useAuth } from "../../contexts/AuthContext";
 import { motion } from "motion/react";
 
-const filters = ["All", "Best Match", "Lowest Price", "Newest", "Pet Friendly", "Near Transit"];
+const filters = ["All", "Best Match", "Lowest Price", "Newest", "Pet Friendly"];
 
 export function ListingsScreen() {
   const [activeFilter, setActiveFilter] = useState("All");
@@ -24,7 +24,7 @@ export function ListingsScreen() {
     beds: listing.beds,
     baths: listing.baths,
     sqft: listing.sqft,
-    matchPercent: 85, // Default match percent
+    matchPercent: 85,
     demand: listing.demand || (listing.competition_score > 70 ? "High" : listing.competition_score > 40 ? "Medium" : "Low"),
     image: listing.image,
     crimeIndex: listing.crime_index,
@@ -35,11 +35,23 @@ export function ListingsScreen() {
     aiSuggestion: listing.ai_suggestion || "",
     competitionScore: listing.competition_score,
     features: listing.features || [],
+    listingUrl: listing.listing_url,
+    source: listing.source,
   });
 
-  const sortedListings = [...listings].sort((a, b) => {
+  // In-memory filter by chip (Pet Friendly) and search
+  const filteredByChip = listings.filter((l) => {
+    if (activeFilter === "Pet Friendly") {
+      const ok = l.pet_policy?.cats || l.pet_policy?.dogs;
+      if (!ok) return false;
+    }
+    return true;
+  });
+
+  const sortedListings = [...filteredByChip].sort((a, b) => {
     if (activeFilter === "Best Match") return b.competition_score - a.competition_score;
     if (activeFilter === "Lowest Price") return a.price - b.price;
+    if (activeFilter === "Newest") return (b.updated_at ?? "").localeCompare(a.updated_at ?? "");
     return 0;
   });
 
@@ -47,7 +59,8 @@ export function ListingsScreen() {
     (l) =>
       !searchQuery ||
       l.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      l.address.toLowerCase().includes(searchQuery.toLowerCase())
+      l.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (l.city ?? "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (loading) {

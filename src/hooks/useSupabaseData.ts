@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase, type Listing, type UserDocument, type ProfileSuggestion, type UserAlert } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
+import { getStaticListings } from "../data/staticListings";
 
 // Score calculation constants
 const DOCUMENT_SCORE_VALUES: Record<string, number> = {
@@ -32,29 +33,20 @@ export function useListings() {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    async function fetchListings() {
-      try {
-        const { data, error } = await supabase
-          .from("listings")
-          .select("*")
-          .order("competition_score", { ascending: false });
-
-        if (error) throw error;
-        setListings(data || []);
-      } catch (err) {
-        setError(err as Error);
-      } finally {
-        setLoading(false);
-      }
+    try {
+      const data = getStaticListings();
+      setListings(data);
+    } catch (err) {
+      setError(err as Error);
+    } finally {
+      setLoading(false);
     }
-
-    fetchListings();
   }, []);
 
   return { listings, loading, error };
 }
 
-// Hook to fetch a single listing
+// Hook to fetch a single listing (from static JSON)
 export function useListing(id: string | undefined) {
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
@@ -65,25 +57,15 @@ export function useListing(id: string | undefined) {
       setLoading(false);
       return;
     }
-
-    async function fetchListing() {
-      try {
-        const { data, error } = await supabase
-          .from("listings")
-          .select("*")
-          .eq("id", id)
-          .single();
-
-        if (error) throw error;
-        setListing(data);
-      } catch (err) {
-        setError(err as Error);
-      } finally {
-        setLoading(false);
-      }
+    try {
+      const all = getStaticListings();
+      const found = all.find((l) => l.id === id) ?? null;
+      setListing(found);
+    } catch (err) {
+      setError(err as Error);
+    } finally {
+      setLoading(false);
     }
-
-    fetchListing();
   }, [id]);
 
   return { listing, loading, error };

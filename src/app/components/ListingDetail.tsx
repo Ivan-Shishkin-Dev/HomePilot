@@ -94,15 +94,24 @@ export function ListingDetail() {
             <ArrowLeft size={18} />
             <span className="text-[14px]">Back to listings</span>
           </button>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            {listing.listing_url && (
+              <a
+                href={listing.listing_url}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[#10B981]/15 text-[#10B981] hover:bg-[#10B981]/25 transition-colors text-[13px]"
+                style={{ fontWeight: 600 }}
+              >
+                <ExternalLink size={16} />
+                {listing.source === "apartments" ? "View on Apartments.com" : "View on Zillow"}
+              </a>
+            )}
             <button className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center hover:bg-white/[0.1] transition-colors">
               <Heart size={18} className="text-[#8B95A5]" />
             </button>
             <button className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center hover:bg-white/[0.1] transition-colors">
               <Share2 size={18} className="text-[#8B95A5]" />
-            </button>
-            <button className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center hover:bg-white/[0.1] transition-colors">
-              <ExternalLink size={18} className="text-[#8B95A5]" />
             </button>
           </div>
         </div>
@@ -166,7 +175,7 @@ export function ListingDetail() {
                 <div className="flex items-center gap-5 text-[#8B95A5]">
                   <div className="flex items-center gap-1.5">
                     <Bed size={16} className="text-[#6B7280]" />
-                    <span className="text-[14px]">{listing.beds} Bed</span>
+                    <span className="text-[14px]">{listing.beds === 0 ? "Studio" : `${listing.beds} Bed`}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Bath size={16} className="text-[#6B7280]" />
@@ -255,16 +264,16 @@ export function ListingDetail() {
                     style={{
                       fontWeight: 600,
                       color:
-                        listing.competition_level > 70
+                        (listing.competition_level ?? listing.competition_score) > 70
                           ? "#EF4444"
-                          : listing.competition_level > 40
+                          : (listing.competition_level ?? listing.competition_score) > 40
                           ? "#F59E0B"
                           : "#10B981",
                     }}
                   >
-                    {listing.competition_level > 70
+                    {(listing.competition_level ?? listing.competition_score) > 70
                       ? "High Demand"
-                      : listing.competition_level > 40
+                      : (listing.competition_level ?? listing.competition_score) > 40
                       ? "Moderate"
                       : "Low Demand"}
                   </span>
@@ -273,15 +282,15 @@ export function ListingDetail() {
                   <div
                     className="h-full rounded-full transition-all duration-1000"
                     style={{
-                      width: `${listing.competition_level}%`,
+                      width: `${listing.competition_level ?? listing.competition_score}%`,
                       background: `linear-gradient(90deg, #10B981, ${
-                        listing.competition_level > 70 ? "#EF4444" : "#F59E0B"
+                        (listing.competition_level ?? listing.competition_score) > 70 ? "#EF4444" : "#F59E0B"
                       })`,
                     }}
                   />
                 </div>
                 <p className="text-[#6B7280] text-[12px]">
-                  {listing.competition_level > 70
+                  {(listing.competition_level ?? listing.competition_score) > 70
                     ? "Many applicants are viewing this listing"
                     : "Fewer applicants interested right now"}
                 </p>
@@ -319,13 +328,26 @@ export function ListingDetail() {
                 transition={{ delay: 0.3 }}
                 className="bg-card rounded-2xl p-5 border border-border"
               >
-                <button
-                  className="w-full bg-[#10B981] text-white py-3.5 rounded-xl text-[16px] flex items-center justify-center gap-2 hover:bg-[#059669] active:scale-[0.98] transition-all"
-                  style={{ fontWeight: 700 }}
-                >
-                  <Zap size={20} />
-                  1-Click Apply
-                </button>
+                {listing.listing_url ? (
+                  <a
+                    href={listing.listing_url}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="block w-full bg-[#10B981] text-white py-3.5 rounded-xl text-[16px] flex items-center justify-center gap-2 hover:bg-[#059669] active:scale-[0.98] transition-all"
+                    style={{ fontWeight: 700 }}
+                  >
+                    <ExternalLink size={20} />
+                    {listing.source === "apartments" ? "View on Apartments.com" : "View on Zillow"}
+                  </a>
+                ) : (
+                  <button
+                    className="w-full bg-[#10B981] text-white py-3.5 rounded-xl text-[16px] flex items-center justify-center gap-2 hover:bg-[#059669] active:scale-[0.98] transition-all"
+                    style={{ fontWeight: 700 }}
+                  >
+                    <Zap size={20} />
+                    1-Click Apply
+                  </button>
+                )}
                 <p className="text-center text-[#6B7280] text-[12px] mt-3">
                   Your Renter Passport will be shared automatically
                 </p>

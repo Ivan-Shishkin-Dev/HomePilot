@@ -68,6 +68,17 @@ export interface Listing {
   time_left: string | null;
   created_at: string;
   updated_at: string;
+  /** Optional: for static listings — deep link to source (Zillow, Apartments.com, etc.) */
+  listing_url?: string;
+  /** Optional: "zillow" | "apartments" — used for external link label */
+  source?: string;
+  /** Optional: application URL when present */
+  apply_url?: string;
+  /** Optional: for pet filter (static listings) */
+  pet_policy?: { cats: boolean; dogs: boolean; notes?: string };
+  /** Optional: used by ListingDetail when present */
+  competition_level?: number;
+  ai_reasons?: string[] | null;
 }
 
 export interface ProfileSuggestion {

@@ -46,6 +46,8 @@ export function HomeScreen() {
     aiSuggestion: listing.ai_suggestion || "",
     competitionScore: listing.competition_score,
     features: listing.features || [],
+    listingUrl: listing.listing_url,
+    source: listing.source,
   });
 
   if (loading) {
