@@ -5,13 +5,12 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.SUPABAS
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.SUPABASE_ANON_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn("Supabase environment variables not found. Please ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.");
+  throw new Error(
+    "Supabase env vars missing. Add to .env:\n  VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co\n  VITE_SUPABASE_ANON_KEY=your_anon_key\n(In Vite, only VITE_* vars are exposed to the client.)"
+  );
 }
 
-export const supabase = createClient(
-  supabaseUrl || "",
-  supabaseAnonKey || ""
-);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Database types - matching actual Supabase schema
 export interface Profile {
