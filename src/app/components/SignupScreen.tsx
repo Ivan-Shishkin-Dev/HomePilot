@@ -12,7 +12,6 @@ export function SignupScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
 
@@ -44,45 +43,11 @@ export function SignupScreen() {
       setError(error.message);
       setLoading(false);
     } else {
-      setSuccess(true);
+      // Email confirmation is disabled, user is auto-logged in
+      // Redirect directly to onboarding
+      navigate("/onboarding");
     }
   };
-
-  if (success) {
-    return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-4">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md relative z-10"
-        >
-          <div className="bg-[#12121a] border border-white/10 rounded-2xl p-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-6">
-              <Check className="w-8 h-8 text-emerald-400" />
-            </div>
-            <h1 className="text-2xl font-bold text-white mb-2">
-              Check your email
-            </h1>
-            <p className="text-gray-400 mb-6">
-              We sent a confirmation link to <strong className="text-white">{email}</strong>. 
-              Click the link to activate your account.
-            </p>
-            <button
-              onClick={() => navigate("/login")}
-              className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white font-semibold hover:bg-white/10 transition-all"
-            >
-              Back to sign in
-            </button>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-4">
