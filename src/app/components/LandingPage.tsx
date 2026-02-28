@@ -53,7 +53,7 @@ export function LandingPage() {
         </div>
         <div className="flex items-center gap-3">
           <Link
-            to="/home"
+            to="/login"
             className="hidden sm:block px-4 py-2 rounded-lg text-[14px] text-gray-300 hover:text-white transition-colors"
             style={{ fontWeight: 500 }}
           >

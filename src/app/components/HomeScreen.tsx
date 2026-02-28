@@ -1,24 +1,81 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Sparkles, TrendingUp, Clock, ChevronRight, Zap, ArrowUpRight } from "lucide-react";
+import { Bell, Sparkles, TrendingUp, Clock, ChevronRight, Zap, ArrowUpRight, Loader2 } from "lucide-react";
 import { ScoreRing } from "./ScoreRing";
 import { ListingCard } from "./ListingCard";
-import { listings } from "./data";
+import { useListings } from "../../hooks/useSupabaseData";
+import { useAuth } from "../../contexts/AuthContext";
 import { motion } from "motion/react";
 
 export function HomeScreen() {
   const navigate = useNavigate();
   const [showAlert, setShowAlert] = useState(true);
+  const { listings, loading } = useListings();
+  const { profile } = useAuth();
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  };
+
+  const getUserFirstName = () => {
+    if (!profile) return "there";
+    return profile.first_name || "there";
+  };
+
+  // Convert listing format for ListingCard (using actual DB schema)
+  const formatListing = (listing: typeof listings[0]) => ({
+    id: listing.id,
+    title: listing.title,
+    address: listing.address,
+    city: listing.city || "",
+    price: listing.price,
+    beds: listing.beds,
+    baths: listing.baths,
+    sqft: listing.sqft,
+    matchPercent: 85, // Default match percent
+    demand: listing.demand || (listing.competition_score > 70 ? "High" : listing.competition_score > 40 ? "Medium" : "Low"),
+    image: listing.image,
+    crimeIndex: listing.crime_index,
+    rentTrend: listing.rent_trend || "",
+    neighborhoodRisk: listing.neighborhood_risk || "Low",
+    scamScore: listing.scam_score,
+    timeLeft: listing.time_left || "",
+    aiSuggestion: listing.ai_suggestion || "",
+    competitionScore: listing.competition_score,
+    features: listing.features || [],
+  });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0A0F1E] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       {/* Page Header */}
-      <div className="border-b border-border px-6 lg:px-10 py-5 lg:py-6">
-        <div className="max-w-7xl mx-auto">
-          <span className="text-muted-foreground text-[13px]">Good evening</span>
-          <h1 className="text-foreground text-[24px] lg:text-[28px]" style={{ fontWeight: 700, lineHeight: 1.2 }}>
-            Welcome back, Alex
-          </h1>
+      <div className="border-b border-white/[0.06] px-6 lg:px-10 py-5 lg:py-6">
+        <div className="flex items-center justify-between max-w-7xl mx-auto">
+          <div>
+            <span className="text-[#8B95A5] text-[13px]">{getGreeting()}</span>
+            <h1 className="text-white text-[24px] lg:text-[28px]" style={{ fontWeight: 700, lineHeight: 1.2 }}>
+              Welcome back, {getUserFirstName()}
+            </h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/alert")}
+              className="relative w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center hover:bg-white/[0.1] transition-colors"
+            >
+              <Bell size={18} className="text-[#8B95A5]" />
+              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#EF4444] rounded-full border-2 border-[#0A0F1E]" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -33,7 +90,7 @@ export function HomeScreen() {
             className="bg-card rounded-2xl p-6 border border-border"
           >
             <div className="flex items-center gap-6">
-              <ScoreRing score={847} size={110} strokeWidth={7} />
+              <ScoreRing score={profile?.renter_score || 0} size={110} strokeWidth={7} />
               <div className="flex-1">
                 <div className="flex items-center gap-1.5 mb-2">
                   <TrendingUp size={14} className="text-[#10B981]" />
@@ -177,7 +234,7 @@ export function HomeScreen() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.3 + i * 0.1 }}
             >
-              <ListingCard listing={listing} />
+              <ListingCard listing={formatListing(listing)} />
             </motion.div>
           ))}
         </div>

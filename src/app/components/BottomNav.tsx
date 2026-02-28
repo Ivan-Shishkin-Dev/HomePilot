@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from "react-router";
-import { Home, Search, Shield, User, Zap, Bell, Menu, X } from "lucide-react";
+import { Home, Search, Shield, User, Zap, Bell, Menu, X, LogOut } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "../../contexts/AuthContext";
 
 const navItems = [
   { path: "/home", label: "Dashboard", icon: Home },
@@ -14,10 +15,31 @@ export function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { profile, signOut } = useAuth();
 
   const isActive = (path: string) => {
     if (path === "/home") return location.pathname === "/home";
     return location.pathname.startsWith(path);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/login");
+  };
+
+  const getUserInitials = () => {
+    if (!profile) return "??";
+    const first = profile.first_name?.[0] || "";
+    const last = profile.last_name?.[0] || "";
+    return (first + last).toUpperCase() || "??";
+  };
+
+  const getUserDisplayName = () => {
+    if (!profile) return "Loading...";
+    if (profile.first_name || profile.last_name) {
+      return `${profile.first_name || ""} ${profile.last_name || ""}`.trim();
+    }
+    return profile.email || "User";
   };
 
   return (
@@ -139,6 +161,13 @@ export function Sidebar() {
               </p>
               <p className="text-muted-foreground text-[11px] truncate">Score: 847</p>
             </div>
+            <button
+              onClick={handleSignOut}
+              className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center hover:bg-white/[0.08] transition-colors"
+              title="Sign out"
+            >
+              <LogOut size={14} className="text-[#8B95A5]" />
+            </button>
           </div>
         </div>
       </aside>

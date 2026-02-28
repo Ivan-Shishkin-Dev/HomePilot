@@ -13,9 +13,11 @@ import {
   ChevronRight,
   Download,
   Lock,
+  Loader2,
 } from "lucide-react";
 import { ScoreRing } from "./ScoreRing";
-import { documents } from "./data";
+import { useUserDocuments } from "../../hooks/useSupabaseData";
+import { useAuth } from "../../contexts/AuthContext";
 import { motion } from "motion/react";
 
 const iconMap: Record<string, typeof FileText> = {
@@ -34,9 +36,20 @@ const statusConfig = {
 };
 
 export function PassportScreen() {
+  const { documents, loading } = useUserDocuments();
+  const { profile } = useAuth();
+
   const verified = documents.filter((d) => d.status === "verified").length;
-  const total = documents.length;
-  const completionPct = Math.round((verified / total) * 100);
+  const total = documents.length || 1;
+  const completionPct = profile?.profile_completion || Math.round((verified / total) * 100);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0A0F1E] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -74,7 +87,7 @@ export function PassportScreen() {
               animate={{ opacity: 1, y: 0 }}
               className="bg-card rounded-2xl p-6 lg:p-8 border border-border mb-5 flex flex-col items-center"
             >
-              <ScoreRing score={847} size={150} strokeWidth={9} />
+              <ScoreRing score={profile?.renter_score || 0} size={150} strokeWidth={9} />
               <div className="mt-4 text-center">
                 <p className="text-[#10B981] text-[15px] mb-1" style={{ fontWeight: 600 }}>
                   Excellent

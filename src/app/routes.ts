@@ -8,13 +8,17 @@ import { ListingDetail } from "./components/ListingDetail";
 import { PassportScreen } from "./components/PassportScreen";
 import { AlertScreen } from "./components/AlertScreen";
 import { ProfileScreen } from "./components/ProfileScreen";
+import { LoginScreen } from "./components/LoginScreen";
+import { SignupScreen } from "./components/SignupScreen";
 
 export const router = createBrowserRouter([
   // Public routes (no sidebar)
   { path: "/", Component: LandingPage },
+  { path: "/login", Component: LoginScreen },
+  { path: "/signup", Component: SignupScreen },
   { path: "/onboarding", Component: OnboardingScreen },
 
-  // App routes (with sidebar)
+  // App routes (with sidebar) - protected
   {
     path: "/",
     Component: Layout,
