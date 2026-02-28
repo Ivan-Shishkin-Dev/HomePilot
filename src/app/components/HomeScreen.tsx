@@ -25,27 +25,27 @@ export function HomeScreen() {
     return profile.first_name || "there";
   };
 
-  // Convert listing format for ListingCard
+  // Convert listing format for ListingCard (using actual DB schema)
   const formatListing = (listing: typeof listings[0]) => ({
     id: listing.id,
     title: listing.title,
     address: listing.address,
-    city: "",
+    city: listing.city || "",
     price: listing.price,
-    beds: listing.bedrooms,
-    baths: listing.bathrooms,
+    beds: listing.beds,
+    baths: listing.baths,
     sqft: listing.sqft,
-    matchPercent: listing.match_score,
-    demand: listing.competition_level > 70 ? "High" : listing.competition_level > 40 ? "Medium" : "Low",
-    image: listing.image_url,
-    crimeIndex: 0,
-    rentTrend: "",
-    neighborhoodRisk: "Low",
-    scamScore: 0,
-    timeLeft: "",
-    aiSuggestion: listing.ai_reasons?.[0] || "",
-    competitionScore: listing.competition_level,
-    features: listing.amenities || [],
+    matchPercent: 85, // Default match percent
+    demand: listing.demand || (listing.competition_score > 70 ? "High" : listing.competition_score > 40 ? "Medium" : "Low"),
+    image: listing.image,
+    crimeIndex: listing.crime_index,
+    rentTrend: listing.rent_trend || "",
+    neighborhoodRisk: listing.neighborhood_risk || "Low",
+    scamScore: listing.scam_score,
+    timeLeft: listing.time_left || "",
+    aiSuggestion: listing.ai_suggestion || "",
+    competitionScore: listing.competition_score,
+    features: listing.features || [],
   });
 
   if (loading) {

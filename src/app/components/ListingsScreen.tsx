@@ -14,31 +14,31 @@ export function ListingsScreen() {
   const { listings, loading } = useListings();
   const { profile } = useAuth();
 
-  // Convert listing format for ListingCard
+  // Convert listing format for ListingCard (using actual DB schema)
   const formatListing = (listing: typeof listings[0]) => ({
     id: listing.id,
     title: listing.title,
     address: listing.address,
-    city: "",
+    city: listing.city || "",
     price: listing.price,
-    beds: listing.bedrooms,
-    baths: listing.bathrooms,
+    beds: listing.beds,
+    baths: listing.baths,
     sqft: listing.sqft,
-    matchPercent: listing.match_score,
-    demand: listing.competition_level > 70 ? "High" : listing.competition_level > 40 ? "Medium" : "Low",
-    image: listing.image_url,
-    crimeIndex: 0,
-    rentTrend: "",
-    neighborhoodRisk: "Low",
-    scamScore: 0,
-    timeLeft: "",
-    aiSuggestion: listing.ai_reasons?.[0] || "",
-    competitionScore: listing.competition_level,
-    features: listing.amenities || [],
+    matchPercent: 85, // Default match percent
+    demand: listing.demand || (listing.competition_score > 70 ? "High" : listing.competition_score > 40 ? "Medium" : "Low"),
+    image: listing.image,
+    crimeIndex: listing.crime_index,
+    rentTrend: listing.rent_trend || "",
+    neighborhoodRisk: listing.neighborhood_risk || "Low",
+    scamScore: listing.scam_score,
+    timeLeft: listing.time_left || "",
+    aiSuggestion: listing.ai_suggestion || "",
+    competitionScore: listing.competition_score,
+    features: listing.features || [],
   });
 
   const sortedListings = [...listings].sort((a, b) => {
-    if (activeFilter === "Best Match") return b.match_score - a.match_score;
+    if (activeFilter === "Best Match") return b.competition_score - a.competition_score;
     if (activeFilter === "Lowest Price") return a.price - b.price;
     return 0;
   });
@@ -109,7 +109,7 @@ export function ListingsScreen() {
           <div className="flex items-center gap-1.5 mb-4">
             <MapPin size={13} className="text-[#3B82F6]" />
             <span className="text-[#8B95A5] text-[13px]">
-              Searching within 25mi of {profile?.search_city || "your area"}
+              Searching within 25mi of {profile?.preferred_cities?.[0] || "your area"}
             </span>
           </div>
           <div className="flex gap-2 overflow-x-auto no-scrollbar">

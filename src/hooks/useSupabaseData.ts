@@ -14,7 +14,7 @@ export function useListings() {
         const { data, error } = await supabase
           .from("listings")
           .select("*")
-          .order("match_score", { ascending: false });
+          .order("competition_score", { ascending: false });
 
         if (error) throw error;
         setListings(data || []);
@@ -82,7 +82,7 @@ export function useUserDocuments() {
     async function fetchDocuments() {
       try {
         const { data, error } = await supabase
-          .from("user_documents")
+          .from("documents")
           .select("*")
           .eq("user_id", user.id)
           .order("created_at", { ascending: true });
@@ -105,16 +105,16 @@ export function useUserDocuments() {
 
     async function createDefaultDocuments() {
       const defaultDocs = [
-        { name: "Government ID", type: "identity", status: "missing", icon: "id" },
-        { name: "Proof of Income", type: "income", status: "missing", icon: "income" },
-        { name: "Bank Statements", type: "financial", status: "missing", icon: "bank" },
-        { name: "Employment Letter", type: "employment", status: "missing", icon: "employment" },
-        { name: "Credit Report", type: "credit", status: "missing", icon: "credit" },
-        { name: "References", type: "references", status: "missing", icon: "references" },
+        { name: "Government ID", status: "missing", icon: "id" },
+        { name: "Proof of Income", status: "missing", icon: "income" },
+        { name: "Bank Statements", status: "missing", icon: "bank" },
+        { name: "Employment Letter", status: "missing", icon: "employment" },
+        { name: "Credit Report", status: "missing", icon: "credit" },
+        { name: "References", status: "missing", icon: "references" },
       ];
 
       const { data, error } = await supabase
-        .from("user_documents")
+        .from("documents")
         .insert(defaultDocs.map(doc => ({ ...doc, user_id: user.id })))
         .select();
 
@@ -168,12 +168,12 @@ export function useProfileSuggestions() {
 
     async function createDefaultSuggestions() {
       const defaultSuggestions = [
-        { title: "Upload last 3 months bank statements", description: "Financial documentation improves acceptance rate", impact: "high", icon: "bank", is_completed: false },
-        { title: "Add employer reference letter", description: "Employment verification is highly valued", impact: "medium", icon: "briefcase", is_completed: false },
-        { title: "Complete credit authorization", description: "Allow credit check for faster approval", impact: "high", icon: "credit-card", is_completed: false },
-        { title: "Add guarantor information", description: "A guarantor can significantly boost acceptance", impact: "high", icon: "users", is_completed: false },
-        { title: "Verify student enrollment status", description: "Student verification for student housing", impact: "low", icon: "graduation-cap", is_completed: false },
-        { title: "Link LinkedIn profile", description: "Professional profile adds credibility", impact: "low", icon: "linkedin", is_completed: false },
+        { action: "Upload last 3 months bank statements", category: "Financial", impact: 22, completed: false, auto_applied: false },
+        { action: "Add employer reference letter", category: "Employment", impact: 12, completed: false, auto_applied: false },
+        { action: "Complete credit authorization", category: "Credit", impact: 22, completed: false, auto_applied: false },
+        { action: "Add guarantor information", category: "Financial", impact: 22, completed: false, auto_applied: false },
+        { action: "Verify identity with government ID", category: "Identity", impact: 5, completed: false, auto_applied: false },
+        { action: "Link LinkedIn profile", category: "Employment", impact: 5, completed: false, auto_applied: false },
       ];
 
       const { data, error } = await supabase
@@ -208,7 +208,7 @@ export function useUserAlerts() {
     async function fetchAlerts() {
       try {
         const { data, error } = await supabase
-          .from("user_alerts")
+          .from("alerts")
           .select(`
             *,
             listing:listings(*)
@@ -230,7 +230,7 @@ export function useUserAlerts() {
 
   const markAsRead = async (alertId: string) => {
     const { error } = await supabase
-      .from("user_alerts")
+      .from("alerts")
       .update({ is_read: true })
       .eq("id", alertId);
 

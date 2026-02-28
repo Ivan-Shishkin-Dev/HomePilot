@@ -47,36 +47,38 @@ export function ListingDetail() {
     );
   }
 
-  const matchColor = getMatchColor(listing.match_score);
+  // Use crime_index as a proxy for match since DB doesn't have match_score
+  const matchScore = 100 - listing.crime_index; // Lower crime = higher match
+  const matchColor = getMatchColor(matchScore);
 
   const stats = [
     {
       icon: Shield,
-      label: "Livability",
-      value: `${listing.livability_score}/100`,
-      color: listing.livability_score > 70 ? "#10B981" : listing.livability_score > 50 ? "#F59E0B" : "#EF4444",
-      desc: listing.livability_score > 70 ? "Great area" : "Moderate area",
+      label: "Crime Index",
+      value: `${listing.crime_index}/100`,
+      color: listing.crime_index < 30 ? "#10B981" : listing.crime_index < 50 ? "#F59E0B" : "#EF4444",
+      desc: listing.crime_index < 30 ? "Safe area" : "Exercise caution",
     },
     {
       icon: TrendingUp,
-      label: "Match Score",
-      value: `${listing.match_score}%`,
-      color: listing.match_score >= 80 ? "#10B981" : "#F59E0B",
-      desc: listing.match_score >= 80 ? "Excellent match" : "Good match",
+      label: "Rent Trend",
+      value: listing.rent_trend || "Stable",
+      color: listing.rent_trend?.startsWith("-") ? "#10B981" : "#F59E0B",
+      desc: listing.rent_trend?.startsWith("-") ? "Prices decreasing" : "Prices rising",
     },
     {
       icon: AlertTriangle,
       label: "Competition",
-      value: listing.competition_level > 70 ? "High" : listing.competition_level > 40 ? "Medium" : "Low",
-      color: listing.competition_level < 40 ? "#10B981" : listing.competition_level < 70 ? "#F59E0B" : "#EF4444",
-      desc: listing.competition_level > 70 ? "Many applicants" : "Fewer applicants",
+      value: listing.competition_score > 70 ? "High" : listing.competition_score > 40 ? "Medium" : "Low",
+      color: listing.competition_score < 40 ? "#10B981" : listing.competition_score < 70 ? "#F59E0B" : "#EF4444",
+      desc: listing.competition_score > 70 ? "Many applicants" : "Fewer applicants",
     },
     {
       icon: Shield,
-      label: "Verified",
-      value: "Yes",
-      color: "#10B981",
-      desc: "Verified listing",
+      label: "Scam Score",
+      value: `${listing.scam_score}/100`,
+      color: listing.scam_score < 10 ? "#10B981" : listing.scam_score < 30 ? "#F59E0B" : "#EF4444",
+      desc: listing.scam_score < 10 ? "Verified listing" : "Some flags detected",
     },
   ];
 
@@ -117,7 +119,7 @@ export function ListingDetail() {
               className="relative rounded-2xl overflow-hidden mb-6 h-64 sm:h-80 lg:h-96"
             >
               <ImageWithFallback
-                src={listing.image_url}
+                src={listing.image}
                 alt={listing.title}
                 className="w-full h-full object-cover"
               />
@@ -148,7 +150,7 @@ export function ListingDetail() {
                   style={{ backgroundColor: `${matchColor}15` }}
                 >
                   <span style={{ color: matchColor, fontWeight: 800, fontSize: 32, lineHeight: 1 }}>
-                    {listing.match_score}%
+                    {matchScore}%
                   </span>
                   <span className="text-[11px] mt-1" style={{ color: matchColor, fontWeight: 600 }}>
                     MATCH
@@ -164,11 +166,11 @@ export function ListingDetail() {
                 <div className="flex items-center gap-5 text-[#8B95A5]">
                   <div className="flex items-center gap-1.5">
                     <Bed size={16} className="text-[#6B7280]" />
-                    <span className="text-[14px]">{listing.bedrooms} Bed</span>
+                    <span className="text-[14px]">{listing.beds} Bed</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Bath size={16} className="text-[#6B7280]" />
-                    <span className="text-[14px]">{listing.bathrooms} Bath</span>
+                    <span className="text-[14px]">{listing.baths} Bath</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Square size={16} className="text-[#6B7280]" />
@@ -187,7 +189,7 @@ export function ListingDetail() {
             >
               <h3 className="text-white text-[16px] mb-3" style={{ fontWeight: 600 }}>Features</h3>
               <div className="flex gap-2 flex-wrap">
-                {(listing.amenities || []).map((f) => (
+                {(listing.features || []).map((f) => (
                   <span
                     key={f}
                     className="text-[13px] text-[#8B95A5] bg-white/[0.06] px-4 py-2 rounded-lg border border-white/[0.04]"
