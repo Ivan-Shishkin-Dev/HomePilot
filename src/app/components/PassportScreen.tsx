@@ -14,9 +14,10 @@ import {
   Download,
   Lock,
   Loader2,
+  X,
 } from "lucide-react";
 import { ScoreRing } from "./ScoreRing";
-import { useUserDocuments } from "../../hooks/useSupabaseData";
+import { useUserDocuments, useDocumentUpload } from "../../hooks/useSupabaseData";
 import { useAuth } from "../../contexts/AuthContext";
 import { motion } from "motion/react";
 
@@ -36,12 +37,19 @@ const statusConfig = {
 };
 
 export function PassportScreen() {
-  const { documents, loading } = useUserDocuments();
+  const { documents, loading, refetch: refetchDocs } = useUserDocuments();
   const { profile } = useAuth();
+  const { triggerUpload, uploading, fileInputRef, handleFileChange, removeDocument } = useDocumentUpload();
 
-  const verified = documents.filter((d) => d.status === "verified").length;
+  const uploaded = documents.filter((d) => d.status !== "missing").length;
   const total = documents.length || 1;
-  const completionPct = profile?.profile_completion || Math.round((verified / total) * 100);
+  const completionPct = profile?.profile_completion || Math.round((uploaded / total) * 100);
+
+  const handleDocClick = (doc: typeof documents[number]) => {
+    if (doc.status === "missing") {
+      triggerUpload(doc.id, refetchDocs);
+    }
+  };
 
   if (loading) {
     return (
@@ -122,7 +130,7 @@ export function PassportScreen() {
                 />
               </div>
               <p className="text-muted-foreground text-[12px]">
-                {verified} of {total} documents verified
+                {uploaded} of {total} documents uploaded
               </p>
             </motion.div>
 
@@ -148,18 +156,31 @@ export function PassportScreen() {
             <h3 className="text-foreground text-[18px] mb-4" style={{ fontWeight: 600 }}>
               Documents
             </h3>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              accept="image/*,.pdf,.doc,.docx"
+            />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {documents.map((doc, i) => {
                 const Icon = iconMap[doc.icon] || FileText;
                 const status = statusConfig[doc.status as keyof typeof statusConfig];
                 const StatusIcon = status.icon;
+                const isMissing = doc.status === "missing";
                 return (
                   <motion.div
                     key={doc.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 + i * 0.05 }}
-                    className="bg-card rounded-xl p-4 border border-border flex items-center gap-4 hover:border-muted transition-colors cursor-pointer"
+                    onClick={() => handleDocClick(doc)}
+                    className={`bg-card rounded-xl p-4 border border-border flex items-center gap-4 transition-colors ${
+                      isMissing && !uploading
+                        ? "hover:border-[#10B981]/30 cursor-pointer"
+                        : "hover:border-muted cursor-default"
+                    }`}
                   >
                     <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
                       <Icon size={20} className="text-muted-foreground" />
@@ -171,11 +192,23 @@ export function PassportScreen() {
                       <div className="flex items-center gap-1.5 mt-1">
                         <StatusIcon size={13} style={{ color: status.color }} />
                         <span className="text-[12px]" style={{ color: status.color }}>
-                          {status.label}
+                          {isMissing ? "Click to upload" : status.label}
                         </span>
                       </div>
                     </div>
-                    <ChevronRight size={16} className="text-muted-foreground" />
+                    {isMissing ? (
+                      <ChevronRight size={16} className="text-muted-foreground" />
+                    ) : (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeDocument(doc.id, refetchDocs);
+                        }}
+                        className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+                      >
+                        <X size={16} className="text-muted-foreground hover:text-foreground" />
+                      </button>
+                    )}
                   </motion.div>
                 );
               })}
