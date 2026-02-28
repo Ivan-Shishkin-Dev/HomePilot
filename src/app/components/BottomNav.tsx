@@ -1,5 +1,14 @@
 import { useNavigate, useLocation } from "react-router";
-import { Home, Search, Shield, User, Bell, Menu, X, LogOut } from "lucide-react";
+import {
+  Home,
+  Search,
+  Shield,
+  User,
+  Bell,
+  Menu,
+  X,
+  LogOut,
+} from "lucide-react";
 import { Logo } from "./Logo";
 import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -25,7 +34,7 @@ export function Sidebar() {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate("/login");
+    navigate("/");
   };
 
   const getUserInitials = () => {
@@ -45,12 +54,15 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile top bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-sidebar/95 backdrop-blur-xl border-b border-sidebar-border">
-        <div className="flex items-center justify-between px-4 py-3">
+      {/* Mobile top bar - floating glass */}
+      <div className="lg:hidden fixed top-4 left-4 right-4 z-50">
+        <div className="min-h-[52px] rounded-2xl border border-white/10 bg-sidebar/80 dark:bg-sidebar/60 dark:border-white/5 shadow-lg shadow-black/10 dark:shadow-black/30 backdrop-blur-xl flex items-center justify-between px-4 py-2.5">
           <div className="flex items-center gap-2.5">
             <Logo className="w-8 h-8" />
-            <span className="text-sidebar-foreground text-[18px]" style={{ fontWeight: 700 }}>
+            <span
+              className="text-sidebar-foreground text-[18px]"
+              style={{ fontWeight: 700 }}
+            >
               HomePilot
             </span>
           </div>
@@ -74,7 +86,7 @@ export function Sidebar() {
           onClick={() => setMobileOpen(false)}
         >
           <div
-            className="absolute top-[57px] left-0 right-0 bg-sidebar border-b border-sidebar-border py-2"
+            className="absolute top-[72px] left-4 right-4 rounded-2xl bg-sidebar/95 dark:bg-sidebar/90 backdrop-blur-xl border border-white/10 dark:border-white/5 shadow-xl py-2 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {navItems.map((item) => {
@@ -93,7 +105,10 @@ export function Sidebar() {
                   }`}
                 >
                   <item.icon size={20} strokeWidth={active ? 2.2 : 1.8} />
-                  <span className="text-[14px]" style={{ fontWeight: active ? 600 : 400 }}>
+                  <span
+                    className="text-[14px]"
+                    style={{ fontWeight: active ? 600 : 400 }}
+                  >
                     {item.label}
                   </span>
                 </button>
@@ -108,14 +123,20 @@ export function Sidebar() {
         {/* Logo */}
         <div className="flex items-center gap-3 px-6 py-6 border-b border-sidebar-border">
           <Logo className="w-9 h-9" />
-          <span className="text-sidebar-foreground text-[20px]" style={{ fontWeight: 700 }}>
+          <span
+            className="text-sidebar-foreground text-[20px]"
+            style={{ fontWeight: 700 }}
+          >
             HomePilot
           </span>
         </div>
 
         {/* Nav items */}
         <nav className="flex-1 py-4 px-3">
-          <p className="text-muted-foreground text-[11px] tracking-wider px-3 mb-2" style={{ fontWeight: 600 }}>
+          <p
+            className="text-muted-foreground text-[11px] tracking-wider px-3 mb-2"
+            style={{ fontWeight: 600 }}
+          >
             NAVIGATION
           </p>
           <div className="flex flex-col gap-1">
@@ -132,11 +153,17 @@ export function Sidebar() {
                   }`}
                 >
                   <item.icon size={18} strokeWidth={active ? 2.2 : 1.8} />
-                  <span className="text-[14px]" style={{ fontWeight: active ? 600 : 400 }}>
+                  <span
+                    className="text-[14px]"
+                    style={{ fontWeight: active ? 600 : 400 }}
+                  >
                     {item.label}
                   </span>
                   {item.path === "/alert" && (
-                    <span className="ml-auto w-5 h-5 rounded-full bg-[#EF4444] text-white text-[10px] flex items-center justify-center" style={{ fontWeight: 700 }}>
+                    <span
+                      className="ml-auto w-5 h-5 rounded-full bg-[#EF4444] text-white text-[10px] flex items-center justify-center"
+                      style={{ fontWeight: 700 }}
+                    >
                       2
                     </span>
                   )}
@@ -149,11 +176,17 @@ export function Sidebar() {
         {/* User - from Supabase profile */}
         <div className="p-4 border-t border-sidebar-border">
           <div className="flex items-center gap-3 px-2">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#10B981] to-[#34D399] flex items-center justify-center text-white text-[13px]" style={{ fontWeight: 700 }}>
+            <div
+              className="w-9 h-9 rounded-full bg-gradient-to-br from-[#10B981] to-[#34D399] flex items-center justify-center text-white text-[13px]"
+              style={{ fontWeight: 700 }}
+            >
               {getUserInitials()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sidebar-foreground text-[13px] truncate" style={{ fontWeight: 600 }}>
+              <p
+                className="text-sidebar-foreground text-[13px] truncate"
+                style={{ fontWeight: 600 }}
+              >
                 {getUserDisplayName()}
               </p>
               <p className="text-muted-foreground text-[11px] truncate">

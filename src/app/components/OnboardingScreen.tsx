@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -17,18 +17,36 @@ import {
   Train,
   Dumbbell,
   Coffee,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { Logo } from "./Logo";
+import { useTheme } from "./ThemeProvider";
+import { useAuth } from "../../contexts/AuthContext";
 
 const TOTAL_STEPS = 4;
 
 export function OnboardingScreen() {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
+  const { user, profile } = useAuth();
   const [step, setStep] = useState(0);
 
   // Form state
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+
+  // Prefill name and email from sign-up (profile or user metadata)
+  useEffect(() => {
+    if (!name.trim() || !email.trim()) {
+      const fullName =
+        [profile?.first_name, profile?.last_name].filter(Boolean).join(" ").trim() ||
+        [user?.user_metadata?.first_name, user?.user_metadata?.last_name].filter(Boolean).join(" ").trim();
+      const emailValue = profile?.email ?? user?.email ?? "";
+      if (fullName && !name.trim()) setName(fullName);
+      if (emailValue && !email.trim()) setEmail(emailValue);
+    }
+  }, [user, profile]);
   const [city, setCity] = useState("");
   const [budgetMin, setBudgetMin] = useState("1000");
   const [budgetMax, setBudgetMax] = useState("2500");
@@ -95,16 +113,30 @@ export function OnboardingScreen() {
       <div className="relative z-10 px-6 py-5 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <Logo className="w-8 h-8" />
-          <span className="text-[18px]" style={{ fontWeight: 700 }}>
+          <span className="text-[18px] text-foreground" style={{ fontWeight: 700 }}>
             HomePilot
           </span>
         </div>
-        <button
-          onClick={() => navigate("/")}
-          className="text-gray-500 text-[14px] hover:text-white transition-colors"
-        >
-          Skip for now
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="w-10 h-10 rounded-xl bg-muted hover:bg-accent transition-colors flex items-center justify-center"
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {theme === "dark" ? (
+              <Sun size={18} className="text-muted-foreground" />
+            ) : (
+              <Moon size={18} className="text-muted-foreground" />
+            )}
+          </button>
+          <button
+            onClick={() => navigate("/")}
+            className="text-muted-foreground text-[14px] hover:text-foreground transition-colors"
+          >
+            Skip for now
+          </button>
+        </div>
       </div>
 
       {/* Progress */}
