@@ -18,6 +18,7 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
+import { Logo } from "./Logo";
 import { ScoreRing } from "./ScoreRing";
 import { listings } from "./data";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
@@ -35,13 +36,11 @@ export function LandingPage() {
         <div className="absolute bottom-0 right-[30%] w-[300px] h-[300px] bg-emerald-500/10 rounded-full blur-[120px]" />
       </div>
 
-      {/* Navigation - full-width bar, sticky, content centered */}
-      <nav className="sticky top-0 z-30 w-full min-h-[72px] bg-background/80 backdrop-blur-md">
-        <div className="container mx-auto px-6 py-5 flex items-center justify-between h-full">
+      {/* Navigation - floating glass bar, anchored on scroll */}
+      <nav className="sticky top-4 z-30 w-full px-4 sm:px-6 md:px-8">
+        <div className="mx-auto max-w-6xl min-h-[64px] rounded-2xl border border-white/10 bg-background/70 dark:bg-background/50 dark:border-white/5 shadow-lg shadow-black/5 dark:shadow-black/20 backdrop-blur-xl flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <Zap className="w-5 h-5" />
-            </div>
+            <Logo className="w-9 h-9" />
             <span className="text-[20px] text-foreground" style={{ fontWeight: 700 }}>
               HomePilot
             </span>
@@ -78,7 +77,7 @@ export function LandingPage() {
               Sign In
             </Link>
             <Link
-              to="/onboarding"
+              to="/signup"
               className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 transition-all text-[14px] text-white shadow-lg shadow-emerald-500/20"
               style={{ fontWeight: 600 }}
             >
@@ -115,7 +114,7 @@ export function LandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              to="/onboarding"
+              to="/signup"
               className="inline-flex items-center gap-2.5 px-8 py-4 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 transition-all shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 text-[16px]"
               style={{ fontWeight: 600 }}
             >
@@ -531,7 +530,7 @@ export function LandingPage() {
               Join thousands of renters using AI to get approved faster. Set up your passport in under 5 minutes.
             </p>
             <Link
-              to="/onboarding"
+              to="/signup"
               className="inline-flex items-center gap-2.5 px-10 py-4 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 transition-all shadow-xl shadow-emerald-500/25 text-[16px] text-white font-semibold"
               style={{ fontWeight: 600 }}
             >
@@ -549,9 +548,7 @@ export function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
-                  <Zap className="w-4 h-4" />
-                </div>
+                <Logo className="w-8 h-8" />
                 <span className="text-[16px] text-foreground" style={{ fontWeight: 700 }}>
                   HomePilot
                 </span>
