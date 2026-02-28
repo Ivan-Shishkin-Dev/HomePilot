@@ -23,10 +23,10 @@ export function ProfileScreen() {
   const sorted = [...profileSuggestions].sort((a, b) => b.impact - a.impact);
 
   const categoryColors: Record<string, string> = {
-    Financial: "#3B82F6",
+    Financial: "#10B981",
     Employment: "#10B981",
-    Credit: "#F59E0B",
-    Identity: "#8B5CF6",
+    Credit: "#10B981",
+    Identity: "#10B981",
   };
 
   return (
@@ -59,7 +59,7 @@ export function ProfileScreen() {
               className="bg-card rounded-2xl p-6 border border-border mb-5"
             >
               <div className="flex flex-col items-center mb-5">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] flex items-center justify-center text-white text-[22px] mb-3" style={{ fontWeight: 700 }}>
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#10B981] to-[#34D399] flex items-center justify-center text-white text-[22px] mb-3" style={{ fontWeight: 700 }}>
                   AC
                 </div>
                 <h3 className="text-foreground text-[18px]" style={{ fontWeight: 600 }}>Alex Chen</h3>
@@ -94,7 +94,7 @@ export function ProfileScreen() {
                 <p className="text-[#10B981] text-[13px]" style={{ fontWeight: 500 }}>Excellent</p>
                 <button
                   onClick={() => navigate("/passport")}
-                  className="flex items-center gap-1 text-[#3B82F6] text-[12px] mt-1"
+                  className="flex items-center gap-1 text-[#10B981] text-[12px] mt-1"
                   style={{ fontWeight: 600 }}
                 >
                   View Passport <ChevronRight size={13} />
@@ -141,7 +141,7 @@ export function ProfileScreen() {
               <button
                 onClick={() => setAutoApply(!autoApply)}
                 className={`relative w-12 h-7 rounded-full transition-colors shrink-0 ml-4 ${
-                  autoApply ? "bg-[#3B82F6]" : "bg-muted"
+                  autoApply ? "bg-[#10B981]" : "bg-muted"
                 }`}
               >
                 <span
@@ -157,14 +157,14 @@ export function ProfileScreen() {
                 Suggestions by Impact
               </h3>
               <div className="flex items-center gap-2">
-                <Sparkles size={16} className="text-[#3B82F6]" />
+                <Sparkles size={16} className="text-[#10B981]" />
                 <span className="text-muted-foreground text-[13px]">{sorted.length} suggestions</span>
               </div>
             </div>
 
             <div className="flex flex-col gap-3">
               {sorted.map((suggestion, i) => {
-                const catColor = categoryColors[suggestion.category] || "#3B82F6";
+                const catColor = categoryColors[suggestion.category] || "#10B981";
                 return (
                   <motion.div
                     key={suggestion.id}
@@ -233,7 +233,7 @@ export function ProfileScreen() {
                           {suggestion.category.toLowerCase()} documentation.
                         </p>
                         <button
-                          className="bg-[#3B82F6]/15 text-[#3B82F6] px-6 py-2.5 rounded-xl text-[14px] hover:bg-[#3B82F6]/25 transition-colors"
+                          className="bg-[#10B981]/15 text-[#10B981] px-6 py-2.5 rounded-xl text-[14px] hover:bg-[#10B981]/25 transition-colors"
                           style={{ fontWeight: 600 }}
                         >
                           Complete Action

@@ -140,7 +140,7 @@ export function ListingDetail() {
               </div>
 
               <div className="flex items-center gap-6 mt-4">
-                <span className="text-[#3B82F6] text-[26px]" style={{ fontWeight: 700 }}>
+                <span className="text-[#10B981] text-[26px]" style={{ fontWeight: 700 }}>
                   ${listing.price.toLocaleString()}
                   <span className="text-[#8B95A5] text-[14px]" style={{ fontWeight: 400 }}>/mo</span>
                 </span>
@@ -273,14 +273,14 @@ export function ListingDetail() {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-gradient-to-r from-[#3B82F6]/10 to-[#3B82F6]/5 rounded-2xl p-5 border border-[#3B82F6]/15"
+                className="bg-gradient-to-r from-[#10B981]/10 to-[#10B981]/5 rounded-2xl p-5 border border-[#10B981]/15"
               >
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#3B82F6]/20 flex items-center justify-center shrink-0">
-                    <Zap size={20} className="text-[#3B82F6]" />
+                  <div className="w-10 h-10 rounded-xl bg-[#10B981]/20 flex items-center justify-center shrink-0">
+                    <Zap size={20} className="text-[#10B981]" />
                   </div>
                   <div>
-                    <p className="text-[#3B82F6] text-[11px]" style={{ fontWeight: 700 }}>
+                    <p className="text-[#10B981] text-[11px]" style={{ fontWeight: 700 }}>
                       AI SUGGESTION
                     </p>
                     <p className="text-white text-[15px]" style={{ fontWeight: 500 }}>
@@ -288,7 +288,7 @@ export function ListingDetail() {
                     </p>
                   </div>
                 </div>
-                <button className="w-full bg-[#3B82F6]/15 text-[#3B82F6] py-2.5 rounded-xl text-[13px] hover:bg-[#3B82F6]/25 transition-colors" style={{ fontWeight: 600 }}>
+                <button className="w-full bg-[#10B981]/15 text-[#10B981] py-2.5 rounded-xl text-[13px] hover:bg-[#10B981]/25 transition-colors" style={{ fontWeight: 600 }}>
                   Apply Suggestion
                 </button>
               </motion.div>
@@ -301,7 +301,7 @@ export function ListingDetail() {
                 className="bg-[#111827] rounded-2xl p-5 border border-white/[0.06]"
               >
                 <button
-                  className="w-full bg-[#3B82F6] text-white py-3.5 rounded-xl text-[16px] flex items-center justify-center gap-2 hover:bg-[#2563EB] active:scale-[0.98] transition-all"
+                  className="w-full bg-[#10B981] text-white py-3.5 rounded-xl text-[16px] flex items-center justify-center gap-2 hover:bg-[#059669] active:scale-[0.98] transition-all"
                   style={{ fontWeight: 700 }}
                 >
                   <Zap size={20} />

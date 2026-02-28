@@ -87,14 +87,14 @@ export function OnboardingScreen() {
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#111117] to-[#0a0a0f] text-white flex flex-col">
       {/* Ambient */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 right-0 w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-[150px]" />
-        <div className="absolute bottom-0 -left-20 w-[300px] h-[300px] bg-blue-500/10 rounded-full blur-[120px]" />
+        <div className="absolute -top-40 right-0 w-[400px] h-[400px] bg-emerald-500/10 rounded-full blur-[150px]" />
+        <div className="absolute bottom-0 -left-20 w-[300px] h-[300px] bg-green-500/10 rounded-full blur-[120px]" />
       </div>
 
-      {/* Header */}
+      {/* Header with logo */}
       <div className="relative z-10 px-6 py-5 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
             <Zap size={16} className="text-white" />
           </div>
           <span className="text-[18px]" style={{ fontWeight: 700 }}>
@@ -120,7 +120,7 @@ export function OnboardingScreen() {
           </div>
           <div className="w-full h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
             <motion.div
-              className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
+              className="h-full bg-gradient-to-r from-emerald-500 to-green-500 rounded-full"
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.4 }}
             />
@@ -235,7 +235,7 @@ export function OnboardingScreen() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-[14px] text-gray-300 mb-2 block" style={{ fontWeight: 500 }}>
-                        <Bed size={14} className="inline mr-1.5 text-purple-400" />
+                        <Bed size={14} className="inline mr-1.5 text-emerald-400" />
                         Bedrooms
                       </label>
                       <div className="flex gap-2">
@@ -409,7 +409,7 @@ export function OnboardingScreen() {
             disabled={!canProceed()}
             className={`flex items-center gap-2 px-8 py-3 rounded-xl text-[15px] transition-all ${
               canProceed()
-                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-500 hover:to-purple-500 shadow-lg shadow-purple-500/20"
+                ? "bg-gradient-to-r from-emerald-600 to-green-600 text-white hover:from-emerald-500 hover:to-green-500 shadow-lg shadow-emerald-500/20"
                 : "bg-white/[0.06] text-gray-600 cursor-not-allowed"
             }`}
             style={{ fontWeight: 600 }}

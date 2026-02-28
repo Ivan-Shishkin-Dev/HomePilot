@@ -46,7 +46,7 @@ export function HomeScreen() {
                 </p>
                 <button
                   onClick={() => navigate("/profile")}
-                  className="flex items-center gap-1 text-[#3B82F6] text-[13px] hover:underline"
+                  className="flex items-center gap-1 text-[#10B981] text-[13px] hover:underline"
                   style={{ fontWeight: 600 }}
                 >
                   Boost Score
@@ -64,11 +64,11 @@ export function HomeScreen() {
             className="lg:col-span-2"
           >
             {showAlert ? (
-              <div className="bg-gradient-to-r from-[#3B82F6]/15 to-[#10B981]/10 rounded-2xl p-5 lg:p-6 border border-[#3B82F6]/20 relative overflow-hidden h-full">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-[#3B82F6]/10 rounded-full blur-3xl" />
+              <div className="bg-gradient-to-r from-[#10B981]/15 to-[#10B981]/10 rounded-2xl p-5 lg:p-6 border border-[#10B981]/20 relative overflow-hidden h-full">
+                <div className="absolute top-0 right-0 w-40 h-40 bg-[#10B981]/10 rounded-full blur-3xl" />
                 <div className="flex items-start gap-4 relative">
-                  <div className="w-11 h-11 rounded-xl bg-[#3B82F6]/20 flex items-center justify-center shrink-0">
-                    <Zap size={22} className="text-[#3B82F6]" />
+                  <div className="w-11 h-11 rounded-xl bg-[#10B981]/20 flex items-center justify-center shrink-0">
+                    <Zap size={22} className="text-[#10B981]" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1.5">
@@ -94,7 +94,7 @@ export function HomeScreen() {
                     <div className="flex gap-3">
                       <button
                         onClick={() => navigate("/listing/2")}
-                        className="bg-[#3B82F6] text-white px-6 py-2.5 rounded-xl text-[14px] hover:bg-[#2563EB] transition-colors"
+                        className="bg-[#10B981] text-white px-6 py-2.5 rounded-xl text-[14px] hover:bg-[#059669] transition-colors"
                         style={{ fontWeight: 600 }}
                       >
                         View Listing
@@ -119,7 +119,7 @@ export function HomeScreen() {
             ) : (
               <div className="bg-card rounded-2xl p-6 border border-border h-full flex items-center justify-center">
                 <div className="text-center">
-                  <Sparkles size={24} className="text-[#3B82F6] mx-auto mb-2" />
+                  <Sparkles size={24} className="text-[#10B981] mx-auto mb-2" />
                   <p className="text-muted-foreground text-[14px]">AI is hunting for your next match...</p>
                 </div>
               </div>
@@ -135,10 +135,10 @@ export function HomeScreen() {
           className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8"
         >
           {[
-            { label: "Active Hunts", value: "12", icon: Sparkles, color: "#3B82F6", change: "+3 today" },
+            { label: "Active Hunts", value: "12", icon: Sparkles, color: "#10B981", change: "+3 today" },
             { label: "Applications", value: "3", icon: TrendingUp, color: "#10B981", change: "1 pending" },
-            { label: "Avg Match", value: "79%", icon: Zap, color: "#F59E0B", change: "+5% this week" },
-            { label: "Saved Listings", value: "8", icon: ArrowUpRight, color: "#8B5CF6", change: "2 expiring" },
+            { label: "Avg Match", value: "79%", icon: Zap, color: "#10B981", change: "+5% this week" },
+            { label: "Saved Listings", value: "8", icon: ArrowUpRight, color: "#10B981", change: "2 expiring" },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -163,7 +163,7 @@ export function HomeScreen() {
           </h2>
           <button
             onClick={() => navigate("/listings")}
-            className="text-[#3B82F6] text-[14px] hover:underline"
+            className="text-[#10B981] text-[14px] hover:underline"
             style={{ fontWeight: 500 }}
           >
             View All

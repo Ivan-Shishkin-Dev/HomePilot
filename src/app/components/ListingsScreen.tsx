@@ -45,7 +45,7 @@ export function ListingsScreen() {
                 placeholder="Search city, neighborhood, address..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-card border border-border rounded-xl pl-11 pr-4 py-2.5 text-foreground text-[14px] placeholder:text-muted-foreground focus:outline-none focus:border-[#3B82F6]/40 transition-colors"
+                className="w-full bg-card border border-border rounded-xl pl-11 pr-4 py-2.5 text-foreground text-[14px] placeholder:text-muted-foreground focus:outline-none focus:border-[#10B981]/40 transition-colors"
               />
             </div>
             <button className="w-11 h-11 bg-card border border-border rounded-xl flex items-center justify-center hover:bg-muted transition-colors">
@@ -55,7 +55,7 @@ export function ListingsScreen() {
               <button
                 onClick={() => setViewMode("grid")}
                 className={`w-10 h-10 flex items-center justify-center transition-colors ${
-                  viewMode === "grid" ? "bg-[#3B82F6]/15 text-[#3B82F6]" : "text-muted-foreground hover:text-foreground"
+                  viewMode === "grid" ? "bg-[#10B981]/15 text-[#10B981]" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Grid2x2 size={16} />
@@ -63,7 +63,7 @@ export function ListingsScreen() {
               <button
                 onClick={() => setViewMode("list")}
                 className={`w-10 h-10 flex items-center justify-center transition-colors ${
-                  viewMode === "list" ? "bg-[#3B82F6]/15 text-[#3B82F6]" : "text-muted-foreground hover:text-foreground"
+                  viewMode === "list" ? "bg-[#10B981]/15 text-[#10B981]" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <LayoutList size={16} />
@@ -73,7 +73,7 @@ export function ListingsScreen() {
 
           {/* Location + Filters */}
           <div className="flex items-center gap-1.5 mb-4">
-            <MapPin size={13} className="text-[#3B82F6]" />
+            <MapPin size={13} className="text-[#10B981]" />
             <span className="text-muted-foreground text-[13px]">
               Searching within 25mi of New York, NY
             </span>
@@ -85,7 +85,7 @@ export function ListingsScreen() {
                 onClick={() => setActiveFilter(f)}
                 className={`px-4 py-1.5 rounded-lg text-[13px] whitespace-nowrap transition-all ${
                   activeFilter === f
-                    ? "bg-[#3B82F6] text-white"
+                    ? "bg-[#10B981] text-white"
                     : "bg-muted text-muted-foreground hover:bg-accent"
                 }`}
                 style={{ fontWeight: 500 }}

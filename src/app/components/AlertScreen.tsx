@@ -42,7 +42,7 @@ export function AlertScreen() {
     {
       listing: listing2,
       urgency: "NEW MATCH",
-      urgencyColor: "#3B82F6",
+      urgencyColor: "#10B981",
       timeAgo: "15 min ago",
     },
   ];
@@ -83,7 +83,7 @@ export function AlertScreen() {
               {/* AI Header */}
               <div className="p-6 border-b border-border">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#3B82F6] to-[#1D4ED8] flex items-center justify-center shadow-lg shadow-[#3B82F6]/20">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#10B981] to-[#059669] flex items-center justify-center shadow-lg shadow-[#10B981]/20">
                     <Zap size={28} className="text-white" />
                   </div>
                   <div>
@@ -122,7 +122,7 @@ export function AlertScreen() {
                         {listing.address}, {listing.city}
                       </span>
                     </div>
-                    <span className="text-[#3B82F6] text-[22px]" style={{ fontWeight: 700 }}>
+                    <span className="text-[#10B981] text-[22px]" style={{ fontWeight: 700 }}>
                       ${listing.price.toLocaleString()}
                       <span className="text-muted-foreground text-[13px]" style={{ fontWeight: 400 }}>/mo</span>
                     </span>
@@ -171,7 +171,7 @@ export function AlertScreen() {
                   </button>
                   <button
                     onClick={() => navigate(`/listing/${listing.id}`)}
-                    className="flex-[2] bg-[#3B82F6] text-white py-3 rounded-xl text-[15px] flex items-center justify-center gap-2 hover:bg-[#2563EB] transition-colors"
+                    className="flex-[2] bg-[#10B981] text-white py-3 rounded-xl text-[15px] flex items-center justify-center gap-2 hover:bg-[#059669] transition-colors"
                     style={{ fontWeight: 700 }}
                   >
                     <Zap size={18} />

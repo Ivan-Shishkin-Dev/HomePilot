@@ -56,7 +56,7 @@ export function PassportScreen() {
               <Download size={16} />
               Export PDF
             </button>
-            <button className="flex items-center gap-2 bg-[#3B82F6] text-white px-5 py-2.5 rounded-xl text-[14px] hover:bg-[#2563EB] transition-colors" style={{ fontWeight: 600 }}>
+            <button className="flex items-center gap-2 bg-[#10B981] text-white px-5 py-2.5 rounded-xl text-[14px] hover:bg-[#059669] transition-colors" style={{ fontWeight: 600 }}>
               <Share2 size={16} />
               Share Passport
             </button>
@@ -96,7 +96,7 @@ export function PassportScreen() {
                 <span className="text-foreground text-[15px]" style={{ fontWeight: 600 }}>
                   Profile Completion
                 </span>
-                <span className="text-[#3B82F6] text-[15px]" style={{ fontWeight: 700 }}>
+                <span className="text-[#10B981] text-[15px]" style={{ fontWeight: 700 }}>
                   {completionPct}%
                 </span>
               </div>
@@ -105,7 +105,7 @@ export function PassportScreen() {
                   initial={{ width: 0 }}
                   animate={{ width: `${completionPct}%` }}
                   transition={{ duration: 1, delay: 0.3 }}
-                  className="h-full bg-[#3B82F6] rounded-full"
+                  className="h-full bg-[#10B981] rounded-full"
                 />
               </div>
               <p className="text-muted-foreground text-[12px]">

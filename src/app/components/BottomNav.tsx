@@ -26,7 +26,7 @@ export function Sidebar() {
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-sidebar/95 backdrop-blur-xl border-b border-sidebar-border">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#3B82F6] to-[#1D4ED8] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#10B981] to-[#059669] flex items-center justify-center">
               <Zap size={16} className="text-white" />
             </div>
             <span className="text-sidebar-foreground text-[18px]" style={{ fontWeight: 700 }}>
@@ -67,7 +67,7 @@ export function Sidebar() {
                   }}
                   className={`w-full flex items-center gap-3 px-5 py-3 transition-all ${
                     active
-                      ? "text-[#3B82F6] bg-[#3B82F6]/10"
+                      ? "text-[#10B981] bg-[#10B981]/10"
                       : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent"
                   }`}
                 >
@@ -86,7 +86,7 @@ export function Sidebar() {
       <aside className="hidden lg:flex fixed top-0 left-0 bottom-0 w-[240px] bg-sidebar border-r border-sidebar-border flex-col z-40">
         {/* Logo */}
         <div className="flex items-center gap-3 px-6 py-6 border-b border-sidebar-border">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#1D4ED8] flex items-center justify-center shadow-lg shadow-[#3B82F6]/20">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#10B981] to-[#059669] flex items-center justify-center shadow-lg shadow-[#10B981]/20">
             <Zap size={20} className="text-white" />
           </div>
           <span className="text-sidebar-foreground text-[20px]" style={{ fontWeight: 700 }}>
@@ -108,7 +108,7 @@ export function Sidebar() {
                   onClick={() => navigate(item.path)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left ${
                     active
-                      ? "text-sidebar-foreground bg-[#3B82F6]/15 border border-[#3B82F6]/20"
+                      ? "text-sidebar-foreground bg-[#10B981]/15 border border-[#10B981]/20"
                       : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent border border-transparent"
                   }`}
                 >
@@ -130,7 +130,7 @@ export function Sidebar() {
         {/* User */}
         <div className="p-4 border-t border-sidebar-border">
           <div className="flex items-center gap-3 px-2">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] flex items-center justify-center text-white text-[13px]" style={{ fontWeight: 700 }}>
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#10B981] to-[#34D399] flex items-center justify-center text-white text-[13px]" style={{ fontWeight: 700 }}>
               AC
             </div>
             <div className="flex-1 min-w-0">
