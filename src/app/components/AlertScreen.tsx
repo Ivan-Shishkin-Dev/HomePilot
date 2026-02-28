@@ -27,44 +27,48 @@ export function AlertScreen() {
     );
   }
 
+  // Calculate match percent from crime_index (lower crime = better match)
+  const matchPercent = 100 - listing.crime_index;
+  const matchPercent2 = listing2 ? 100 - listing2.crime_index : 0;
+
   const reasons = [
     {
       icon: TrendingUp,
-      text: `${listing.match_score}% match with your preferences and budget`,
+      text: `${matchPercent}% match with your preferences and budget`,
       color: "#10B981",
     },
     {
       icon: Shield,
-      text: "Verified landlord and listing",
-      color: "#10B981",
+      text: listing.scam_score < 10 ? "Verified landlord and listing" : "Listing under review",
+      color: listing.scam_score < 10 ? "#10B981" : "#F59E0B",
     },
     {
       icon: Users,
-      text: listing.competition_level > 70 ? "High competition — act fast" : "Moderate competition",
-      color: listing.competition_level > 70 ? "#F59E0B" : "#10B981",
+      text: listing.competition_score > 70 ? "High competition — act fast" : "Moderate competition",
+      color: listing.competition_score > 70 ? "#F59E0B" : "#10B981",
     },
     {
       icon: Clock,
-      text: "New listing — apply early",
+      text: listing.time_left || "New listing — apply early",
       color: "#3B82F6",
     },
   ];
 
   const alerts = listing2 ? [
     {
-      listing: { ...listing, image: listing.image_url, matchPercent: listing.match_score },
+      listing: { ...listing, matchPercent },
       urgency: "URGENT",
       urgencyColor: "#EF4444",
       timeAgo: "2 min ago",
     },
     {
-      listing: { ...listing2, image: listing2.image_url, matchPercent: listing2.match_score },
+      listing: { ...listing2, matchPercent: matchPercent2 },
       urgency: "NEW MATCH",
       urgencyColor: "#3B82F6",
       timeAgo: "15 min ago",
     },
   ] : [{
-    listing: { ...listing, image: listing.image_url, matchPercent: listing.match_score },
+    listing: { ...listing, matchPercent },
     urgency: "URGENT",
     urgencyColor: "#EF4444",
     timeAgo: "2 min ago",
@@ -125,13 +129,13 @@ export function AlertScreen() {
                 <div className="flex gap-5 flex-col sm:flex-row">
                   <div className="relative rounded-xl overflow-hidden w-full sm:w-64 h-44 shrink-0">
                     <ImageWithFallback
-                      src={listing.image_url}
+                      src={listing.image}
                       alt={listing.title}
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute top-3 right-3 bg-[#10B981] px-2.5 py-1 rounded-lg">
                       <span className="text-white text-[14px]" style={{ fontWeight: 700 }}>
-                        {listing.match_score}% match
+                        {matchPercent}% match
                       </span>
                     </div>
                   </div>
@@ -236,7 +240,7 @@ export function AlertScreen() {
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0">
                       <ImageWithFallback
-                        src={alert.listing.image}
+                        src={alert.listing.image || ""}
                         alt={alert.listing.title}
                         className="w-full h-full object-cover"
                       />

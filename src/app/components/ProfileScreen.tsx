@@ -37,8 +37,8 @@ export function ProfileScreen() {
     await updateProfile({ auto_apply_enabled: newValue });
   };
 
-  const impactOrder = { high: 3, medium: 2, low: 1 };
-  const sorted = [...suggestions].sort((a, b) => impactOrder[b.impact] - impactOrder[a.impact]);
+  // Impact is stored as integer in DB (higher = more impact)
+  const sorted = [...suggestions].sort((a, b) => b.impact - a.impact);
 
   const getUserInitials = () => {
     if (!profile) return "??";
@@ -55,13 +55,14 @@ export function ProfileScreen() {
     return profile.email || "User";
   };
 
-  const getImpactValue = (impact: string) => {
-    if (impact === "high") return 22;
-    if (impact === "medium") return 12;
-    return 5;
+  // Impact is already a number in the database
+  const getImpactLabel = (impact: number) => {
+    if (impact >= 20) return "high";
+    if (impact >= 10) return "medium";
+    return "low";
   };
 
-  const totalPotentialImpact = sorted.reduce((acc, s) => acc + getImpactValue(s.impact), 0);
+  const totalPotentialImpact = sorted.filter(s => !s.completed).reduce((acc, s) => acc + s.impact, 0);
 
   const categoryColors: Record<string, string> = {
     Financial: "#3B82F6",
@@ -118,9 +119,9 @@ export function ProfileScreen() {
               <div className="flex flex-col gap-2.5 text-[13px]">
                 {[
                   { icon: Mail, label: profile?.email || "No email" },
-                  { icon: MapPin, label: profile?.search_city || "Location not set" },
-                  { icon: Calendar, label: `Looking for: ${profile?.search_move_in_date ? new Date(profile.search_move_in_date).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "Not set"}` },
-                  { icon: User, label: profile?.search_max_rent ? `Budget: Up to $${profile.search_max_rent.toLocaleString()}/mo` : "Budget not set" },
+                  { icon: MapPin, label: profile?.preferred_cities?.[0] || "Location not set" },
+                  { icon: Calendar, label: `Looking for: ${profile?.move_in_date ? new Date(profile.move_in_date).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "Not set"}` },
+                  { icon: User, label: profile?.max_budget ? `Budget: Up to $${profile.max_budget.toLocaleString()}/mo` : "Budget not set" },
                 ].map((item) => (
                   <div key={item.label} className="flex items-center gap-2.5 text-[#8B95A5]">
                     <item.icon size={14} className="text-[#6B7280] shrink-0" />
@@ -213,8 +214,9 @@ export function ProfileScreen() {
 
             <div className="flex flex-col gap-3">
               {sorted.map((suggestion, i) => {
-                const impactValue = getImpactValue(suggestion.impact);
-                const impactColor = suggestion.impact === "high" ? "#10B981" : suggestion.impact === "medium" ? "#F59E0B" : "#8B5CF6";
+                const impactLabel = getImpactLabel(suggestion.impact);
+                const impactColor = impactLabel === "high" ? "#10B981" : impactLabel === "medium" ? "#F59E0B" : "#8B5CF6";
+                const catColor = categoryColors[suggestion.category] || "#3B82F6";
                 return (
                   <motion.div
                     key={suggestion.id}
@@ -230,26 +232,31 @@ export function ProfileScreen() {
                       className="w-full p-4 flex items-center gap-4 text-left"
                     >
                       <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-white/[0.04] shrink-0">
-                        <span className="text-[17px]" style={{ fontWeight: 700, color: impactColor }}>
+                        <span className="text-[17px]" style={{ fontWeight: 700, color: catColor }}>
                           #{i + 1}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-white text-[15px] mb-1" style={{ fontWeight: 500 }}>
-                          {suggestion.title}
+                          {suggestion.action}
                         </p>
                         <div className="flex items-center gap-2 flex-wrap">
                           <span
-                            className="text-[11px] px-2.5 py-0.5 rounded-md capitalize"
+                            className="text-[11px] px-2.5 py-0.5 rounded-md"
                             style={{
-                              color: impactColor,
-                              backgroundColor: `${impactColor}15`,
+                              color: catColor,
+                              backgroundColor: `${catColor}15`,
                               fontWeight: 600,
                             }}
                           >
-                            {suggestion.impact} impact
+                            {suggestion.category}
                           </span>
-                          {suggestion.is_completed && (
+                          {suggestion.auto_applied && (
+                            <span className="text-[10px] text-[#F59E0B] bg-[#F59E0B]/10 px-2 py-0.5 rounded-md">
+                              Auto-applied
+                            </span>
+                          )}
+                          {suggestion.completed && (
                             <span className="text-[10px] text-[#10B981] bg-[#10B981]/10 px-2 py-0.5 rounded-md">
                               Completed
                             </span>
@@ -261,7 +268,7 @@ export function ProfileScreen() {
                           className="bg-[#10B981]/15 text-[#10B981] px-3 py-1.5 rounded-lg text-[14px]"
                           style={{ fontWeight: 700 }}
                         >
-                          +{impactValue}%
+                          +{suggestion.impact}%
                         </span>
                         <ChevronRight
                           size={16}
@@ -278,7 +285,7 @@ export function ProfileScreen() {
                         className="px-4 pb-4 border-t border-white/[0.04]"
                       >
                         <p className="text-[#8B95A5] text-[13px] pt-4 mb-4">
-                          {suggestion.description || `Completing this action will increase your acceptance rate by ${impactValue}%. Landlords prioritize renters with complete documentation.`}
+                          Completing this action will increase your acceptance rate by {suggestion.impact}%. Landlords prioritize renters with complete {suggestion.category.toLowerCase()} documentation.
                         </p>
                         <button
                           className="bg-[#3B82F6]/15 text-[#3B82F6] px-6 py-2.5 rounded-xl text-[14px] hover:bg-[#3B82F6]/25 transition-colors"
