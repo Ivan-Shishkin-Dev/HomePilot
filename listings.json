@@ -1,0 +1,39 @@
+{
+    "schema_version": 1,
+    "generated_at": "2026-02-28",
+    "listings": [
+      {
+        "id": "irv-zil-001",
+        "source": "zillow",
+        "city": "Irvine",
+        "area_tag": "near_uci",
+        "audience_tags": ["students"],
+        "property_type": "apartment",
+        "title": "Example: 1 bd / 1 ba near UCI",
+        "price_monthly": 2450,
+        "beds": 1,
+        "baths": 1,
+        "sqft": 720,
+        "address_display": "Irvine, CA 92617",
+        "pet_policy": { "cats": true, "dogs": true, "notes": "Breed restrictions may apply" },
+        "parking": "1 assigned spot",
+        "available_date": "2026-03-05",
+        "lease_terms": ["12_months"],
+        "amenities": ["in_unit_laundry", "gym", "pool"],
+        "images": [
+          {
+            "type": "remote_url",
+            "url": "https://... (optional if page exposes a stable image url)"
+          }
+        ],
+        "listing_url": "https://www.zillow.com/homedetails/...",
+        "apply_url": "https://www.zillow.com/rental-manager/apply/...",
+        "notes": "Any extra detail you want for demo",
+        "demo_flags": {
+          "student_friendly": true,
+          "family_friendly": false,
+          "high_competition": true
+        }
+      }
+    ]
+  }
