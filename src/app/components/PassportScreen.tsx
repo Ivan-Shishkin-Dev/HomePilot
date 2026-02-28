@@ -146,7 +146,7 @@ export function PassportScreen() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 + i * 0.05 }}
-                    className="bg-card rounded-xl p-4 border border-border flex items-center gap-4 hover:border-accent transition-colors cursor-pointer"
+                    className="bg-card rounded-xl p-4 border border-border flex items-center gap-4 hover:border-muted transition-colors cursor-pointer"
                   >
                     <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
                       <Icon size={20} className="text-muted-foreground" />

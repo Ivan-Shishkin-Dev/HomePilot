@@ -171,7 +171,7 @@ export function ProfileScreen() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15 + i * 0.05 }}
-                    className="bg-card rounded-xl border border-border overflow-hidden hover:border-accent transition-colors"
+                    className="bg-card rounded-xl border border-border overflow-hidden hover:border-muted transition-colors"
                   >
                     <button
                       onClick={() =>

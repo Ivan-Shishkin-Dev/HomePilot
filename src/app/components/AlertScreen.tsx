@@ -194,7 +194,7 @@ export function AlertScreen() {
                   initial={{ opacity: 0, x: 15 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2 + i * 0.1 }}
-                  className="bg-card rounded-xl p-4 border border-border hover:border-accent transition-colors cursor-pointer"
+                  className="bg-card rounded-xl p-4 border border-border hover:border-muted transition-colors cursor-pointer"
                   onClick={() => navigate(`/listing/${alert.listing.id}`)}
                 >
                   <div className="flex items-center gap-2 mb-2">

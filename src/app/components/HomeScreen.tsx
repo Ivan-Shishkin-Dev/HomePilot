@@ -142,7 +142,7 @@ export function HomeScreen() {
           ].map((stat) => (
             <div
               key={stat.label}
-              className="bg-card rounded-xl p-4 lg:p-5 border border-border hover:border-accent transition-colors cursor-default"
+              className="bg-card rounded-xl p-4 lg:p-5 border border-border hover:border-muted transition-colors cursor-default"
             >
               <div className="flex items-center justify-between mb-3">
                 <stat.icon size={18} style={{ color: stat.color }} />

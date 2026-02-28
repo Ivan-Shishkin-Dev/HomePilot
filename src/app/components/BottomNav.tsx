@@ -35,14 +35,14 @@ export function Sidebar() {
           </div>
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center hover:bg-accent transition-colors"
+            className="w-9 h-9 rounded-lg bg-sidebar-accent flex items-center justify-center"
           >
-              {mobileOpen ? (
-                <X size={18} className="text-sidebar-foreground" />
-              ) : (
-                <Menu size={18} className="text-sidebar-foreground" />
-              )}
-            </button>
+            {mobileOpen ? (
+              <X size={18} className="text-sidebar-foreground" />
+            ) : (
+              <Menu size={18} className="text-sidebar-foreground" />
+            )}
+          </button>
         </div>
       </div>
 
