@@ -18,7 +18,11 @@ import {
   Train,
   Dumbbell,
   Coffee,
+  Loader2,
+  X,
 } from "lucide-react";
+import { useUserDocuments, useDocumentUpload } from "../../hooks/useSupabaseData";
+import { useAuth } from "../../contexts/AuthContext";
 
 const TOTAL_STEPS = 4;
 
@@ -35,7 +39,26 @@ export function OnboardingScreen() {
   const [beds, setBeds] = useState("1");
   const [moveDate, setMoveDate] = useState("");
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
-  const [uploadedDocs, setUploadedDocs] = useState<string[]>([]);
+  const [localUploadedDocs, setLocalUploadedDocs] = useState<string[]>([]);
+
+  // Auth context
+  const { user } = useAuth();
+
+  // Document upload from Supabase
+  const { documents: dbDocuments, refetch: refetchDocs } = useUserDocuments();
+  const { triggerUpload, uploading, fileInputRef, handleFileChange, removeDocument } = useDocumentUpload();
+
+  // Map onboarding doc IDs to DB icon keys
+  const onboardingToDbIcon: Record<string, string> = {
+    gov_id: "id",
+    income: "income",
+    bank: "bank",
+    employment: "employment",
+    credit: "credit",
+    references: "references",
+  };
+
+  const hasDbDocs = dbDocuments.length > 0;
 
   const amenities = [
     { id: "pet", label: "Pet Friendly", icon: PawPrint },
@@ -61,11 +84,37 @@ export function OnboardingScreen() {
     );
   };
 
-  const toggleDoc = (id: string) => {
-    setUploadedDocs((prev) =>
-      prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id]
-    );
+  const handleDocClick = async (onboardingId: string) => {
+    if (hasDbDocs) {
+      // Supabase flow: open file picker and update DB
+      const dbIcon = onboardingToDbIcon[onboardingId];
+      const dbDoc = dbDocuments.find(d => d.icon === dbIcon);
+      if (dbDoc && dbDoc.status === "missing") {
+        triggerUpload(dbDoc.id, refetchDocs);
+      }
+    } else if (user) {
+      // User is authenticated but DB docs haven't loaded yet — retry fetch then upload
+      await refetchDocs();
+    } else {
+      // Fallback: local toggle (user not authenticated)
+      setLocalUploadedDocs(prev =>
+        prev.includes(onboardingId) ? prev.filter(d => d !== onboardingId) : [...prev, onboardingId]
+      );
+    }
   };
+
+  const isDocUploaded = (onboardingId: string) => {
+    if (hasDbDocs) {
+      const dbIcon = onboardingToDbIcon[onboardingId];
+      const dbDoc = dbDocuments.find(d => d.icon === dbIcon);
+      return dbDoc ? dbDoc.status !== "missing" : false;
+    }
+    return localUploadedDocs.includes(onboardingId);
+  };
+
+  const uploadedCount = hasDbDocs
+    ? dbDocuments.filter(d => d.status !== "missing").length
+    : localUploadedDocs.length;
 
   const progress = ((step + 1) / TOTAL_STEPS) * 100;
 
@@ -341,13 +390,21 @@ export function OnboardingScreen() {
                   </span>
                 </div>
 
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
+                  accept="image/*,.pdf,.doc,.docx"
+                />
                 <div className="space-y-3">
                   {documents.map((doc) => {
-                    const uploaded = uploadedDocs.includes(doc.id);
+                    const uploaded = isDocUploaded(doc.id);
                     return (
                       <button
                         key={doc.id}
-                        onClick={() => toggleDoc(doc.id)}
+                        onClick={() => handleDocClick(doc.id)}
+                        disabled={uploading}
                         className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all text-left ${
                           uploaded
                             ? "bg-[#10B981]/10 border-[#10B981]/20"
@@ -361,6 +418,8 @@ export function OnboardingScreen() {
                         >
                           {uploaded ? (
                             <CheckCircle2 size={20} className="text-[#10B981]" />
+                          ) : uploading ? (
+                            <Loader2 size={18} className="text-gray-500 animate-spin" />
                           ) : (
                             <Upload size={18} className="text-gray-500" />
                           )}
@@ -376,7 +435,23 @@ export function OnboardingScreen() {
                             {uploaded ? "Uploaded — Pending verification" : "Click to upload"}
                           </p>
                         </div>
-                        {!uploaded && (
+                        {uploaded ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (hasDbDocs) {
+                                const dbIcon = onboardingToDbIcon[doc.id];
+                                const dbDoc = dbDocuments.find(d => d.icon === dbIcon);
+                                if (dbDoc) removeDocument(dbDoc.id, refetchDocs);
+                              } else {
+                                setLocalUploadedDocs(prev => prev.filter(d => d !== doc.id));
+                              }
+                            }}
+                            className="p-1.5 rounded-lg hover:bg-white/[0.1] transition-colors"
+                          >
+                            <X size={16} className="text-gray-400 hover:text-white" />
+                          </button>
+                        ) : (
                           <span className="text-blue-400 text-[13px]" style={{ fontWeight: 500 }}>
                             Upload
                           </span>
@@ -386,7 +461,7 @@ export function OnboardingScreen() {
                   })}
                 </div>
                 <p className="text-gray-600 text-[13px] mt-4">
-                  {uploadedDocs.length} of {documents.length} uploaded
+                  {uploadedCount} of {documents.length} uploaded
                 </p>
               </motion.div>
             )}
