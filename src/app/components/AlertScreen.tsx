@@ -48,14 +48,14 @@ export function AlertScreen() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0A0F1E]">
+    <div className="min-h-screen bg-background">
       {/* Page Header */}
-      <div className="border-b border-white/[0.06] px-6 lg:px-10 py-5 lg:py-6">
+      <div className="border-b border-border px-6 lg:px-10 py-5 lg:py-6">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-white text-[24px] lg:text-[28px]" style={{ fontWeight: 700 }}>
+          <h1 className="text-foreground text-[24px] lg:text-[28px]" style={{ fontWeight: 700 }}>
             AI Copilot Alerts
           </h1>
-          <p className="text-[#8B95A5] text-[14px] mt-1">
+          <p className="text-muted-foreground text-[14px] mt-1">
             Proactive matches found by your AI rental copilot
           </p>
         </div>
@@ -69,7 +69,7 @@ export function AlertScreen() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-[#111827] rounded-2xl border border-white/[0.06] overflow-hidden mb-6"
+              className="bg-card rounded-2xl border border-border overflow-hidden mb-6"
             >
               {/* Urgency Banner */}
               <div className="bg-[#EF4444]/10 border-b border-[#EF4444]/15 px-5 py-3 flex items-center gap-3">
@@ -77,20 +77,20 @@ export function AlertScreen() {
                 <span className="text-[#EF4444] text-[13px]" style={{ fontWeight: 700 }}>
                   URGENT — HIGH PRIORITY ALERT
                 </span>
-                <span className="text-[#6B7280] text-[12px] ml-auto">2 min ago</span>
+                <span className="text-muted-foreground text-[12px] ml-auto">2 min ago</span>
               </div>
 
               {/* AI Header */}
-              <div className="p-6 border-b border-white/[0.04]">
+              <div className="p-6 border-b border-border">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#3B82F6] to-[#1D4ED8] flex items-center justify-center shadow-lg shadow-[#3B82F6]/20">
                     <Zap size={28} className="text-white" />
                   </div>
                   <div>
-                    <h2 className="text-white text-[20px]" style={{ fontWeight: 700 }}>
+                    <h2 className="text-foreground text-[20px]" style={{ fontWeight: 700 }}>
                       AI Copilot Found a Match
                     </h2>
-                    <p className="text-[#8B95A5] text-[14px]">
+                    <p className="text-muted-foreground text-[14px]">
                       This listing matches your profile exceptionally well
                     </p>
                   </div>
@@ -113,18 +113,18 @@ export function AlertScreen() {
                     </div>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-white text-[18px] mb-1" style={{ fontWeight: 600 }}>
+                    <h3 className="text-foreground text-[18px] mb-1" style={{ fontWeight: 600 }}>
                       {listing.title}
                     </h3>
                     <div className="flex items-center gap-1 mb-3">
-                      <MapPin size={13} className="text-[#8B95A5]" />
-                      <span className="text-[#8B95A5] text-[13px]">
+                      <MapPin size={13} className="text-muted-foreground" />
+                      <span className="text-muted-foreground text-[13px]">
                         {listing.address}, {listing.city}
                       </span>
                     </div>
                     <span className="text-[#3B82F6] text-[22px]" style={{ fontWeight: 700 }}>
                       ${listing.price.toLocaleString()}
-                      <span className="text-[#8B95A5] text-[13px]" style={{ fontWeight: 400 }}>/mo</span>
+                      <span className="text-muted-foreground text-[13px]" style={{ fontWeight: 400 }}>/mo</span>
                     </span>
                     <div className="flex items-center gap-1.5 mt-3">
                       <Clock size={14} className="text-[#EF4444]" />
@@ -138,14 +138,14 @@ export function AlertScreen() {
 
               {/* Why AI Flagged */}
               <div className="px-6 pb-6">
-                <h3 className="text-white text-[15px] mb-3" style={{ fontWeight: 600 }}>
+                <h3 className="text-foreground text-[15px] mb-3" style={{ fontWeight: 600 }}>
                   Why AI flagged this
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {reasons.map((reason, i) => (
                     <div
                       key={i}
-                      className="flex items-start gap-3 bg-white/[0.03] rounded-xl p-3"
+                      className="flex items-start gap-3 bg-muted rounded-xl p-3"
                     >
                       <div
                         className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
@@ -153,7 +153,7 @@ export function AlertScreen() {
                       >
                         <reason.icon size={15} style={{ color: reason.color }} />
                       </div>
-                      <span className="text-[#C9D1D9] text-[13px] pt-1">{reason.text}</span>
+                      <span className="text-foreground text-[13px] pt-1">{reason.text}</span>
                     </div>
                   ))}
                 </div>
@@ -164,7 +164,7 @@ export function AlertScreen() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => navigate("/home")}
-                    className="flex-1 bg-white/[0.06] text-[#8B95A5] py-3 rounded-xl text-[15px] hover:bg-white/[0.1] transition-colors"
+                    className="flex-1 bg-muted text-muted-foreground py-3 rounded-xl text-[15px] hover:bg-accent transition-colors"
                     style={{ fontWeight: 600 }}
                   >
                     Dismiss
@@ -184,7 +184,7 @@ export function AlertScreen() {
 
           {/* Right: Alert History */}
           <div className="lg:col-span-2">
-            <h3 className="text-white text-[16px] mb-4" style={{ fontWeight: 600 }}>
+            <h3 className="text-foreground text-[16px] mb-4" style={{ fontWeight: 600 }}>
               Recent Alerts
             </h3>
             <div className="flex flex-col gap-3">
@@ -194,7 +194,7 @@ export function AlertScreen() {
                   initial={{ opacity: 0, x: 15 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2 + i * 0.1 }}
-                  className="bg-[#111827] rounded-xl p-4 border border-white/[0.06] hover:border-white/[0.12] transition-colors cursor-pointer"
+                  className="bg-card rounded-xl p-4 border border-border hover:border-accent transition-colors cursor-pointer"
                   onClick={() => navigate(`/listing/${alert.listing.id}`)}
                 >
                   <div className="flex items-center gap-2 mb-2">
@@ -208,7 +208,7 @@ export function AlertScreen() {
                     >
                       {alert.urgency}
                     </span>
-                    <span className="text-[#6B7280] text-[11px] ml-auto">{alert.timeAgo}</span>
+                    <span className="text-muted-foreground text-[11px] ml-auto">{alert.timeAgo}</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0">
@@ -219,10 +219,10 @@ export function AlertScreen() {
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-white text-[14px] truncate" style={{ fontWeight: 500 }}>
+                      <p className="text-foreground text-[14px] truncate" style={{ fontWeight: 500 }}>
                         {alert.listing.title}
                       </p>
-                      <p className="text-[#8B95A5] text-[12px]">
+                      <p className="text-muted-foreground text-[12px]">
                         {alert.listing.matchPercent}% match · ${alert.listing.price.toLocaleString()}/mo
                       </p>
                     </div>
@@ -232,7 +232,7 @@ export function AlertScreen() {
 
               {/* Past alerts */}
               <div className="mt-2">
-                <p className="text-[#4B5563] text-[12px] mb-2" style={{ fontWeight: 600 }}>
+                <p className="text-muted-foreground text-[12px] mb-2" style={{ fontWeight: 600 }}>
                   EARLIER TODAY
                 </p>
                 {[
@@ -241,14 +241,14 @@ export function AlertScreen() {
                 ].map((item, i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-3 py-3 border-b border-white/[0.04] last:border-0"
+                    className="flex items-center gap-3 py-3 border-b border-border last:border-0"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center">
-                      <Bell size={14} className="text-[#6B7280]" />
+                    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                      <Bell size={14} className="text-muted-foreground" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-white text-[13px] truncate" style={{ fontWeight: 500 }}>
+                        <p className="text-foreground text-[13px] truncate" style={{ fontWeight: 500 }}>
                           {item.title}
                         </p>
                         <span
@@ -258,9 +258,9 @@ export function AlertScreen() {
                           {item.type}
                         </span>
                       </div>
-                      <p className="text-[#6B7280] text-[11px]">{item.desc}</p>
+                      <p className="text-muted-foreground text-[11px]">{item.desc}</p>
                     </div>
-                    <span className="text-[#4B5563] text-[11px] shrink-0">{item.time}</span>
+                    <span className="text-muted-foreground text-[11px] shrink-0">{item.time}</span>
                   </div>
                 ))}
               </div>

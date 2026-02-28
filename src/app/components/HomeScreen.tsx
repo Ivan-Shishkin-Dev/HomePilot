@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Bell, Sparkles, TrendingUp, Clock, ChevronRight, Zap, ArrowUpRight } from "lucide-react";
+import { Sparkles, TrendingUp, Clock, ChevronRight, Zap, ArrowUpRight } from "lucide-react";
 import { ScoreRing } from "./ScoreRing";
 import { ListingCard } from "./ListingCard";
 import { listings } from "./data";
@@ -11,25 +11,14 @@ export function HomeScreen() {
   const [showAlert, setShowAlert] = useState(true);
 
   return (
-    <div className="min-h-screen bg-[#0A0F1E]">
+    <div className="min-h-screen bg-background">
       {/* Page Header */}
-      <div className="border-b border-white/[0.06] px-6 lg:px-10 py-5 lg:py-6">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <div>
-            <span className="text-[#8B95A5] text-[13px]">Good evening</span>
-            <h1 className="text-white text-[24px] lg:text-[28px]" style={{ fontWeight: 700, lineHeight: 1.2 }}>
-              Welcome back, Alex
-            </h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate("/alert")}
-              className="relative w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center hover:bg-white/[0.1] transition-colors"
-            >
-              <Bell size={18} className="text-[#8B95A5]" />
-              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#EF4444] rounded-full border-2 border-[#0A0F1E]" />
-            </button>
-          </div>
+      <div className="border-b border-border px-6 lg:px-10 py-5 lg:py-6">
+        <div className="max-w-7xl mx-auto">
+          <span className="text-muted-foreground text-[13px]">Good evening</span>
+          <h1 className="text-foreground text-[24px] lg:text-[28px]" style={{ fontWeight: 700, lineHeight: 1.2 }}>
+            Welcome back, Alex
+          </h1>
         </div>
       </div>
 
@@ -41,7 +30,7 @@ export function HomeScreen() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="bg-gradient-to-br from-[#111827] to-[#0D1321] rounded-2xl p-6 border border-white/[0.06]"
+            className="bg-card rounded-2xl p-6 border border-border"
           >
             <div className="flex items-center gap-6">
               <ScoreRing score={847} size={110} strokeWidth={7} />
@@ -52,7 +41,7 @@ export function HomeScreen() {
                     +12 pts this week
                   </span>
                 </div>
-                <p className="text-[#8B95A5] text-[13px] mb-3">
+                <p className="text-muted-foreground text-[13px] mb-3">
                   Top 15% of renters in your area. Your score unlocks priority applications.
                 </p>
                 <button
@@ -87,11 +76,11 @@ export function HomeScreen() {
                         HIGH MATCH (82%)
                       </span>
                       <span className="w-1.5 h-1.5 bg-[#EF4444] rounded-full animate-pulse" />
-                      <span className="text-[#8B95A5] text-[12px] ml-auto hidden sm:block">
+                      <span className="text-muted-foreground text-[12px] ml-auto hidden sm:block">
                         AI Copilot Alert
                       </span>
                     </div>
-                    <p className="text-white text-[16px] lg:text-[18px] mb-1" style={{ fontWeight: 600 }}>
+                    <p className="text-foreground text-[16px] lg:text-[18px] mb-1" style={{ fontWeight: 600 }}>
                       Sunny 2BR Near Campus — $1,450/mo
                     </p>
                     <div className="flex items-center gap-4 mb-4">
@@ -112,7 +101,7 @@ export function HomeScreen() {
                       </button>
                       <button
                         onClick={() => setShowAlert(false)}
-                        className="px-5 bg-white/[0.06] text-[#8B95A5] py-2.5 rounded-xl text-[14px] hover:bg-white/[0.1] transition-colors"
+                        className="px-5 bg-muted text-muted-foreground py-2.5 rounded-xl text-[14px] hover:bg-accent transition-colors"
                         style={{ fontWeight: 500 }}
                       >
                         Dismiss
@@ -121,17 +110,17 @@ export function HomeScreen() {
                   </div>
                   <button
                     onClick={() => setShowAlert(false)}
-                    className="text-[#8B95A5] text-[20px] leading-none hover:text-white transition-colors"
+                    className="text-muted-foreground text-[20px] leading-none hover:text-foreground transition-colors"
                   >
                     &times;
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="bg-[#111827] rounded-2xl p-6 border border-white/[0.06] h-full flex items-center justify-center">
+              <div className="bg-card rounded-2xl p-6 border border-border h-full flex items-center justify-center">
                 <div className="text-center">
                   <Sparkles size={24} className="text-[#3B82F6] mx-auto mb-2" />
-                  <p className="text-[#8B95A5] text-[14px]">AI is hunting for your next match...</p>
+                  <p className="text-muted-foreground text-[14px]">AI is hunting for your next match...</p>
                 </div>
               </div>
             )}
@@ -153,23 +142,23 @@ export function HomeScreen() {
           ].map((stat) => (
             <div
               key={stat.label}
-              className="bg-[#111827] rounded-xl p-4 lg:p-5 border border-white/[0.04] hover:border-white/[0.1] transition-colors cursor-default"
+              className="bg-card rounded-xl p-4 lg:p-5 border border-border hover:border-accent transition-colors cursor-default"
             >
               <div className="flex items-center justify-between mb-3">
                 <stat.icon size={18} style={{ color: stat.color }} />
-                <span className="text-[#6B7280] text-[11px]">{stat.change}</span>
+                <span className="text-muted-foreground text-[11px]">{stat.change}</span>
               </div>
-              <p className="text-white text-[24px] lg:text-[28px]" style={{ fontWeight: 700, lineHeight: 1 }}>
+              <p className="text-foreground text-[24px] lg:text-[28px]" style={{ fontWeight: 700, lineHeight: 1 }}>
                 {stat.value}
               </p>
-              <p className="text-[#6B7280] text-[12px] mt-1">{stat.label}</p>
+              <p className="text-muted-foreground text-[12px] mt-1">{stat.label}</p>
             </div>
           ))}
         </motion.div>
 
         {/* Listings Feed */}
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-white text-[20px]" style={{ fontWeight: 700 }}>
+          <h2 className="text-foreground text-[20px]" style={{ fontWeight: 700 }}>
             Top Matches
           </h2>
           <button
