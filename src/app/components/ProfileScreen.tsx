@@ -30,20 +30,20 @@ export function ProfileScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0F1E]">
+    <div className="min-h-screen bg-background">
       {/* Page Header */}
-      <div className="border-b border-white/[0.06] px-6 lg:px-10 py-5 lg:py-6">
+      <div className="border-b border-border px-6 lg:px-10 py-5 lg:py-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-white text-[24px] lg:text-[28px]" style={{ fontWeight: 700 }}>
+            <h1 className="text-foreground text-[24px] lg:text-[28px]" style={{ fontWeight: 700 }}>
               Profile Optimization
             </h1>
-            <p className="text-[#8B95A5] text-[14px] mt-1">
+            <p className="text-muted-foreground text-[14px] mt-1">
               AI-powered suggestions to maximize your acceptance rate
             </p>
           </div>
-          <button className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center hover:bg-white/[0.1] transition-colors">
-            <Settings size={18} className="text-[#8B95A5]" />
+          <button className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center hover:bg-accent transition-colors">
+            <Settings size={18} className="text-muted-foreground" />
           </button>
         </div>
       </div>
@@ -56,14 +56,14 @@ export function ProfileScreen() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-br from-[#111827] to-[#0D1321] rounded-2xl p-6 border border-white/[0.06] mb-5"
+              className="bg-card rounded-2xl p-6 border border-border mb-5"
             >
               <div className="flex flex-col items-center mb-5">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] flex items-center justify-center text-white text-[22px] mb-3" style={{ fontWeight: 700 }}>
                   AC
                 </div>
-                <h3 className="text-white text-[18px]" style={{ fontWeight: 600 }}>Alex Chen</h3>
-                <p className="text-[#8B95A5] text-[13px]">Renter since 2024</p>
+                <h3 className="text-foreground text-[18px]" style={{ fontWeight: 600 }}>Alex Chen</h3>
+                <p className="text-muted-foreground text-[13px]">Renter since 2024</p>
               </div>
 
               <div className="flex flex-col gap-2.5 text-[13px]">
@@ -73,8 +73,8 @@ export function ProfileScreen() {
                   { icon: Calendar, label: "Looking for: March 2026" },
                   { icon: User, label: "Budget: $1,500 — $2,500/mo" },
                 ].map((item) => (
-                  <div key={item.label} className="flex items-center gap-2.5 text-[#8B95A5]">
-                    <item.icon size={14} className="text-[#6B7280] shrink-0" />
+                  <div key={item.label} className="flex items-center gap-2.5 text-muted-foreground">
+                    <item.icon size={14} className="text-muted-foreground shrink-0" />
                     <span>{item.label}</span>
                   </div>
                 ))}
@@ -86,11 +86,11 @@ export function ProfileScreen() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-[#111827] rounded-2xl p-5 border border-white/[0.06] mb-5 flex items-center gap-5"
+              className="bg-card rounded-2xl p-5 border border-border mb-5 flex items-center gap-5"
             >
               <ScoreRing score={847} size={80} strokeWidth={6} label="" />
               <div>
-                <p className="text-white text-[15px]" style={{ fontWeight: 600 }}>Renter Score</p>
+                <p className="text-foreground text-[15px]" style={{ fontWeight: 600 }}>Renter Score</p>
                 <p className="text-[#10B981] text-[13px]" style={{ fontWeight: 500 }}>Excellent</p>
                 <button
                   onClick={() => navigate("/passport")}
@@ -123,17 +123,17 @@ export function ProfileScreen() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-[#111827] rounded-2xl p-5 border border-white/[0.06] mb-5 flex items-center justify-between"
+              className="bg-card rounded-2xl p-5 border border-border mb-5 flex items-center justify-between"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/15 flex items-center justify-center">
                   <Zap size={20} className="text-[#F59E0B]" />
                 </div>
                 <div>
-                  <p className="text-white text-[15px]" style={{ fontWeight: 600 }}>
+                  <p className="text-foreground text-[15px]" style={{ fontWeight: 600 }}>
                     Auto-apply suggestions
                   </p>
-                  <p className="text-[#6B7280] text-[12px]">
+                  <p className="text-muted-foreground text-[12px]">
                     Automatically optimize your profile as new data is available
                   </p>
                 </div>
@@ -141,7 +141,7 @@ export function ProfileScreen() {
               <button
                 onClick={() => setAutoApply(!autoApply)}
                 className={`relative w-12 h-7 rounded-full transition-colors shrink-0 ml-4 ${
-                  autoApply ? "bg-[#3B82F6]" : "bg-white/[0.1]"
+                  autoApply ? "bg-[#3B82F6]" : "bg-muted"
                 }`}
               >
                 <span
@@ -153,12 +153,12 @@ export function ProfileScreen() {
             </motion.div>
 
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-white text-[18px]" style={{ fontWeight: 600 }}>
+              <h3 className="text-foreground text-[18px]" style={{ fontWeight: 600 }}>
                 Suggestions by Impact
               </h3>
               <div className="flex items-center gap-2">
                 <Sparkles size={16} className="text-[#3B82F6]" />
-                <span className="text-[#8B95A5] text-[13px]">{sorted.length} suggestions</span>
+                <span className="text-muted-foreground text-[13px]">{sorted.length} suggestions</span>
               </div>
             </div>
 
@@ -171,7 +171,7 @@ export function ProfileScreen() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15 + i * 0.05 }}
-                    className="bg-[#111827] rounded-xl border border-white/[0.04] overflow-hidden hover:border-white/[0.1] transition-colors"
+                    className="bg-card rounded-xl border border-border overflow-hidden hover:border-accent transition-colors"
                   >
                     <button
                       onClick={() =>
@@ -179,13 +179,13 @@ export function ProfileScreen() {
                       }
                       className="w-full p-4 flex items-center gap-4 text-left"
                     >
-                      <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-white/[0.04] shrink-0">
+                      <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-muted shrink-0">
                         <span className="text-[17px]" style={{ fontWeight: 700, color: catColor }}>
                           #{i + 1}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-white text-[15px] mb-1" style={{ fontWeight: 500 }}>
+                        <p className="text-foreground text-[15px] mb-1" style={{ fontWeight: 500 }}>
                           {suggestion.action}
                         </p>
                         <div className="flex items-center gap-2 flex-wrap">
@@ -215,7 +215,7 @@ export function ProfileScreen() {
                         </span>
                         <ChevronRight
                           size={16}
-                          className={`text-[#4B5563] transition-transform ${
+                          className={`text-muted-foreground transition-transform ${
                             expanded === suggestion.id ? "rotate-90" : ""
                           }`}
                         />
@@ -225,9 +225,9 @@ export function ProfileScreen() {
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
-                        className="px-4 pb-4 border-t border-white/[0.04]"
+                        className="px-4 pb-4 border-t border-border"
                       >
-                        <p className="text-[#8B95A5] text-[13px] pt-4 mb-4">
+                        <p className="text-muted-foreground text-[13px] pt-4 mb-4">
                           Completing this action will increase your acceptance rate by{" "}
                           {suggestion.impact}%. Landlords prioritize renters with complete{" "}
                           {suggestion.category.toLowerCase()} documentation.

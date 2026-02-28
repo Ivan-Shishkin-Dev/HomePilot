@@ -64,26 +64,26 @@ export function ListingDetail() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0A0F1E]">
+    <div className="min-h-screen bg-background">
       {/* Back bar */}
-      <div className="border-b border-white/[0.06] px-6 lg:px-10 py-4">
+      <div className="border-b border-border px-6 lg:px-10 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-[#8B95A5] hover:text-white transition-colors"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft size={18} />
             <span className="text-[14px]">Back to listings</span>
           </button>
           <div className="flex gap-2">
-            <button className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center hover:bg-white/[0.1] transition-colors">
-              <Heart size={18} className="text-[#8B95A5]" />
+            <button className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center hover:bg-accent transition-colors">
+              <Heart size={18} className="text-muted-foreground" />
             </button>
-            <button className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center hover:bg-white/[0.1] transition-colors">
-              <Share2 size={18} className="text-[#8B95A5]" />
+            <button className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center hover:bg-accent transition-colors">
+              <Share2 size={18} className="text-muted-foreground" />
             </button>
-            <button className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center hover:bg-white/[0.1] transition-colors">
-              <ExternalLink size={18} className="text-[#8B95A5]" />
+            <button className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center hover:bg-accent transition-colors">
+              <ExternalLink size={18} className="text-muted-foreground" />
             </button>
           </div>
         </div>
@@ -104,7 +104,7 @@ export function ListingDetail() {
                 alt={listing.title}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0A0F1E]/60 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
             </motion.div>
 
             {/* Title + Price */}
@@ -116,12 +116,12 @@ export function ListingDetail() {
             >
               <div className="flex items-start justify-between mb-2">
                 <div>
-                  <h1 className="text-white text-[24px] lg:text-[28px] mb-1" style={{ fontWeight: 700 }}>
+                  <h1 className="text-foreground text-[24px] lg:text-[28px] mb-1" style={{ fontWeight: 700 }}>
                     {listing.title}
                   </h1>
                   <div className="flex items-center gap-1.5">
-                    <MapPin size={14} className="text-[#8B95A5]" />
-                    <span className="text-[#8B95A5] text-[14px]">
+                    <MapPin size={14} className="text-muted-foreground" />
+                    <span className="text-muted-foreground text-[14px]">
                       {listing.address}, {listing.city}
                     </span>
                   </div>
@@ -142,19 +142,19 @@ export function ListingDetail() {
               <div className="flex items-center gap-6 mt-4">
                 <span className="text-[#3B82F6] text-[26px]" style={{ fontWeight: 700 }}>
                   ${listing.price.toLocaleString()}
-                  <span className="text-[#8B95A5] text-[14px]" style={{ fontWeight: 400 }}>/mo</span>
+                  <span className="text-muted-foreground text-[14px]" style={{ fontWeight: 400 }}>/mo</span>
                 </span>
-                <div className="flex items-center gap-5 text-[#8B95A5]">
+                <div className="flex items-center gap-5 text-muted-foreground">
                   <div className="flex items-center gap-1.5">
-                    <Bed size={16} className="text-[#6B7280]" />
+                    <Bed size={16} className="text-muted-foreground" />
                     <span className="text-[14px]">{listing.beds} Bed</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Bath size={16} className="text-[#6B7280]" />
+                    <Bath size={16} className="text-muted-foreground" />
                     <span className="text-[14px]">{listing.baths} Bath</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Square size={16} className="text-[#6B7280]" />
+                    <Square size={16} className="text-muted-foreground" />
                     <span className="text-[14px]">{listing.sqft} sqft</span>
                   </div>
                 </div>
@@ -168,12 +168,12 @@ export function ListingDetail() {
               transition={{ delay: 0.15 }}
               className="mb-6"
             >
-              <h3 className="text-white text-[16px] mb-3" style={{ fontWeight: 600 }}>Features</h3>
+              <h3 className="text-foreground text-[16px] mb-3" style={{ fontWeight: 600 }}>Features</h3>
               <div className="flex gap-2 flex-wrap">
                 {listing.features.map((f) => (
                   <span
                     key={f}
-                    className="text-[13px] text-[#8B95A5] bg-white/[0.06] px-4 py-2 rounded-lg border border-white/[0.04]"
+                    className="text-[13px] text-muted-foreground bg-muted px-4 py-2 rounded-lg border border-border"
                   >
                     {f}
                   </span>
@@ -186,16 +186,16 @@ export function ListingDetail() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-[#111827] rounded-2xl p-5 lg:p-6 border border-white/[0.06]"
+              className="bg-card rounded-2xl p-5 lg:p-6 border border-border"
             >
-              <h3 className="text-white text-[16px] mb-4" style={{ fontWeight: 600 }}>
+              <h3 className="text-foreground text-[16px] mb-4" style={{ fontWeight: 600 }}>
                 Livability Analysis
               </h3>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {stats.map((stat) => (
                   <div
                     key={stat.label}
-                    className="bg-white/[0.03] rounded-xl p-4"
+                    className="bg-muted rounded-xl p-4"
                   >
                     <div
                       className="w-10 h-10 rounded-lg flex items-center justify-center mb-3"
@@ -203,11 +203,11 @@ export function ListingDetail() {
                     >
                       <stat.icon size={20} style={{ color: stat.color }} />
                     </div>
-                    <p className="text-[#6B7280] text-[12px] mb-0.5">{stat.label}</p>
-                    <p className="text-white text-[18px]" style={{ fontWeight: 700 }}>
+                    <p className="text-muted-foreground text-[12px] mb-0.5">{stat.label}</p>
+                    <p className="text-foreground text-[18px]" style={{ fontWeight: 700 }}>
                       {stat.value}
                     </p>
-                    <p className="text-[#6B7280] text-[11px] mt-0.5">{stat.desc}</p>
+                    <p className="text-muted-foreground text-[11px] mt-0.5">{stat.desc}</p>
                   </div>
                 ))}
               </div>
@@ -222,12 +222,12 @@ export function ListingDetail() {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-[#111827] rounded-2xl p-5 border border-white/[0.06]"
+                className="bg-card rounded-2xl p-5 border border-border"
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <Users size={16} className="text-[#F59E0B]" />
-                    <span className="text-white text-[15px]" style={{ fontWeight: 600 }}>
+                    <span className="text-foreground text-[15px]" style={{ fontWeight: 600 }}>
                       Competition
                     </span>
                   </div>
@@ -250,7 +250,7 @@ export function ListingDetail() {
                       : "Low Demand"}
                   </span>
                 </div>
-                <div className="w-full h-2.5 bg-white/[0.06] rounded-full overflow-hidden mb-2">
+                <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden mb-2">
                   <div
                     className="h-full rounded-full transition-all duration-1000"
                     style={{
@@ -261,7 +261,7 @@ export function ListingDetail() {
                     }}
                   />
                 </div>
-                <p className="text-[#6B7280] text-[12px]">
+                <p className="text-muted-foreground text-[12px]">
                   {listing.competitionScore > 70
                     ? "Many applicants are viewing this listing"
                     : "Fewer applicants interested right now"}
@@ -283,7 +283,7 @@ export function ListingDetail() {
                     <p className="text-[#3B82F6] text-[11px]" style={{ fontWeight: 700 }}>
                       AI SUGGESTION
                     </p>
-                    <p className="text-white text-[15px]" style={{ fontWeight: 500 }}>
+                    <p className="text-foreground text-[15px]" style={{ fontWeight: 500 }}>
                       {listing.aiSuggestion}
                     </p>
                   </div>
@@ -298,7 +298,7 @@ export function ListingDetail() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-[#111827] rounded-2xl p-5 border border-white/[0.06]"
+                className="bg-card rounded-2xl p-5 border border-border"
               >
                 <button
                   className="w-full bg-[#3B82F6] text-white py-3.5 rounded-xl text-[16px] flex items-center justify-center gap-2 hover:bg-[#2563EB] active:scale-[0.98] transition-all"
@@ -307,7 +307,7 @@ export function ListingDetail() {
                   <Zap size={20} />
                   1-Click Apply
                 </button>
-                <p className="text-center text-[#6B7280] text-[12px] mt-3">
+                <p className="text-center text-muted-foreground text-[12px] mt-3">
                   Your Renter Passport will be shared automatically
                 </p>
               </motion.div>

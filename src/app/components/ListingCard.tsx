@@ -36,7 +36,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
   return (
     <button
       onClick={() => navigate(`/listing/${listing.id}`)}
-      className="w-full bg-[#111827] rounded-2xl overflow-hidden border border-white/[0.06] hover:border-[#3B82F6]/30 transition-all text-left group"
+      className="w-full bg-card rounded-2xl overflow-hidden border border-border hover:border-[#3B82F6]/30 transition-all text-left group"
     >
       <div className="relative h-44 lg:h-48">
         <ImageWithFallback
@@ -44,7 +44,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
           alt={listing.title}
           className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         <div
           className={`absolute top-3 right-3 ${getMatchColor(
             listing.matchPercent
@@ -62,30 +62,30 @@ export function ListingCard({ listing }: { listing: Listing }) {
       </div>
       <div className="p-4">
         <div className="flex items-start justify-between mb-1.5">
-          <h3 className="text-white text-[15px]" style={{ fontWeight: 600 }}>
+          <h3 className="text-foreground text-[15px]" style={{ fontWeight: 600 }}>
             {listing.title}
           </h3>
           <span className="text-[#3B82F6] text-[16px] shrink-0 ml-3" style={{ fontWeight: 700 }}>
             ${listing.price.toLocaleString()}
-            <span className="text-[#8B95A5] text-[11px]" style={{ fontWeight: 400 }}>/mo</span>
+            <span className="text-muted-foreground text-[11px]" style={{ fontWeight: 400 }}>/mo</span>
           </span>
         </div>
         <div className="flex items-center gap-1 mb-3">
-          <MapPin size={12} className="text-[#8B95A5]" />
-          <span className="text-[#8B95A5] text-[12px]">
+          <MapPin size={12} className="text-muted-foreground" />
+          <span className="text-muted-foreground text-[12px]">
             {listing.address}, {listing.city}
           </span>
         </div>
         <div className="flex items-center gap-3 mb-3">
           <div className="flex items-center gap-1">
-            <Bed size={13} className="text-[#6B7280]" />
-            <span className="text-[#8B95A5] text-[12px]">{listing.beds} bed</span>
+            <Bed size={13} className="text-muted-foreground" />
+            <span className="text-muted-foreground text-[12px]">{listing.beds} bed</span>
           </div>
           <div className="flex items-center gap-1">
-            <Bath size={13} className="text-[#6B7280]" />
-            <span className="text-[#8B95A5] text-[12px]">{listing.baths} bath</span>
+            <Bath size={13} className="text-muted-foreground" />
+            <span className="text-muted-foreground text-[12px]">{listing.baths} bath</span>
           </div>
-          <span className="text-[#6B7280] text-[12px]">{listing.sqft} sqft</span>
+          <span className="text-muted-foreground text-[12px]">{listing.sqft} sqft</span>
           <span className={`ml-auto text-[11px] ${getDemandColor(listing.demand)}`}>
             {listing.demand} Demand
           </span>
@@ -94,7 +94,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
           {listing.features.map((f) => (
             <span
               key={f}
-              className="text-[10px] text-[#8B95A5] bg-white/[0.05] px-2 py-0.5 rounded-md"
+              className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-md"
             >
               {f}
             </span>

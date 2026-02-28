@@ -39,20 +39,20 @@ export function PassportScreen() {
   const completionPct = Math.round((verified / total) * 100);
 
   return (
-    <div className="min-h-screen bg-[#0A0F1E]">
+    <div className="min-h-screen bg-background">
       {/* Page Header */}
-      <div className="border-b border-white/[0.06] px-6 lg:px-10 py-5 lg:py-6">
+      <div className="border-b border-border px-6 lg:px-10 py-5 lg:py-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-white text-[24px] lg:text-[28px]" style={{ fontWeight: 700 }}>
+            <h1 className="text-foreground text-[24px] lg:text-[28px]" style={{ fontWeight: 700 }}>
               Renter Passport
             </h1>
-            <p className="text-[#8B95A5] text-[14px] mt-1">
+            <p className="text-muted-foreground text-[14px] mt-1">
               Your verified renter profile for instant applications
             </p>
           </div>
           <div className="flex gap-2">
-            <button className="hidden sm:flex items-center gap-2 bg-white/[0.06] text-[#8B95A5] px-4 py-2.5 rounded-xl text-[14px] hover:bg-white/[0.1] transition-colors" style={{ fontWeight: 500 }}>
+            <button className="hidden sm:flex items-center gap-2 bg-muted text-muted-foreground px-4 py-2.5 rounded-xl text-[14px] hover:bg-accent transition-colors" style={{ fontWeight: 500 }}>
               <Download size={16} />
               Export PDF
             </button>
@@ -72,14 +72,14 @@ export function PassportScreen() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-br from-[#111827] to-[#0D1321] rounded-2xl p-6 lg:p-8 border border-white/[0.06] mb-5 flex flex-col items-center"
+              className="bg-card rounded-2xl p-6 lg:p-8 border border-border mb-5 flex flex-col items-center"
             >
               <ScoreRing score={847} size={150} strokeWidth={9} />
               <div className="mt-4 text-center">
                 <p className="text-[#10B981] text-[15px] mb-1" style={{ fontWeight: 600 }}>
                   Excellent
                 </p>
-                <p className="text-[#8B95A5] text-[13px]">
+                <p className="text-muted-foreground text-[13px]">
                   Your passport is accepted by 92% of landlords
                 </p>
               </div>
@@ -90,17 +90,17 @@ export function PassportScreen() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-[#111827] rounded-2xl p-5 border border-white/[0.06] mb-5"
+              className="bg-card rounded-2xl p-5 border border-border mb-5"
             >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-white text-[15px]" style={{ fontWeight: 600 }}>
+                <span className="text-foreground text-[15px]" style={{ fontWeight: 600 }}>
                   Profile Completion
                 </span>
                 <span className="text-[#3B82F6] text-[15px]" style={{ fontWeight: 700 }}>
                   {completionPct}%
                 </span>
               </div>
-              <div className="w-full h-2.5 bg-white/[0.06] rounded-full overflow-hidden mb-2">
+              <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden mb-2">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${completionPct}%` }}
@@ -108,7 +108,7 @@ export function PassportScreen() {
                   className="h-full bg-[#3B82F6] rounded-full"
                 />
               </div>
-              <p className="text-[#6B7280] text-[12px]">
+              <p className="text-muted-foreground text-[12px]">
                 {verified} of {total} documents verified
               </p>
             </motion.div>
@@ -125,14 +125,14 @@ export function PassportScreen() {
                 <p className="text-[#10B981] text-[13px]" style={{ fontWeight: 600 }}>
                   Bank-level encryption
                 </p>
-                <p className="text-[#6B7280] text-[11px]">Your data is secured with AES-256</p>
+                <p className="text-muted-foreground text-[11px]">Your data is secured with AES-256</p>
               </div>
             </motion.div>
           </div>
 
           {/* Right Column: Documents */}
           <div className="lg:col-span-2">
-            <h3 className="text-white text-[18px] mb-4" style={{ fontWeight: 600 }}>
+            <h3 className="text-foreground text-[18px] mb-4" style={{ fontWeight: 600 }}>
               Documents
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -146,13 +146,13 @@ export function PassportScreen() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 + i * 0.05 }}
-                    className="bg-[#111827] rounded-xl p-4 border border-white/[0.04] flex items-center gap-4 hover:border-white/[0.1] transition-colors cursor-pointer"
+                    className="bg-card rounded-xl p-4 border border-border flex items-center gap-4 hover:border-accent transition-colors cursor-pointer"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-white/[0.04] flex items-center justify-center">
-                      <Icon size={20} className="text-[#8B95A5]" />
+                    <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
+                      <Icon size={20} className="text-muted-foreground" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-white text-[14px]" style={{ fontWeight: 500 }}>
+                      <p className="text-foreground text-[14px]" style={{ fontWeight: 500 }}>
                         {doc.name}
                       </p>
                       <div className="flex items-center gap-1.5 mt-1">
@@ -162,13 +162,13 @@ export function PassportScreen() {
                         </span>
                       </div>
                     </div>
-                    <ChevronRight size={16} className="text-[#4B5563]" />
+                    <ChevronRight size={16} className="text-muted-foreground" />
                   </motion.div>
                 );
               })}
             </div>
 
-            <p className="text-[#6B7280] text-[12px] mt-6">
+            <p className="text-muted-foreground text-[12px] mt-6">
               Securely share your verified renter profile with landlords. Documents are encrypted and only shared with your explicit consent.
             </p>
           </div>
