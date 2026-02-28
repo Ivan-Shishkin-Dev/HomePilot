@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import { MapPin, Bed, Bath, Clock } from "lucide-react";
+import { MapPin, Bed, Bath, Clock, ExternalLink } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 
 interface Listing {
@@ -16,6 +16,8 @@ interface Listing {
   image: string;
   timeLeft: string;
   features: string[];
+  listingUrl?: string;
+  source?: string;
 }
 
 export function ListingCard({ listing }: { listing: Listing }) {
@@ -34,10 +36,11 @@ export function ListingCard({ listing }: { listing: Listing }) {
   };
 
   return (
-    <button
-      onClick={() => navigate(`/listing/${listing.id}`)}
-      className="w-full bg-card rounded-2xl overflow-hidden border border-border hover:border-[#10B981]/30 transition-all text-left group"
-    >
+    <div className="w-full bg-card rounded-2xl overflow-hidden border border-border hover:border-[#10B981]/30 transition-all text-left group flex flex-col">
+      <button
+        onClick={() => navigate(`/listing/${listing.id}`)}
+        className="flex-1 text-left min-w-0"
+      >
       <div className="relative h-44 lg:h-48">
         <ImageWithFallback
           src={listing.image}
@@ -57,7 +60,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
         </div>
         <div className="absolute bottom-3 left-3 flex items-center gap-1.5">
           <Clock size={12} className="text-white/60" />
-          <span className="text-white/70 text-[11px]">{listing.timeLeft} left</span>
+          <span className="text-white/70 text-[11px]">{listing.timeLeft}</span>
         </div>
       </div>
       <div className="p-4">
@@ -79,7 +82,9 @@ export function ListingCard({ listing }: { listing: Listing }) {
         <div className="flex items-center gap-3 mb-3">
           <div className="flex items-center gap-1">
             <Bed size={13} className="text-muted-foreground" />
-            <span className="text-muted-foreground text-[12px]">{listing.beds} bed</span>
+            <span className="text-muted-foreground text-[12px]">
+              {listing.beds === 0 ? "Studio" : `${listing.beds} bed`}
+            </span>
           </div>
           <div className="flex items-center gap-1">
             <Bath size={13} className="text-muted-foreground" />
@@ -101,6 +106,23 @@ export function ListingCard({ listing }: { listing: Listing }) {
           ))}
         </div>
       </div>
-    </button>
+      </button>
+      {listing.listingUrl && (
+        <div
+          className="px-4 pb-4 pt-1 flex flex-wrap gap-2 border-t border-border mt-1"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <a
+            href={listing.listingUrl}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="inline-flex items-center gap-1.5 text-[12px] text-[#10B981] hover:underline"
+          >
+            <ExternalLink size={12} />
+            {listing.source === "apartments" ? "View on Apartments.com" : "View on Zillow"}
+          </a>
+        </div>
+      )}
+    </div>
   );
 }
