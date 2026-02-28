@@ -1,14 +1,60 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Bell, Sparkles, TrendingUp, Clock, ChevronRight, Zap, ArrowUpRight } from "lucide-react";
+import { Bell, Sparkles, TrendingUp, Clock, ChevronRight, Zap, ArrowUpRight, Loader2 } from "lucide-react";
 import { ScoreRing } from "./ScoreRing";
 import { ListingCard } from "./ListingCard";
-import { listings } from "./data";
+import { useListings } from "../../hooks/useSupabaseData";
+import { useAuth } from "../../contexts/AuthContext";
 import { motion } from "motion/react";
 
 export function HomeScreen() {
   const navigate = useNavigate();
   const [showAlert, setShowAlert] = useState(true);
+  const { listings, loading } = useListings();
+  const { profile } = useAuth();
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  };
+
+  const getUserFirstName = () => {
+    if (!profile) return "there";
+    return profile.first_name || "there";
+  };
+
+  // Convert listing format for ListingCard
+  const formatListing = (listing: typeof listings[0]) => ({
+    id: listing.id,
+    title: listing.title,
+    address: listing.address,
+    city: "",
+    price: listing.price,
+    beds: listing.bedrooms,
+    baths: listing.bathrooms,
+    sqft: listing.sqft,
+    matchPercent: listing.match_score,
+    demand: listing.competition_level > 70 ? "High" : listing.competition_level > 40 ? "Medium" : "Low",
+    image: listing.image_url,
+    crimeIndex: 0,
+    rentTrend: "",
+    neighborhoodRisk: "Low",
+    scamScore: 0,
+    timeLeft: "",
+    aiSuggestion: listing.ai_reasons?.[0] || "",
+    competitionScore: listing.competition_level,
+    features: listing.amenities || [],
+  });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0A0F1E] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0A0F1E]">
@@ -16,9 +62,9 @@ export function HomeScreen() {
       <div className="border-b border-white/[0.06] px-6 lg:px-10 py-5 lg:py-6">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div>
-            <span className="text-[#8B95A5] text-[13px]">Good evening</span>
+            <span className="text-[#8B95A5] text-[13px]">{getGreeting()}</span>
             <h1 className="text-white text-[24px] lg:text-[28px]" style={{ fontWeight: 700, lineHeight: 1.2 }}>
-              Welcome back, Alex
+              Welcome back, {getUserFirstName()}
             </h1>
           </div>
           <div className="flex items-center gap-3">
@@ -44,7 +90,7 @@ export function HomeScreen() {
             className="bg-gradient-to-br from-[#111827] to-[#0D1321] rounded-2xl p-6 border border-white/[0.06]"
           >
             <div className="flex items-center gap-6">
-              <ScoreRing score={847} size={110} strokeWidth={7} />
+              <ScoreRing score={profile?.renter_score || 0} size={110} strokeWidth={7} />
               <div className="flex-1">
                 <div className="flex items-center gap-1.5 mb-2">
                   <TrendingUp size={14} className="text-[#10B981]" />
@@ -188,7 +234,7 @@ export function HomeScreen() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.3 + i * 0.1 }}
             >
-              <ListingCard listing={listing} />
+              <ListingCard listing={formatListing(listing)} />
             </motion.div>
           ))}
         </div>

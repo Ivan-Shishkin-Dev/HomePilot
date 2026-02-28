@@ -1,51 +1,74 @@
 import { useNavigate } from "react-router";
-import { ArrowLeft, Zap, Clock, MapPin, TrendingUp, Shield, Users, Bell } from "lucide-react";
-import { listings } from "./data";
+import { ArrowLeft, Zap, Clock, MapPin, TrendingUp, Shield, Users, Bell, Loader2 } from "lucide-react";
+import { useListings } from "../../hooks/useSupabaseData";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { motion } from "motion/react";
 
 export function AlertScreen() {
   const navigate = useNavigate();
+  const { listings, loading } = useListings();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0A0F1E] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
+      </div>
+    );
+  }
+
   const listing = listings[0];
   const listing2 = listings[1];
+
+  if (!listing) {
+    return (
+      <div className="min-h-screen bg-[#0A0F1E] flex items-center justify-center">
+        <p className="text-white">No alerts available</p>
+      </div>
+    );
+  }
 
   const reasons = [
     {
       icon: TrendingUp,
-      text: "92% match with your preferences and budget",
+      text: `${listing.match_score}% match with your preferences and budget`,
       color: "#10B981",
     },
     {
       icon: Shield,
-      text: "Low crime area with verified landlord",
+      text: "Verified landlord and listing",
       color: "#10B981",
     },
     {
       icon: Users,
-      text: "15 applicants already — act fast",
-      color: "#F59E0B",
+      text: listing.competition_level > 70 ? "High competition — act fast" : "Moderate competition",
+      color: listing.competition_level > 70 ? "#F59E0B" : "#10B981",
     },
     {
       icon: Clock,
-      text: "Application deadline in 2h 15m",
-      color: "#EF4444",
+      text: "New listing — apply early",
+      color: "#3B82F6",
     },
   ];
 
-  const alerts = [
+  const alerts = listing2 ? [
     {
-      listing: listing,
+      listing: { ...listing, image: listing.image_url, matchPercent: listing.match_score },
       urgency: "URGENT",
       urgencyColor: "#EF4444",
       timeAgo: "2 min ago",
     },
     {
-      listing: listing2,
+      listing: { ...listing2, image: listing2.image_url, matchPercent: listing2.match_score },
       urgency: "NEW MATCH",
       urgencyColor: "#3B82F6",
       timeAgo: "15 min ago",
     },
-  ];
+  ] : [{
+    listing: { ...listing, image: listing.image_url, matchPercent: listing.match_score },
+    urgency: "URGENT",
+    urgencyColor: "#EF4444",
+    timeAgo: "2 min ago",
+  }];
 
   return (
     <div className="min-h-screen bg-[#0A0F1E]">
@@ -102,13 +125,13 @@ export function AlertScreen() {
                 <div className="flex gap-5 flex-col sm:flex-row">
                   <div className="relative rounded-xl overflow-hidden w-full sm:w-64 h-44 shrink-0">
                     <ImageWithFallback
-                      src={listing.image}
+                      src={listing.image_url}
                       alt={listing.title}
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute top-3 right-3 bg-[#10B981] px-2.5 py-1 rounded-lg">
                       <span className="text-white text-[14px]" style={{ fontWeight: 700 }}>
-                        {listing.matchPercent}% match
+                        {listing.match_score}% match
                       </span>
                     </div>
                   </div>
@@ -119,7 +142,7 @@ export function AlertScreen() {
                     <div className="flex items-center gap-1 mb-3">
                       <MapPin size={13} className="text-[#8B95A5]" />
                       <span className="text-[#8B95A5] text-[13px]">
-                        {listing.address}, {listing.city}
+                        {listing.address}
                       </span>
                     </div>
                     <span className="text-[#3B82F6] text-[22px]" style={{ fontWeight: 700 }}>
@@ -127,9 +150,9 @@ export function AlertScreen() {
                       <span className="text-[#8B95A5] text-[13px]" style={{ fontWeight: 400 }}>/mo</span>
                     </span>
                     <div className="flex items-center gap-1.5 mt-3">
-                      <Clock size={14} className="text-[#EF4444]" />
-                      <span className="text-[#EF4444] text-[14px]" style={{ fontWeight: 600 }}>
-                        {listing.timeLeft} left to apply
+                      <Clock size={14} className="text-[#3B82F6]" />
+                      <span className="text-[#3B82F6] text-[14px]" style={{ fontWeight: 600 }}>
+                        Available now
                       </span>
                     </div>
                   </div>

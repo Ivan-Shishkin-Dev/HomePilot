@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Search, SlidersHorizontal, MapPin, Grid2x2, LayoutList } from "lucide-react";
+import { Search, SlidersHorizontal, MapPin, Grid2x2, LayoutList, Loader2 } from "lucide-react";
 import { ListingCard } from "./ListingCard";
-import { listings } from "./data";
+import { useListings } from "../../hooks/useSupabaseData";
+import { useAuth } from "../../contexts/AuthContext";
 import { motion } from "motion/react";
 
 const filters = ["All", "Best Match", "Lowest Price", "Newest", "Pet Friendly", "Near Transit"];
@@ -10,9 +11,34 @@ export function ListingsScreen() {
   const [activeFilter, setActiveFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const { listings, loading } = useListings();
+  const { profile } = useAuth();
+
+  // Convert listing format for ListingCard
+  const formatListing = (listing: typeof listings[0]) => ({
+    id: listing.id,
+    title: listing.title,
+    address: listing.address,
+    city: "",
+    price: listing.price,
+    beds: listing.bedrooms,
+    baths: listing.bathrooms,
+    sqft: listing.sqft,
+    matchPercent: listing.match_score,
+    demand: listing.competition_level > 70 ? "High" : listing.competition_level > 40 ? "Medium" : "Low",
+    image: listing.image_url,
+    crimeIndex: 0,
+    rentTrend: "",
+    neighborhoodRisk: "Low",
+    scamScore: 0,
+    timeLeft: "",
+    aiSuggestion: listing.ai_reasons?.[0] || "",
+    competitionScore: listing.competition_level,
+    features: listing.amenities || [],
+  });
 
   const sortedListings = [...listings].sort((a, b) => {
-    if (activeFilter === "Best Match") return b.matchPercent - a.matchPercent;
+    if (activeFilter === "Best Match") return b.match_score - a.match_score;
     if (activeFilter === "Lowest Price") return a.price - b.price;
     return 0;
   });
@@ -21,8 +47,16 @@ export function ListingsScreen() {
     (l) =>
       !searchQuery ||
       l.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      l.city.toLowerCase().includes(searchQuery.toLowerCase())
+      l.address.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0A0F1E] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0A0F1E]">
@@ -75,7 +109,7 @@ export function ListingsScreen() {
           <div className="flex items-center gap-1.5 mb-4">
             <MapPin size={13} className="text-[#3B82F6]" />
             <span className="text-[#8B95A5] text-[13px]">
-              Searching within 25mi of New York, NY
+              Searching within 25mi of {profile?.search_city || "your area"}
             </span>
           </div>
           <div className="flex gap-2 overflow-x-auto no-scrollbar">
@@ -117,7 +151,7 @@ export function ListingsScreen() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, delay: i * 0.06 }}
             >
-              <ListingCard listing={listing} />
+              <ListingCard listing={formatListing(listing)} />
             </motion.div>
           ))}
         </div>

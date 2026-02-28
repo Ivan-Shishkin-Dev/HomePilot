@@ -14,15 +14,16 @@ import {
   Users,
   ChevronRight,
   ExternalLink,
+  Loader2,
 } from "lucide-react";
-import { listings } from "./data";
+import { useListing } from "../../hooks/useSupabaseData";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { motion } from "motion/react";
 
 export function ListingDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const listing = listings.find((l) => l.id === id) || listings[0];
+  const { listing, loading } = useListing(id);
 
   const getMatchColor = (pct: number) => {
     if (pct >= 80) return "#10B981";
@@ -30,36 +31,52 @@ export function ListingDetail() {
     return "#EF4444";
   };
 
-  const matchColor = getMatchColor(listing.matchPercent);
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0A0F1E] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
+      </div>
+    );
+  }
+
+  if (!listing) {
+    return (
+      <div className="min-h-screen bg-[#0A0F1E] flex items-center justify-center">
+        <p className="text-white">Listing not found</p>
+      </div>
+    );
+  }
+
+  const matchColor = getMatchColor(listing.match_score);
 
   const stats = [
     {
       icon: Shield,
-      label: "Crime Index",
-      value: `${listing.crimeIndex}/100`,
-      color: listing.crimeIndex < 30 ? "#10B981" : listing.crimeIndex < 50 ? "#F59E0B" : "#EF4444",
-      desc: listing.crimeIndex < 30 ? "Safe area" : "Exercise caution",
+      label: "Livability",
+      value: `${listing.livability_score}/100`,
+      color: listing.livability_score > 70 ? "#10B981" : listing.livability_score > 50 ? "#F59E0B" : "#EF4444",
+      desc: listing.livability_score > 70 ? "Great area" : "Moderate area",
     },
     {
       icon: TrendingUp,
-      label: "Rent Trend",
-      value: listing.rentTrend,
-      color: listing.rentTrend.startsWith("-") ? "#10B981" : "#F59E0B",
-      desc: listing.rentTrend.startsWith("-") ? "Prices decreasing" : "Prices rising",
+      label: "Match Score",
+      value: `${listing.match_score}%`,
+      color: listing.match_score >= 80 ? "#10B981" : "#F59E0B",
+      desc: listing.match_score >= 80 ? "Excellent match" : "Good match",
     },
     {
       icon: AlertTriangle,
-      label: "Area Risk",
-      value: listing.neighborhoodRisk,
-      color: listing.neighborhoodRisk === "Low" ? "#10B981" : "#F59E0B",
-      desc: listing.neighborhoodRisk === "Low" ? "Low risk neighborhood" : "Moderate risk",
+      label: "Competition",
+      value: listing.competition_level > 70 ? "High" : listing.competition_level > 40 ? "Medium" : "Low",
+      color: listing.competition_level < 40 ? "#10B981" : listing.competition_level < 70 ? "#F59E0B" : "#EF4444",
+      desc: listing.competition_level > 70 ? "Many applicants" : "Fewer applicants",
     },
     {
       icon: Shield,
-      label: "Scam Score",
-      value: `${listing.scamScore}/100`,
-      color: listing.scamScore < 10 ? "#10B981" : listing.scamScore < 30 ? "#F59E0B" : "#EF4444",
-      desc: listing.scamScore < 10 ? "Verified listing" : "Some flags detected",
+      label: "Verified",
+      value: "Yes",
+      color: "#10B981",
+      desc: "Verified listing",
     },
   ];
 
@@ -100,7 +117,7 @@ export function ListingDetail() {
               className="relative rounded-2xl overflow-hidden mb-6 h-64 sm:h-80 lg:h-96"
             >
               <ImageWithFallback
-                src={listing.image}
+                src={listing.image_url}
                 alt={listing.title}
                 className="w-full h-full object-cover"
               />
@@ -122,7 +139,7 @@ export function ListingDetail() {
                   <div className="flex items-center gap-1.5">
                     <MapPin size={14} className="text-[#8B95A5]" />
                     <span className="text-[#8B95A5] text-[14px]">
-                      {listing.address}, {listing.city}
+                      {listing.address}
                     </span>
                   </div>
                 </div>
@@ -131,7 +148,7 @@ export function ListingDetail() {
                   style={{ backgroundColor: `${matchColor}15` }}
                 >
                   <span style={{ color: matchColor, fontWeight: 800, fontSize: 32, lineHeight: 1 }}>
-                    {listing.matchPercent}%
+                    {listing.match_score}%
                   </span>
                   <span className="text-[11px] mt-1" style={{ color: matchColor, fontWeight: 600 }}>
                     MATCH
@@ -147,11 +164,11 @@ export function ListingDetail() {
                 <div className="flex items-center gap-5 text-[#8B95A5]">
                   <div className="flex items-center gap-1.5">
                     <Bed size={16} className="text-[#6B7280]" />
-                    <span className="text-[14px]">{listing.beds} Bed</span>
+                    <span className="text-[14px]">{listing.bedrooms} Bed</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Bath size={16} className="text-[#6B7280]" />
-                    <span className="text-[14px]">{listing.baths} Bath</span>
+                    <span className="text-[14px]">{listing.bathrooms} Bath</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Square size={16} className="text-[#6B7280]" />
@@ -170,7 +187,7 @@ export function ListingDetail() {
             >
               <h3 className="text-white text-[16px] mb-3" style={{ fontWeight: 600 }}>Features</h3>
               <div className="flex gap-2 flex-wrap">
-                {listing.features.map((f) => (
+                {(listing.amenities || []).map((f) => (
                   <span
                     key={f}
                     className="text-[13px] text-[#8B95A5] bg-white/[0.06] px-4 py-2 rounded-lg border border-white/[0.04]"
@@ -236,16 +253,16 @@ export function ListingDetail() {
                     style={{
                       fontWeight: 600,
                       color:
-                        listing.competitionScore > 70
+                        listing.competition_level > 70
                           ? "#EF4444"
-                          : listing.competitionScore > 40
+                          : listing.competition_level > 40
                           ? "#F59E0B"
                           : "#10B981",
                     }}
                   >
-                    {listing.competitionScore > 70
+                    {listing.competition_level > 70
                       ? "High Demand"
-                      : listing.competitionScore > 40
+                      : listing.competition_level > 40
                       ? "Moderate"
                       : "Low Demand"}
                   </span>
@@ -254,15 +271,15 @@ export function ListingDetail() {
                   <div
                     className="h-full rounded-full transition-all duration-1000"
                     style={{
-                      width: `${listing.competitionScore}%`,
+                      width: `${listing.competition_level}%`,
                       background: `linear-gradient(90deg, #10B981, ${
-                        listing.competitionScore > 70 ? "#EF4444" : "#F59E0B"
+                        listing.competition_level > 70 ? "#EF4444" : "#F59E0B"
                       })`,
                     }}
                   />
                 </div>
                 <p className="text-[#6B7280] text-[12px]">
-                  {listing.competitionScore > 70
+                  {listing.competition_level > 70
                     ? "Many applicants are viewing this listing"
                     : "Fewer applicants interested right now"}
                 </p>
@@ -284,7 +301,7 @@ export function ListingDetail() {
                       AI SUGGESTION
                     </p>
                     <p className="text-white text-[15px]" style={{ fontWeight: 500 }}>
-                      {listing.aiSuggestion}
+                      {listing.ai_reasons?.[0] || "Complete your profile for better matching"}
                     </p>
                   </div>
                 </div>
