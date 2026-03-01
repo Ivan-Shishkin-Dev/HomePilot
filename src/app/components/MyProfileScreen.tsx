@@ -12,11 +12,20 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
+  Trash2,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { ScoreRing } from "./ScoreRing";
 import { motion } from "motion/react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
 
 function getScoreLabel(score: number): { label: string; color: string } {
   if (score >= 800) return { label: "Excellent", color: "#10B981" };
@@ -26,7 +35,7 @@ function getScoreLabel(score: number): { label: string; color: string } {
 
 export function MyProfileScreen() {
   const navigate = useNavigate();
-  const { profile, user, loading: authLoading } = useAuth();
+  const { profile, user, loading: authLoading, signOut } = useAuth();
 
   const [newEmail, setNewEmail] = useState("");
   const [emailStatus, setEmailStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -39,6 +48,37 @@ export function MyProfileScreen() {
   const [showNewPw, setShowNewPw] = useState(false);
   const [passwordStatus, setPasswordStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [passwordSaving, setPasswordSaving] = useState(false);
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteAccountLoading, setDeleteAccountLoading] = useState(false);
+  const [deleteAccountError, setDeleteAccountError] = useState<string | null>(null);
+
+  const handleDeleteAccount = async () => {
+    if (!user?.id) return;
+    setDeleteAccountError(null);
+    setDeleteAccountLoading(true);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke("delete-user", {
+        body: {},
+      });
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
+      await signOut().catch(() => {});
+      navigate("/", { replace: true });
+      return;
+    } catch {
+      // Fallback when Edge Function is not deployed or unreachable: delete profile and sign out
+      const { error: deleteProfileError } = await supabase.from("profiles").delete().eq("id", user!.id);
+      if (deleteProfileError) {
+        setDeleteAccountError(deleteProfileError.message || "Failed to delete account. Try again.");
+        return;
+      }
+      await signOut().catch(() => {});
+      navigate("/", { replace: true });
+    } finally {
+      setDeleteAccountLoading(false);
+    }
+  };
 
   const handleChangeEmail = async () => {
     setEmailStatus(null);
@@ -383,7 +423,71 @@ export function MyProfileScreen() {
             </motion.div>
           </div>
         </div>
+
+        {/* Delete account */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mt-10 pt-8 border-t border-border"
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setDeleteAccountError(null);
+              setDeleteDialogOpen(true);
+            }}
+            className="flex items-center gap-2 text-[#EF4444] hover:text-red-400 transition-colors text-[14px]"
+            style={{ fontWeight: 600 }}
+          >
+            <Trash2 size={18} />
+            Delete account
+          </button>
+        </motion.div>
       </div>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Delete account</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              This will permanently delete your profile and account. You will not be able to sign in again. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          {deleteAccountError && (
+            <div className="flex items-start gap-2 rounded-lg px-3 py-2 text-[13px] bg-red-500/10 text-red-500 border border-red-500/15">
+              <AlertCircle size={14} className="shrink-0 mt-0.5" />
+              <span>{deleteAccountError}</span>
+            </div>
+          )}
+          <DialogFooter className="gap-2 sm:gap-0">
+            <button
+              type="button"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={deleteAccountLoading}
+              className="px-4 py-2.5 rounded-xl text-[14px] border border-border bg-background text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+              style={{ fontWeight: 600 }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteAccount}
+              disabled={deleteAccountLoading}
+              className="px-4 py-2.5 rounded-xl text-[14px] bg-[#EF4444] text-white hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ fontWeight: 600 }}
+            >
+              {deleteAccountLoading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 size={16} className="animate-spin" /> Deleting…
+                </span>
+              ) : (
+                "Yes, delete my account"
+              )}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
