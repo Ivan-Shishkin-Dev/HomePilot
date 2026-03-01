@@ -76,6 +76,8 @@ export interface Listing {
   apply_url?: string;
   /** Optional: for pet filter (static listings) */
   pet_policy?: { cats: boolean; dogs: boolean; notes?: string };
+  /** Optional: for university/student filter (static listings) */
+  student_friendly?: boolean;
   /** Optional: used by ListingDetail when present */
   competition_level?: number;
   ai_reasons?: string[] | null;

@@ -33,6 +33,8 @@ function staticListingToAppListing(s: StaticListing): Listing {
     apply_url: s.apply_url,
     pet_policy: s.pet_policy,
     source: s.source,
+    student_friendly:
+      s.audience_tags?.includes("student") === true || s.demo_flags?.student_friendly === true,
   };
 }
 

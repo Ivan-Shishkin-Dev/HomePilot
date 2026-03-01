@@ -1,196 +1,308 @@
-import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router";
-import { Search, SlidersHorizontal, MapPin, Grid2x2, LayoutList, Loader2 } from "lucide-react";
-import { ListingCard } from "./ListingCard";
-import { useListings, useSavedListings, useAppliedListings } from "../../hooks/useSupabaseData";
-import { useAuth } from "../../contexts/AuthContext";
-import { motion } from "motion/react";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { useNavigate } from "react-router";
+import { Search, SlidersHorizontal, MapPin, Loader2, ChevronDown } from "lucide-react";
+import { useListings } from "../../hooks/useSupabaseData";
+import { motion, AnimatePresence } from "motion/react";
 
-const filters = ["All", "Saved Listings", "Applied Listings", "Best Match", "Lowest Price", "Newest", "Pet Friendly"];
+export const MAX_PRICE_SLIDER = 10000;
+
+export interface SearchFilters {
+  location: string;
+  beds: number | null;
+  baths: number | null;
+  minSqft: number | null;
+  maxPrice: number | null;
+  petFriendly: boolean;
+  studentFriendly: boolean;
+}
+
+export const defaultSearchFilters: SearchFilters = {
+  location: "",
+  beds: null,
+  baths: null,
+  minSqft: null,
+  maxPrice: null,
+  petFriendly: false,
+  studentFriendly: false,
+};
+
+function buildSearchParams(f: SearchFilters): URLSearchParams {
+  const p = new URLSearchParams();
+  if (f.location) p.set("location", f.location);
+  if (f.beds != null) p.set("beds", String(f.beds));
+  if (f.baths != null) p.set("baths", String(f.baths));
+  if (f.minSqft != null) p.set("minSqft", String(f.minSqft));
+  if (f.maxPrice != null) p.set("maxPrice", String(f.maxPrice));
+  if (f.petFriendly) p.set("petFriendly", "1");
+  if (f.studentFriendly) p.set("studentFriendly", "1");
+  return p;
+}
 
 export function ListingsScreen() {
-  const [searchParams] = useSearchParams();
-  const filterFromUrl = searchParams.get("filter");
-  const [activeFilter, setActiveFilter] = useState(
-    filterFromUrl === "saved" ? "Saved Listings" : filterFromUrl === "applied" ? "Applied Listings" : "All"
-  );
-  const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const navigate = useNavigate();
+  const [filters, setFilters] = useState<SearchFilters>(defaultSearchFilters);
+  const [searchInput, setSearchInput] = useState("");
+  const [showFiltersPanel, setShowFiltersPanel] = useState(false);
+  const [typeaheadOpen, setTypeaheadOpen] = useState(false);
+  const typeaheadRef = useRef<HTMLDivElement>(null);
+
   const { listings, loading } = useListings();
-  const { savedIds, toggleSave } = useSavedListings();
-  const { appliedIds } = useAppliedListings();
-  const { profile } = useAuth();
+
+  // Unique city names from listings data (from src/data/*.json)
+  const cityNames = useMemo(() => {
+    const cities = [...new Set(listings.map((l) => l.city).filter(Boolean))] as string[];
+    return cities.sort((a, b) => a.localeCompare(b));
+  }, [listings]);
+
+  // Typeahead: city names only (from data) that match as you type
+  const suggestions = useMemo(() => {
+    if (!searchInput.trim()) return [];
+    const q = searchInput.trim().toLowerCase();
+    return cityNames.filter((city) => city.toLowerCase().includes(q));
+  }, [cityNames, searchInput]);
 
   useEffect(() => {
-    if (filterFromUrl === "saved") setActiveFilter("Saved Listings");
-    if (filterFromUrl === "applied") setActiveFilter("Applied Listings");
-  }, [filterFromUrl]);
-
-  // Convert listing format for ListingCard (using actual DB schema)
-  const formatListing = (listing: typeof listings[0]) => ({
-    id: listing.id,
-    title: listing.title,
-    address: listing.address,
-    city: listing.city || "",
-    price: listing.price,
-    beds: listing.beds,
-    baths: listing.baths,
-    sqft: listing.sqft,
-    matchPercent: 85,
-    demand: listing.demand || (listing.competition_score > 70 ? "High" : listing.competition_score > 40 ? "Medium" : "Low"),
-    image: listing.image,
-    crimeIndex: listing.crime_index,
-    rentTrend: listing.rent_trend || "",
-    neighborhoodRisk: listing.neighborhood_risk || "Low",
-    scamScore: listing.scam_score,
-    timeLeft: listing.time_left || "",
-    aiSuggestion: listing.ai_suggestion || "",
-    competitionScore: listing.competition_score,
-    features: listing.features || [],
-    listingUrl: listing.listing_url,
-    source: listing.source,
-  });
-
-  // In-memory filter by chip and search
-  const filteredByChip = listings.filter((l) => {
-    if (activeFilter === "Saved Listings") {
-      if (!savedIds.has(l.id)) return false;
+    function handleClick(e: MouseEvent) {
+      if (typeaheadRef.current && !typeaheadRef.current.contains(e.target as Node)) {
+        setTypeaheadOpen(false);
+      }
     }
-    if (activeFilter === "Applied Listings") {
-      if (!appliedIds.has(l.id)) return false;
-    }
-    if (activeFilter === "Pet Friendly") {
-      const ok = l.pet_policy?.cats || l.pet_policy?.dogs;
-      if (!ok) return false;
-    }
-    return true;
-  });
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
-  const sortedListings = [...filteredByChip].sort((a, b) => {
-    if (activeFilter === "Best Match") return b.competition_score - a.competition_score;
-    if (activeFilter === "Lowest Price") return a.price - b.price;
-    if (activeFilter === "Newest") return (b.updated_at ?? "").localeCompare(a.updated_at ?? "");
-    return 0;
-  });
+  const handleSearch = () => {
+    const next = { ...filters, location: searchInput.trim() };
+    setFilters(next);
+    setTypeaheadOpen(false);
+    const query = buildSearchParams(next).toString();
+    navigate(`/listings/results${query ? `?${query}` : ""}`);
+  };
 
-  const filteredListings = sortedListings.filter(
-    (l) =>
-      !searchQuery ||
-      l.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      l.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (l.city ?? "").toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleSelectSuggestion = (city: string) => {
+    setSearchInput(city);
+    setFilters((prev) => ({ ...prev, location: city }));
+    setTypeaheadOpen(false);
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
+        <Loader2 className="w-8 h-8 text-[#10B981] animate-spin" />
       </div>
     );
   }
 
+  // Hero pulls up to cover the full top strip (main is already -mt so content starts at 68px)
   return (
-    <div className="min-h-screen bg-background">
-      {/* Page Header */}
-      <div className="border-b border-border px-6 lg:px-10 py-5 lg:py-6">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-foreground text-[24px] lg:text-[28px] mb-4" style={{ fontWeight: 700 }}>
-            Listings
-          </h1>
-
-          {/* Search Row */}
-          <div className="flex gap-3 mb-4">
-            <div className="flex-1 relative max-w-xl">
-              <Search
-                size={16}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
-              />
-              <input
-                type="text"
-                placeholder="Search city, neighborhood, address..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-card border border-border rounded-xl pl-11 pr-4 py-2.5 text-foreground text-[14px] placeholder:text-muted-foreground focus:outline-none focus:border-[#10B981]/40 transition-colors"
-              />
-            </div>
-            <button className="w-11 h-11 bg-card border border-border rounded-xl flex items-center justify-center hover:bg-muted transition-colors">
-              <SlidersHorizontal size={16} className="text-muted-foreground" />
-            </button>
-            <div className="hidden sm:flex bg-card border border-border rounded-xl overflow-hidden">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`w-10 h-10 flex items-center justify-center transition-colors ${
-                  viewMode === "grid" ? "bg-[#10B981]/15 text-[#10B981]" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Grid2x2 size={16} />
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={`w-10 h-10 flex items-center justify-center transition-colors ${
-                  viewMode === "list" ? "bg-[#10B981]/15 text-[#10B981]" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <LayoutList size={16} />
-              </button>
-            </div>
-          </div>
-
-          {/* Location + Filters */}
-          <div className="flex items-center gap-1.5 mb-4">
-            <MapPin size={13} className="text-[#10B981]" />
-            <span className="text-muted-foreground text-[13px]">
-              Searching within 25mi of {profile?.preferred_cities?.[0] || "your area"}
-            </span>
-          </div>
-          <div className="flex gap-2 overflow-x-auto no-scrollbar">
-            {filters.map((f) => (
-              <button
-                key={f}
-                onClick={() => setActiveFilter(f)}
-                className={`px-4 py-1.5 rounded-lg text-[13px] whitespace-nowrap transition-all ${
-                  activeFilter === f
-                    ? "bg-[#10B981] text-white"
-                    : "bg-muted text-muted-foreground hover:bg-accent"
-                }`}
-                style={{ fontWeight: 500 }}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Results */}
-      <div className="px-6 lg:px-10 py-6 max-w-7xl mx-auto">
-        <p className="text-muted-foreground text-[13px] mb-4">
-          {filteredListings.length} listings found
-        </p>
-
-        <div
-          className={
-            viewMode === "grid"
-              ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
-              : "flex flex-col gap-4 max-w-3xl"
-          }
+    <div className="relative -mt-[84px] min-h-[calc(100vh+84px)] flex flex-col items-center justify-center px-4 py-12 overflow-hidden">
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url(https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200)`,
+        }}
+      />
+      <div className="absolute inset-0 bg-black/50" />
+      {/* Content below nav */}
+      <div className="relative z-10 w-full max-w-3xl mx-auto text-center pt-[68px]">
+        <motion.h1
+          className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold mb-2"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
         >
-          {filteredListings.map((listing, i) => (
-            <motion.div
-              key={listing.id}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: i * 0.06 }}
+          Discover Your New Home
+        </motion.h1>
+        <motion.p
+          className="text-white/90 text-sm sm:text-base mb-8"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.08 }}
+        >
+          Helping renters find their perfect rental with Smart Search
+        </motion.p>
+
+        <motion.div
+          ref={typeaheadRef}
+          className="relative w-full"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.12 }}
+        >
+          <div className="flex bg-white rounded-2xl shadow-lg overflow-hidden border border-white/20">
+            <div className="flex items-center pl-4 text-muted-foreground">
+              <Search size={20} className="shrink-0" />
+            </div>
+            <input
+              type="text"
+              placeholder="e.g. Irvine"
+              value={searchInput}
+              onChange={(e) => {
+                setSearchInput(e.target.value);
+                setTypeaheadOpen(true);
+              }}
+              onFocus={() => setTypeaheadOpen(true)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSearch();
+              }}
+              className="flex-1 min-w-0 py-3.5 px-3 text-gray-900 placeholder:text-gray-500 focus:outline-none text-[15px] bg-transparent"
+            />
+            <button
+              type="button"
+              onClick={handleSearch}
+              className="bg-[#10B981] text-white px-5 sm:px-6 flex items-center justify-center gap-2 hover:bg-[#0d9668] transition-colors"
             >
-              <ListingCard
-                listing={formatListing(listing)}
-                isSaved={savedIds.has(listing.id)}
-                onToggleSave={toggleSave}
-              />
-            </motion.div>
-          ))}
-        </div>
+              <Search size={18} />
+              <span className="hidden sm:inline font-medium">Search</span>
+            </button>
+          </div>
+
+          <AnimatePresence>
+            {typeaheadOpen && suggestions.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-xl shadow-xl overflow-hidden z-50"
+              >
+                <div className="py-1 max-h-64 overflow-auto">
+                  {suggestions.map((city) => (
+                    <button
+                      key={city}
+                      type="button"
+                      onClick={() => handleSelectSuggestion(city)}
+                      className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-accent text-foreground"
+                    >
+                      <MapPin size={14} className="text-[#10B981] shrink-0" />
+                      <span className="text-sm">{city}</span>
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        <motion.div
+          className="mt-4 flex flex-wrap items-center justify-center gap-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <button
+            type="button"
+            onClick={() => setShowFiltersPanel(!showFiltersPanel)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/95 dark:bg-white/90 text-gray-900 dark:text-gray-900 text-sm font-medium hover:bg-white shadow-lg border border-white/30 backdrop-blur-sm"
+          >
+            <SlidersHorizontal size={16} />
+            Filters
+            <ChevronDown
+              size={14}
+              className={`transition-transform ${showFiltersPanel ? "rotate-180" : ""}`}
+            />
+          </button>
+        </motion.div>
+
+        {showFiltersPanel && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            className="mt-4 p-4 rounded-xl bg-white/95 dark:bg-white/95 text-gray-900 backdrop-blur-sm border border-white/30 shadow-lg"
+          >
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-left">
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-gray-600">Beds (min)</span>
+                <select
+                  value={filters.beds ?? ""}
+                  onChange={(e) =>
+                    setFilters((p) => ({ ...p, beds: e.target.value === "" ? null : +e.target.value }))
+                  }
+                  className="rounded-lg border border-gray-200 bg-gray-100 text-gray-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#10B981]/40"
+                >
+                  <option value="">Any</option>
+                  {[0, 1, 2, 3, 4].map((n) => (
+                    <option key={n} value={n}>
+                      {n === 0 ? "Studio" : n === 4 ? "4+" : String(n)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-gray-600">Baths (min)</span>
+                <select
+                  value={filters.baths ?? ""}
+                  onChange={(e) =>
+                    setFilters((p) => ({ ...p, baths: e.target.value === "" ? null : +e.target.value }))
+                  }
+                  className="rounded-lg border border-gray-200 bg-gray-100 text-gray-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#10B981]/40"
+                >
+                  <option value="">Any</option>
+                  {[1, 2, 3, 4].map((n) => (
+                    <option key={n} value={n}>{n === 4 ? "4+" : String(n)}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-gray-600">Min sq ft</span>
+                <input
+                  type="number"
+                  placeholder="e.g. 600"
+                  value={filters.minSqft ?? ""}
+                  onChange={(e) =>
+                    setFilters((p) => ({
+                      ...p,
+                      minSqft: e.target.value === "" ? null : Math.max(0, +e.target.value),
+                    }))
+                  }
+                  className="rounded-lg border border-gray-200 bg-gray-100 text-gray-900 px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#10B981]/40"
+                />
+              </label>
+              <label className="flex flex-col gap-1 sm:col-span-2">
+                <span className="text-xs text-gray-600">
+                  Max price: {filters.maxPrice != null ? `$${filters.maxPrice.toLocaleString()}` : `$${MAX_PRICE_SLIDER.toLocaleString()}`}
+                </span>
+                <input
+                  type="range"
+                  min={0}
+                  max={MAX_PRICE_SLIDER}
+                  step={100}
+                  value={filters.maxPrice ?? MAX_PRICE_SLIDER}
+                  onChange={(e) => {
+                    const v = +e.target.value;
+                    setFilters((p) => ({
+                      ...p,
+                      maxPrice: v >= MAX_PRICE_SLIDER ? null : v,
+                    }));
+                  }}
+                  className="w-full h-2 rounded-full appearance-none bg-gray-200 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#10B981] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#10B981] [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
+                />
+              </label>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-4">
+              <label className="flex items-center gap-2 cursor-pointer text-gray-800">
+                <input
+                  type="checkbox"
+                  checked={filters.petFriendly}
+                  onChange={(e) => setFilters((p) => ({ ...p, petFriendly: e.target.checked }))}
+                  className="rounded border-border text-[#10B981] focus:ring-[#10B981] focus:ring-offset-0"
+                />
+                <span className="text-sm">Pet friendly</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-gray-800">
+                <input
+                  type="checkbox"
+                  checked={filters.studentFriendly}
+                  onChange={(e) => setFilters((p) => ({ ...p, studentFriendly: e.target.checked }))}
+                  className="rounded border-border text-[#10B981] focus:ring-[#10B981] focus:ring-offset-0"
+                />
+                <span className="text-sm">University students</span>
+              </label>
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
   );
 }
+
+export { buildSearchParams };

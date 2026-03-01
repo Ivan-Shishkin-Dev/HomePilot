@@ -148,7 +148,8 @@ export function TopBar() {
           <button
             onClick={toggleTheme}
             className="w-10 h-10 rounded-xl bg-muted hover:bg-accent transition-colors flex items-center justify-center"
-            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label={theme === "dark" ? "Enable light mode" : "Enable dark mode"}
+            title={theme === "dark" ? "Enable light mode" : "Enable dark mode"}
           >
             {theme === "dark" ? (
               <Sun size={18} className="text-muted-foreground" />
@@ -160,7 +161,8 @@ export function TopBar() {
           <button
             onClick={() => navigate("/alert")}
             className="relative w-10 h-10 rounded-xl bg-muted hover:bg-accent transition-colors flex items-center justify-center"
-            aria-label="View notifications"
+            aria-label="AI Alerts"
+            title="AI Alerts"
           >
             <Bell size={18} className="text-muted-foreground" />
             {unreadCount > 0 && (
@@ -174,7 +176,8 @@ export function TopBar() {
             <DropdownMenuTrigger asChild>
               <button
                 className="w-10 h-10 rounded-xl bg-muted hover:bg-accent transition-colors flex items-center justify-center overflow-hidden"
-                aria-label="Account menu"
+                aria-label="Your profile"
+                title="Your profile"
               >
                 <div
                   className="w-9 h-9 rounded-full bg-gradient-to-br from-[#10B981] to-[#34D399] flex items-center justify-center text-white text-[13px]"
