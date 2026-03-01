@@ -33,6 +33,7 @@ export function ProfileScreen() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const { documents, loading } = useUserDocuments();
   const { profile } = useAuth();
+  const navigate = useNavigate();
   // Build suggestions from documents, ranked by score impact (descending)
   const missingDocs = documents
     .filter(d => d.status === "missing")
@@ -92,97 +93,23 @@ export function ProfileScreen() {
       </div>
 
       <div className="px-6 lg:px-10 py-6 lg:py-8 max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-foreground text-[18px]" style={{ fontWeight: 600 }}>
-            Suggestions by Impact
-          </h3>
-          <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-[#10B981]" />
-            <span className="text-muted-foreground text-[13px]">{sorted.length} suggestions</span>
-          </div>
-        </div>
+          {/* Impact Summary */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="bg-[#10B981]/10 rounded-2xl px-4 py-3.5 border border-[#10B981]/15 flex items-center gap-3 mb-6"
+          >
+            <TrendingUp size={18} className="text-[#10B981]" />
+            <span className="text-[#10B981] text-[13px]" style={{ fontWeight: 600 }}>
+              {allUploaded
+                ? "All documents uploaded!"
+                : `Potential: +${totalPotentialPoints} score points`}
+            </span>
+          </motion.div>
 
-        <div className="flex flex-col gap-3">
-          {sorted.map((suggestion, i) => {
-            const impactLabel = getImpactLabel(suggestion.impact);
-            const catColor = categoryColors[suggestion.category] || "#10B981";
-            return (
-              <motion.div
-                key={suggestion.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 + i * 0.05 }}
-                className="bg-card rounded-xl border border-border overflow-hidden hover:border-muted transition-colors"
-              >
-                <button
-                  onClick={() =>
-                    setExpanded(expanded === suggestion.id ? null : suggestion.id)
-                  }
-                  className="w-full p-4 flex items-center gap-4 text-left"
-                >
-                  <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-muted shrink-0">
-                    <span className="text-[17px]" style={{ fontWeight: 700, color: catColor }}>
-                      #{i + 1}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-foreground text-[15px] mb-1" style={{ fontWeight: 500 }}>
-                      {suggestion.action}
-                    </p>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span
-                        className="text-[11px] px-2.5 py-0.5 rounded-md"
-                        style={{
-                          color: catColor,
-                          backgroundColor: `${catColor}15`,
-                          fontWeight: 600,
-                        }}
-                      >
-                        {suggestion.category}
-                      </span>
-                      {suggestion.completed && (
-                        <span className="text-[10px] text-[#10B981] bg-[#10B981]/10 px-2 py-0.5 rounded-md">
-                          Completed
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span
-                      className="bg-[#10B981]/15 text-[#10B981] px-3 py-1.5 rounded-lg text-[14px]"
-                      style={{ fontWeight: 700 }}
-                    >
-                      +{suggestion.impact}%
-                    </span>
-                    <ChevronRight
-                      size={16}
-                      className={`text-muted-foreground transition-transform ${
-                        expanded === suggestion.id ? "rotate-90" : ""
-                      }`}
-                    />
-                  </div>
-                </button>
-              </div>
-            </motion.div>
-
-            {/* Impact Summary */}
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className="bg-[#10B981]/10 rounded-2xl px-4 py-3.5 border border-[#10B981]/15 flex items-center gap-3"
-            >
-              <TrendingUp size={18} className="text-[#10B981]" />
-              <span className="text-[#10B981] text-[13px]" style={{ fontWeight: 600 }}>
-                {allUploaded
-                  ? "All documents uploaded!"
-                  : `Potential: +${totalPotentialPoints} score points`}
-              </span>
-            </motion.div>
-          </div>
-
-          {/* Right: Suggestions */}
-          <div className="lg:col-span-2">
+          {/* Suggestions */}
+          <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-foreground text-[18px]" style={{ fontWeight: 600 }}>
                 Suggestions by Impact
@@ -302,7 +229,6 @@ export function ProfileScreen() {
               </div>
             )}
           </div>
-        </div>
       </div>
     </div>
   );
