@@ -1,4 +1,7 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router";
+import { useSavedListings } from "../../hooks/useSupabaseData";
+import { useAppliedListings } from "../../contexts/AppliedListingsContext";
 import {
   ArrowLeft,
   Heart,
@@ -18,12 +21,31 @@ import {
 } from "lucide-react";
 import { useListing } from "../../hooks/useSupabaseData";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 
 export function ListingDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { listing, loading } = useListing(id);
+  const { savedIds, toggleSave } = useSavedListings();
+  const { trackExternalLinkClick } = useAppliedListings();
+  const isSaved = id ? savedIds.has(id) : false;
+  const [showCopied, setShowCopied] = useState(false);
+
+  const handleShare = async () => {
+    const url = listing.listing_url || window.location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+      setShowCopied(true);
+      setTimeout(() => setShowCopied(false), 2500);
+    } catch {
+      try {
+        document.execCommand("copy");
+        setShowCopied(true);
+        setTimeout(() => setShowCopied(false), 2500);
+      } catch {}
+    }
+  };
 
   const getMatchColor = (pct: number) => {
     if (pct >= 80) return "#10B981";
@@ -83,7 +105,22 @@ export function ListingDetail() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      <AnimatePresence>
+        {showCopied && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            onClick={() => setShowCopied(false)}
+            className="fixed inset-x-4 top-24 z-50 mx-auto max-w-sm cursor-pointer"
+          >
+            <div className="rounded-xl bg-[#10B981] px-4 py-3 text-center text-sm font-medium text-white shadow-lg">
+              Link copied
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Back bar */}
       <div className="border-b border-white/[0.06] px-6 lg:px-10 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -95,22 +132,19 @@ export function ListingDetail() {
             <span className="text-[14px]">Back to listings</span>
           </button>
           <div className="flex gap-2 items-center">
-            {listing.listing_url && (
-              <a
-                href={listing.listing_url}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[#10B981]/15 text-[#10B981] hover:bg-[#10B981]/25 transition-colors text-[13px]"
-                style={{ fontWeight: 600 }}
-              >
-                <ExternalLink size={16} />
-                {listing.source === "apartments" ? "View on Apartments.com" : "View on Zillow"}
-              </a>
-            )}
-            <button className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center hover:bg-white/[0.1] transition-colors">
-              <Heart size={18} className="text-[#8B95A5]" />
+            <button
+              onClick={() => id && toggleSave(id)}
+              className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center hover:bg-white/[0.1] transition-colors"
+            >
+              <Heart
+                size={18}
+                className={isSaved ? "text-[#EF4444] fill-[#EF4444]" : "text-[#8B95A5]"}
+              />
             </button>
-            <button className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center hover:bg-white/[0.1] transition-colors">
+            <button
+              onClick={handleShare}
+              className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center hover:bg-white/[0.1] transition-colors"
+            >
               <Share2 size={18} className="text-[#8B95A5]" />
             </button>
           </div>
@@ -329,16 +363,21 @@ export function ListingDetail() {
                 className="bg-card rounded-2xl p-5 border border-border"
               >
                 {listing.listing_url ? (
-                  <a
-                    href={listing.listing_url}
-                    target="_blank"
-                    rel="noreferrer noopener"
+                  <button
+                    type="button"
+                    onClick={() =>
+                      trackExternalLinkClick({
+                        id: listing.id,
+                        title: listing.title,
+                        url: listing.listing_url!,
+                      })
+                    }
                     className="block w-full bg-[#10B981] text-white py-3.5 rounded-xl text-[16px] flex items-center justify-center gap-2 hover:bg-[#059669] active:scale-[0.98] transition-all"
                     style={{ fontWeight: 700 }}
                   >
                     <ExternalLink size={20} />
                     {listing.source === "apartments" ? "View on Apartments.com" : "View on Zillow"}
-                  </a>
+                  </button>
                 ) : (
                   <button
                     className="w-full bg-[#10B981] text-white py-3.5 rounded-xl text-[16px] flex items-center justify-center gap-2 hover:bg-[#059669] active:scale-[0.98] transition-all"
