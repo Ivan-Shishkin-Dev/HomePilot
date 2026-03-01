@@ -38,7 +38,7 @@ export function CoverLetterSection() {
               Create New Letter
             </p>
             <p className="text-muted-foreground text-[13px]">
-              AI generates a tailored letter from your profile data
+              Atlas AI generates a tailored letter from your profile data
             </p>
           </button>
 
@@ -53,7 +53,7 @@ export function CoverLetterSection() {
               Upload Existing Letter
             </p>
             <p className="text-muted-foreground text-[13px]">
-              Upload a .txt file and let AI improve it for you
+              Upload a .txt file and let Atlas AI improve it for you
             </p>
           </button>
         </div>

@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router";
+import { toast } from "sonner";
 import { Search, SlidersHorizontal, MapPin, Grid2x2, LayoutList, Loader2, ChevronDown, Globe, Home, RefreshCw, AlertTriangle, Target } from "lucide-react";
 import { ListingCard } from "./ListingCard";
 import { useSavedListings, useAppliedListings } from "../../hooks/useSupabaseData";
@@ -294,8 +295,14 @@ export function ListingsResultsScreen() {
         timeLeft: listing.time_left || "",
       }));
       setTopMatchesQueue(snapshots, searchParamsString);
+      toast("Check out listings for you here", {
+        action: {
+          label: "View Matches",
+          onClick: () => navigate("/alert"),
+        },
+      });
     }
-  }, [listingsWithMatch, hasSearched, loading, searchParamsString]);
+  }, [listingsWithMatch, hasSearched, loading, searchParamsString, navigate]);
 
   // Check if pending filters differ from committed (to hint the user to click Search)
   const hasPendingChanges =

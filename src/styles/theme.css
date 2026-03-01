@@ -182,3 +182,69 @@
     line-height: 1.5;
   }
 }
+
+/* Sonner toast overrides: rounded corners, space for close button */
+.hp-toaster [data-sonner-toast].hp-toast {
+  border-radius: 14px !important;
+  overflow: hidden;
+  padding-right: 36px !important; /* Space for close button so action doesn't overlap */
+}
+
+/* Light mode: ensure toast has proper contrast */
+:root .hp-toaster [data-sonner-toast].hp-toast {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.dark .hp-toaster [data-sonner-toast].hp-toast {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* Green rounded action button (no glass) */
+.hp-toaster [data-sonner-toast] .hp-toast-action {
+  border-radius: 9999px !important;
+  background: #10B981 !important;
+  color: white !important;
+  font-weight: 600 !important;
+  padding: 8px 16px !important;
+  height: auto !important;
+  min-height: 36px !important;
+  border: none !important;
+  transition: background 0.2s;
+}
+
+.hp-toaster [data-sonner-toast] .hp-toast-action:hover {
+  background: #059669 !important;
+}
+
+/* Small cross close button, top right */
+.hp-toaster [data-sonner-toast] .hp-toast-close {
+  position: absolute !important;
+  top: 6px !important;
+  right: 6px !important;
+  left: auto !important;
+  width: 22px !important;
+  height: 22px !important;
+  min-width: 22px !important;
+  min-height: 22px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px !important;
+  color: var(--muted-foreground) !important;
+  background: transparent !important;
+  border: none !important;
+  transform: none !important;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.hp-toaster [data-sonner-toast] .hp-toast-close:hover {
+  color: var(--foreground) !important;
+  background: var(--muted) !important;
+}
+
+.hp-toaster [data-sonner-toast] .hp-toast-close svg {
+  width: 14px !important;
+  height: 14px !important;
+}

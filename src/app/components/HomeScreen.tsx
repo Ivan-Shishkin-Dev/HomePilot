@@ -271,7 +271,7 @@ export function HomeScreen() {
                     )}
                     <div className="flex flex-wrap gap-3">
                       <button
-                        onClick={() => navigate(`/listing/${currentMatch.id}`)}
+                        onClick={() => navigate(`/listing/${currentMatch.id}`, { state: { matchPercent: currentMatch.matchPercent } })}
                         className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-[14px] font-medium bg-white/15 dark:bg-white/10 backdrop-blur-sm border border-white/20 dark:border-white/10 text-foreground hover:bg-white/25 dark:hover:bg-white/15 transition-colors"
                         style={{ fontWeight: 600 }}
                       >
@@ -301,7 +301,7 @@ export function HomeScreen() {
                       {atlasDisplayList.slice(0, 5).map((snap) => (
                         <button
                           key={snap.id}
-                          onClick={() => navigate(`/listing/${snap.id}`)}
+                          onClick={() => navigate(`/listing/${snap.id}`, { state: { matchPercent: snap.matchPercent } })}
                           className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-[13px] bg-white/10 dark:bg-white/5 border border-white/10 text-foreground hover:bg-white/15 transition-colors"
                         >
                           <span className={getMatchBadgeColor(snap.matchPercent)} style={{ fontWeight: 700 }}>{snap.matchPercent}%</span>

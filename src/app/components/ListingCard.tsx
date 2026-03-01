@@ -52,7 +52,7 @@ export function ListingCard({
   return (
     <div className={cn("w-full bg-card rounded-2xl overflow-hidden border border-border hover:border-[#10B981]/30 transition-all text-left group flex flex-col", className)}>
       <button
-        onClick={() => navigate(`/listing/${listing.id}`)}
+        onClick={() => navigate(`/listing/${listing.id}`, { state: { matchPercent: listing.matchPercent } })}
         className="flex-1 text-left min-w-0"
       >
       <div className="relative h-44 lg:h-48">
@@ -152,7 +152,7 @@ export function ListingCard({
       </button>
       {listing.listingUrl && (
         <div
-          className="px-4 pb-4 pt-1 flex flex-wrap gap-2 border-t border-border mt-1"
+          className="px-4 py-3 flex items-center border-t border-border mt-1"
           onClick={(e) => e.stopPropagation()}
         >
           <button
