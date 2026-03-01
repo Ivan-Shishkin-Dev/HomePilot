@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Search, SlidersHorizontal, MapPin, Loader2, ChevronDown } from "lucide-react";
-import { useListings, useSavedListings, useAppliedListings } from "../../hooks/useSupabaseData";
+import { Search, SlidersHorizontal, MapPin, ChevronDown } from "lucide-react";
+import { useSavedListings, useAppliedListings } from "../../hooks/useSupabaseData";
 import { motion, AnimatePresence } from "motion/react";
 
 export const MAX_PRICE_SLIDER = 10000;
@@ -52,22 +52,20 @@ export function ListingsScreen() {
   const [typeaheadOpen, setTypeaheadOpen] = useState(false);
   const typeaheadRef = useRef<HTMLDivElement>(null);
 
-  const { listings, loading } = useListings();
   const { savedIds, savedCount } = useSavedListings();
   const { appliedIds, appliedCount } = useAppliedListings();
 
-  // Unique city names from listings data (from src/data/*.json)
-  const cityNames = useMemo(() => {
-    const cities = [...new Set(listings.map((l) => l.city).filter(Boolean))] as string[];
-    return cities.sort((a, b) => a.localeCompare(b));
-  }, [listings]);
+  const popularCities = [
+    "Irvine", "Los Angeles", "San Diego", "San Francisco", "Newport Beach",
+    "Anaheim", "Santa Ana", "Long Beach", "Pasadena", "Burbank",
+    "Sacramento", "San Jose", "Oakland", "Santa Monica", "Glendale",
+  ];
 
-  // Typeahead: city names only (from data) that match as you type
   const suggestions = useMemo(() => {
     if (!searchInput.trim()) return [];
     const q = searchInput.trim().toLowerCase();
-    return cityNames.filter((city) => city.toLowerCase().includes(q));
-  }, [cityNames, searchInput]);
+    return popularCities.filter((city) => city.toLowerCase().includes(q));
+  }, [searchInput]);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -93,15 +91,6 @@ export function ListingsScreen() {
     setTypeaheadOpen(false);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-[#10B981] animate-spin" />
-      </div>
-    );
-  }
-
-  // Hero pulls up to cover the full top strip (main is already -mt so content starts at 68px)
   return (
     <div className="relative -mt-[84px] min-h-[calc(100vh+84px)] flex flex-col items-center justify-center px-4 py-12 overflow-hidden">
       <div

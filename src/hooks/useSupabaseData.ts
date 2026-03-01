@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase, type Listing, type UserDocument, type ProfileSuggestion, type UserAlert } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
-import { getStaticListings } from "../data/staticListings";
 
 // Score calculation constants
 export const DOCUMENT_SCORE_VALUES: Record<string, number> = {
@@ -26,27 +25,7 @@ export function calculateProfileCompletion(documents: UserDocument[]): number {
   return Math.round((uploaded / documents.length) * 100);
 }
 
-// Hook to fetch listings
-export function useListings() {
-  const [listings, setListings] = useState<Listing[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    try {
-      const data = getStaticListings();
-      setListings(data);
-    } catch (err) {
-      setError(err as Error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  return { listings, loading, error };
-}
-
-// Hook to fetch a single listing (from static JSON)
+// Hook to fetch a single listing from the Zillow sessionStorage cache.
 export function useListing(id: string | undefined) {
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
@@ -58,9 +37,12 @@ export function useListing(id: string | undefined) {
       return;
     }
     try {
-      const all = getStaticListings();
-      const found = all.find((l) => l.id === id) ?? null;
-      setListing(found);
+      const cached = sessionStorage.getItem("zillow_listings");
+      if (cached) {
+        const parsed: Listing[] = JSON.parse(cached);
+        const found = parsed.find((l) => l.id === id) ?? null;
+        setListing(found);
+      }
     } catch (err) {
       setError(err as Error);
     } finally {

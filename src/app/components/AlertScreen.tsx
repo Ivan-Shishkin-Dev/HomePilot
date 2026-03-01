@@ -1,12 +1,33 @@
+import { useMemo, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { ArrowLeft, Zap, Clock, MapPin, TrendingUp, Shield, Users, Bell, Loader2 } from "lucide-react";
-import { useListings } from "../../hooks/useSupabaseData";
+import { useZillowListings } from "../../hooks/useZillowListings";
+import { useAuth } from "../../contexts/AuthContext";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { motion } from "motion/react";
 
 export function AlertScreen() {
   const navigate = useNavigate();
-  const { listings, loading } = useListings();
+  const { profile } = useAuth();
+
+  const defaultCity = useMemo(() => {
+    const cities = profile?.preferred_cities;
+    return cities?.length ? cities[0] : "Irvine";
+  }, [profile?.preferred_cities]);
+
+  const { listings, loading } = useZillowListings({ city: defaultCity, state: "ca" });
+
+  useEffect(() => {
+    if (listings.length > 0) {
+      try {
+        const existing = sessionStorage.getItem("zillow_listings");
+        const prev: unknown[] = existing ? JSON.parse(existing) : [];
+        const merged = [...prev, ...listings];
+        const unique = Array.from(new Map(merged.map((l: any) => [l.id, l])).values());
+        sessionStorage.setItem("zillow_listings", JSON.stringify(unique.slice(-200)));
+      } catch { /* quota exceeded */ }
+    }
+  }, [listings]);
 
   if (loading) {
     return (

@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Bell, Sparkles, TrendingUp, Clock, ChevronRight, Zap, ArrowUpRight, Loader2 } from "lucide-react";
 import { ScoreRing } from "./ScoreRing";
 import { ListingCard } from "./ListingCard";
-import { useListings, useSavedListings } from "../../hooks/useSupabaseData";
+import { useSavedListings } from "../../hooks/useSupabaseData";
+import { useZillowListings } from "../../hooks/useZillowListings";
 import { useAppliedListings } from "../../contexts/AppliedListingsContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { motion } from "motion/react";
@@ -11,10 +12,30 @@ import { motion } from "motion/react";
 export function HomeScreen() {
   const navigate = useNavigate();
   const [showAlert, setShowAlert] = useState(true);
-  const { listings, loading } = useListings();
   const { savedIds, savedCount, toggleSave } = useSavedListings();
   const { appliedCount } = useAppliedListings();
   const { profile } = useAuth();
+
+  // Load "Top Matches" from the user's preferred cities, or a sensible default
+  const defaultCity = useMemo(() => {
+    const cities = profile?.preferred_cities;
+    return cities?.length ? cities[0] : "Irvine";
+  }, [profile?.preferred_cities]);
+
+  const { listings, loading } = useZillowListings({ city: defaultCity, state: "ca" });
+
+  // Persist listings to sessionStorage so detail pages can find them
+  useEffect(() => {
+    if (listings.length > 0) {
+      try {
+        const existing = sessionStorage.getItem("zillow_listings");
+        const prev: unknown[] = existing ? JSON.parse(existing) : [];
+        const merged = [...prev, ...listings];
+        const unique = Array.from(new Map(merged.map((l: any) => [l.id, l])).values());
+        sessionStorage.setItem("zillow_listings", JSON.stringify(unique.slice(-200)));
+      } catch { /* quota exceeded */ }
+    }
+  }, [listings]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();

@@ -1,8 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router";
-import { Search, SlidersHorizontal, MapPin, Grid2x2, LayoutList, Loader2, ChevronDown } from "lucide-react";
+import { Search, SlidersHorizontal, MapPin, Grid2x2, LayoutList, Loader2, ChevronDown, Globe } from "lucide-react";
 import { ListingCard } from "./ListingCard";
-import { useListings, useSavedListings, useAppliedListings } from "../../hooks/useSupabaseData";
+import { useSavedListings, useAppliedListings } from "../../hooks/useSupabaseData";
+import { useZillowListings } from "../../hooks/useZillowListings";
 import {
   defaultSearchFilters,
   buildSearchParams,
@@ -27,6 +28,16 @@ function parseSearchParams(sp: URLSearchParams): SearchFilters {
   };
 }
 
+function parseStateFromLocation(location: string): { city: string; state: string } {
+  const parts = location.split(",").map((s) => s.trim());
+  if (parts.length >= 2) {
+    const stateRaw = parts[parts.length - 1].replace(/\d+/g, "").trim();
+    const city = parts.slice(0, -1).join(", ");
+    return { city, state: stateRaw.length === 2 ? stateRaw : "ca" };
+  }
+  return { city: location.trim(), state: "ca" };
+}
+
 export function ListingsResultsScreen() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -37,22 +48,67 @@ export function ListingsResultsScreen() {
   const [typeaheadOpen, setTypeaheadOpen] = useState(false);
   const typeaheadRef = useRef<HTMLDivElement>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [zillowPage, setZillowPage] = useState(1);
 
-  const { listings, loading } = useListings();
   const { savedIds, toggleSave } = useSavedListings();
   const { appliedIds } = useAppliedListings();
 
-  // Unique city names from listings data (same as main search page)
-  const cityNames = useMemo(() => {
-    const cities = [...new Set(listings.map((l) => l.city).filter(Boolean))] as string[];
-    return cities.sort((a, b) => a.localeCompare(b));
-  }, [listings]);
+  // Zillow search — fires when location is set
+  const zillowOpts = useMemo(() => {
+    if (!filters.location.trim()) return null;
+    const { city, state } = parseStateFromLocation(filters.location);
+    return {
+      city,
+      state,
+      page: zillowPage,
+      maxPrice: filters.maxPrice ?? undefined,
+      beds: filters.beds ?? undefined,
+    };
+  }, [filters.location, filters.maxPrice, filters.beds, zillowPage]);
+
+  const {
+    listings: zillowListings,
+    totalResults: zillowTotal,
+    totalPages: zillowTotalPages,
+    loading,
+    error,
+  } = useZillowListings(zillowOpts);
+
+  // Persist fetched listings to sessionStorage so useListing (detail page) can find them
+  useEffect(() => {
+    if (zillowListings.length > 0) {
+      try {
+        const existing = sessionStorage.getItem("zillow_listings");
+        const prev: unknown[] = existing ? JSON.parse(existing) : [];
+        const merged = [...prev, ...zillowListings];
+        const unique = Array.from(new Map(merged.map((l: any) => [l.id, l])).values());
+        sessionStorage.setItem("zillow_listings", JSON.stringify(unique.slice(-200)));
+      } catch { /* quota exceeded — harmless */ }
+    }
+  }, [zillowListings]);
+
+  // Client-side filters that the API doesn't handle (baths, sqft, saved/applied)
+  const filteredListings = useMemo(() => {
+    let list = [...zillowListings];
+    if (filters.baths != null) list = list.filter((l) => l.baths >= filters.baths!);
+    if (filters.minSqft != null) list = list.filter((l) => l.sqft >= filters.minSqft!);
+    if (filters.saved) list = list.filter((l) => savedIds.has(l.id));
+    if (filters.applied) list = list.filter((l) => appliedIds.has(l.id));
+    return list;
+  }, [zillowListings, filters, savedIds, appliedIds]);
+
+  // Typeahead: suggest popular California cities
+  const popularCities = [
+    "Irvine", "Los Angeles", "San Diego", "San Francisco", "Newport Beach",
+    "Anaheim", "Santa Ana", "Long Beach", "Pasadena", "Burbank",
+    "Sacramento", "San Jose", "Oakland", "Santa Monica", "Glendale",
+  ];
 
   const suggestions = useMemo(() => {
     if (!searchInput.trim()) return [];
     const q = searchInput.trim().toLowerCase();
-    return cityNames.filter((city) => city.toLowerCase().includes(q));
-  }, [cityNames, searchInput]);
+    return popularCities.filter((city) => city.toLowerCase().includes(q));
+  }, [searchInput]);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -68,7 +124,7 @@ export function ListingsResultsScreen() {
     setSearchInput(filters.location);
   }, [filters.location]);
 
-  const formatListing = (listing: (typeof listings)[0]) => ({
+  const formatListing = (listing: (typeof zillowListings)[0]) => ({
     id: listing.id,
     title: listing.title,
     address: listing.address,
@@ -94,28 +150,6 @@ export function ListingsResultsScreen() {
     source: listing.source,
   });
 
-  const filteredListings = useMemo(() => {
-    let list = [...listings];
-    // Location filter: match by city only (so "Irvine" = Irvine city, not Irvine Ave in Newport Beach)
-    if (filters.location.trim()) {
-      const loc = filters.location.trim().toLowerCase();
-      list = list.filter((l) => (l.city ?? "").toLowerCase().includes(loc));
-    }
-    if (filters.beds != null) list = list.filter((l) => l.beds >= filters.beds!);
-    if (filters.baths != null) list = list.filter((l) => l.baths >= filters.baths!);
-    if (filters.minSqft != null) list = list.filter((l) => l.sqft >= filters.minSqft!);
-    if (filters.maxPrice != null) list = list.filter((l) => l.price <= filters.maxPrice!);
-    if (filters.petFriendly) {
-      list = list.filter((l) => l.pet_policy?.cats || l.pet_policy?.dogs);
-    }
-    if (filters.studentFriendly) {
-      list = list.filter((l) => l.student_friendly === true);
-    }
-    if (filters.saved) list = list.filter((l) => savedIds.has(l.id));
-    if (filters.applied) list = list.filter((l) => appliedIds.has(l.id));
-    return list;
-  }, [listings, filters, savedIds, appliedIds]);
-
   const updateFilters = (next: SearchFilters) => {
     setSearchInput(next.location);
     const query = buildSearchParams(next).toString();
@@ -124,28 +158,23 @@ export function ListingsResultsScreen() {
 
   const handleSearch = () => {
     setTypeaheadOpen(false);
+    setZillowPage(1);
     updateFilters({ ...filters, location: searchInput.trim() });
   };
 
   const handleSelectSuggestion = (city: string) => {
     setSearchInput(city);
     setTypeaheadOpen(false);
+    setZillowPage(1);
     updateFilters({ ...filters, location: city });
   };
 
   const displayLocation = filters.location || "all areas";
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-[#10B981] animate-spin" />
-      </div>
-    );
-  }
+  const hasSearched = filters.location.trim().length > 0;
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Search + filters float (no bar, no line) */}
+      {/* Search + filters */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-6 pb-2 sm:pt-8 sm:pb-3">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 flex gap-2 min-w-0" ref={typeaheadRef}>
@@ -156,7 +185,7 @@ export function ListingsResultsScreen() {
                 />
                 <input
                   type="text"
-                  placeholder="e.g. Irvine"
+                  placeholder="Search any city, e.g. Irvine, CA"
                   value={searchInput}
                   onChange={(e) => {
                     setSearchInput(e.target.value);
@@ -315,101 +344,124 @@ export function ListingsResultsScreen() {
                   className="w-full h-2 rounded-full appearance-none bg-muted [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#10B981] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#10B981] [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
                 />
               </label>
-              <label className="col-span-2 sm:col-span-4 flex items-center gap-4 flex-wrap">
-                <span className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={filters.petFriendly}
-                    onChange={(e) =>
-                      updateFilters({ ...filters, petFriendly: e.target.checked })
-                    }
-                    className="rounded border-border text-[#10B981] focus:ring-[#10B981]"
-                  />
-                  <span className="text-sm">Pet friendly</span>
-                </span>
-                <span className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={filters.studentFriendly}
-                    onChange={(e) =>
-                      updateFilters({ ...filters, studentFriendly: e.target.checked })
-                    }
-                    className="rounded border-border text-[#10B981] focus:ring-[#10B981]"
-                  />
-                  <span className="text-sm">University students</span>
-                </span>
-              </label>
             </motion.div>
           )}
       </div>
 
       {/* Results */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div className="flex items-center gap-2">
-            <MapPin size={18} className="text-[#10B981]" />
-            <h2 className="text-foreground text-xl font-bold">
-              {filteredListings.length} {filteredListings.length === 1 ? "listing" : "listings"} in {displayLocation}
-            </h2>
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <Loader2 className="w-8 h-8 text-[#10B981] animate-spin" />
+            <p className="text-muted-foreground text-sm">Searching Zillow rentals...</p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="bg-card border border-border rounded-xl overflow-hidden flex">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-2.5 ${viewMode === "grid" ? "bg-[#10B981]/15 text-[#10B981]" : "text-muted-foreground hover:text-foreground"}`}
-                aria-label="Grid layout"
-                title="Grid layout"
-              >
-                <Grid2x2 size={18} />
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={`p-2.5 ${viewMode === "list" ? "bg-[#10B981]/15 text-[#10B981]" : "text-muted-foreground hover:text-foreground"}`}
-                aria-label="List layout"
-                title="List layout"
-              >
-                <LayoutList size={18} />
-              </button>
+        )}
+
+        {!loading && hasSearched && (
+          <>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div className="flex items-center gap-2">
+                <MapPin size={18} className="text-[#10B981]" />
+                <h2 className="text-foreground text-xl font-bold">
+                  {zillowTotal.toLocaleString()} rentals in {displayLocation}
+                </h2>
+                <span className="inline-flex items-center gap-1 text-xs bg-[#10B981]/10 text-[#10B981] px-2 py-0.5 rounded-full font-medium">
+                  <Globe size={12} />
+                  Live from Zillow
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="bg-card border border-border rounded-xl overflow-hidden flex">
+                  <button
+                    onClick={() => setViewMode("grid")}
+                    className={`p-2.5 ${viewMode === "grid" ? "bg-[#10B981]/15 text-[#10B981]" : "text-muted-foreground hover:text-foreground"}`}
+                    aria-label="Grid layout"
+                    title="Grid layout"
+                  >
+                    <Grid2x2 size={18} />
+                  </button>
+                  <button
+                    onClick={() => setViewMode("list")}
+                    className={`p-2.5 ${viewMode === "list" ? "bg-[#10B981]/15 text-[#10B981]" : "text-muted-foreground hover:text-foreground"}`}
+                    aria-label="List layout"
+                    title="List layout"
+                  >
+                    <LayoutList size={18} />
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div
-          className={
-            viewMode === "grid"
-              ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6"
-              : "flex flex-col gap-4 max-w-3xl mx-auto"
-          }
-        >
-          {filteredListings.map((listing, i) => (
-            <motion.div
-              key={listing.id}
-              className={viewMode === "grid" ? "h-full min-h-0" : undefined}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: i * 0.05 }}
-            >
-              <ListingCard
-                listing={formatListing(listing)}
-                isSaved={savedIds.has(listing.id)}
-                onToggleSave={toggleSave}
-                className={viewMode === "grid" ? "h-full" : undefined}
-              />
-            </motion.div>
-          ))}
-        </div>
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6">
+                <p className="text-red-400 text-sm font-medium">Search failed: {error.message}</p>
+                <p className="text-red-400/70 text-xs mt-1">Please try again or check your API key configuration.</p>
+              </div>
+            )}
 
-        {filteredListings.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
-            <p className="font-medium">No listings match your search.</p>
-            <p className="text-sm mt-1">Try adjusting location or filters, or search from the main listings page.</p>
-            <button
-              type="button"
-              onClick={() => navigate("/listings")}
-              className="mt-4 text-[#10B981] hover:underline font-medium"
+            <div
+              className={
+                viewMode === "grid"
+                  ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6"
+                  : "flex flex-col gap-4 max-w-3xl mx-auto"
+              }
             >
-              Back to search
-            </button>
+              {filteredListings.map((listing, i) => (
+                <motion.div
+                  key={listing.id}
+                  className={viewMode === "grid" ? "h-full min-h-0" : undefined}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: i * 0.05 }}
+                >
+                  <ListingCard
+                    listing={formatListing(listing)}
+                    isSaved={savedIds.has(listing.id)}
+                    onToggleSave={toggleSave}
+                    className={viewMode === "grid" ? "h-full" : undefined}
+                  />
+                </motion.div>
+              ))}
+            </div>
+
+            {filteredListings.length === 0 && !error && (
+              <div className="text-center py-12 text-muted-foreground">
+                <p className="font-medium">No listings match your filters.</p>
+                <p className="text-sm mt-1">Try adjusting your search or filters.</p>
+              </div>
+            )}
+
+            {zillowTotalPages > 1 && (
+              <div className="flex items-center justify-center gap-3 pt-8 pb-4">
+                <button
+                  type="button"
+                  disabled={zillowPage <= 1}
+                  onClick={() => setZillowPage((p) => Math.max(1, p - 1))}
+                  className="px-4 py-2 rounded-xl border border-border text-sm font-medium disabled:opacity-40 hover:bg-accent transition-colors"
+                >
+                  Previous
+                </button>
+                <span className="text-sm text-muted-foreground">
+                  Page {zillowPage} of {zillowTotalPages}
+                </span>
+                <button
+                  type="button"
+                  disabled={zillowPage >= zillowTotalPages}
+                  onClick={() => setZillowPage((p) => Math.min(zillowTotalPages, p + 1))}
+                  className="px-4 py-2 rounded-xl border border-border text-sm font-medium disabled:opacity-40 hover:bg-accent transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        {!loading && !hasSearched && (
+          <div className="text-center py-20 text-muted-foreground">
+            <Search size={40} className="mx-auto mb-4 text-muted-foreground/40" />
+            <p className="font-medium text-lg">Search for rentals</p>
+            <p className="text-sm mt-1">Enter a city name above to find available rentals on Zillow.</p>
           </div>
         )}
       </div>
