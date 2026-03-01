@@ -9,7 +9,6 @@ import {
   ArrowRight,
   Zap,
   CheckCircle2,
-  Star,
   ChevronRight,
   Users,
   Lock,
@@ -51,9 +50,6 @@ export function LandingPage() {
             </a>
             <a href="#how-it-works" className="text-[14px] text-muted-foreground hover:text-foreground transition-colors">
               How It Works
-            </a>
-            <a href="#social-proof" className="text-[14px] text-muted-foreground hover:text-foreground transition-colors">
-              Testimonials
             </a>
           </div>
           <div className="flex items-center gap-3">
@@ -203,22 +199,6 @@ export function LandingPage() {
             </div>
           </div>
         </motion.div>
-      </section>
-
-      {/* ═══════════ LOGOS / SOCIAL PROOF BAR ═══════════ */}
-      <section className="relative z-10 border-y border-border py-10">
-        <div className="container mx-auto px-6">
-          <p className="text-center text-muted-foreground text-[13px] mb-6" style={{ fontWeight: 500 }}>
-            TRUSTED BY RENTERS AT
-          </p>
-          <div className="flex items-center justify-center gap-10 md:gap-16 flex-wrap opacity-60">
-            {["NYU", "Columbia", "MIT", "Stanford", "UT Austin", "UCLA"].map((name) => (
-              <span key={name} className="text-[16px] text-muted-foreground tracking-wider" style={{ fontWeight: 700 }}>
-                {name}
-              </span>
-            ))}
-          </div>
-        </div>
       </section>
 
       {/* ═══════════ FEATURES ═══════════ */}
@@ -375,109 +355,6 @@ export function LandingPage() {
               <p className="text-muted-foreground text-[15px]" style={{ lineHeight: 1.6 }}>
                 {item.desc}
               </p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* ═══════════ STATS BAR ═══════════ */}
-      <section className="relative z-10 border-y border-border py-16">
-        <div className="container mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto text-center">
-            {[
-              { value: "12K+", label: "Renters onboarded" },
-              { value: "94%", label: "Approval success rate" },
-              { value: "2.4hrs", label: "Avg. time to match" },
-              { value: "48K+", label: "Listings scanned daily" },
-            ].map((stat) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-              >
-                <p
-                  className="text-[32px] md:text-[40px] bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent"
-                  style={{ fontWeight: 800, lineHeight: 1 }}
-                >
-                  {stat.value}
-                </p>
-                <p className="text-muted-foreground text-[13px] mt-2">{stat.label}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════ TESTIMONIALS ═══════════ */}
-      <section id="social-proof" className="relative z-10 container mx-auto px-6 py-24">
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-[36px] md:text-[44px] text-center mb-4 text-foreground"
-          style={{ fontWeight: 700 }}
-        >
-          Loved by renters
-        </motion.h2>
-        <p className="text-muted-foreground text-[18px] text-center mb-14 max-w-xl mx-auto">
-          Hear from students and young professionals who found their home with HomePilot.
-        </p>
-
-        <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
-          {[
-            {
-              name: "Sarah Kim",
-              school: "NYU, Class of '25",
-              text: "HomePilot told me to apply within the hour and I got approved the same day. Without the AI alert, I would have missed it completely.",
-              score: 892,
-            },
-            {
-              name: "Marcus Johnson",
-              school: "UT Austin, Grad Student",
-              text: "The scam detection saved me from a fake listing. And the Renter Passport made my real applications way stronger.",
-              score: 834,
-            },
-            {
-              name: "Priya Patel",
-              school: "Stanford, Remote Worker",
-              text: "Moving cross-country was stressful until HomePilot's AI started hunting listings for me. Found my dream apartment in SF in 3 days.",
-              score: 871,
-            },
-          ].map((testimonial, i) => (
-            <motion.div
-              key={testimonial.name}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="bg-card rounded-2xl p-6 border border-border"
-            >
-              <div className="flex items-center gap-1 mb-4">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <Star key={s} size={14} className="text-yellow-400 fill-yellow-400" />
-                ))}
-              </div>
-              <p className="text-muted-foreground text-[14px] mb-6" style={{ lineHeight: 1.7 }}>
-                "{testimonial.text}"
-              </p>
-              <div className="flex items-center gap-3 pt-4 border-t border-border">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-[13px] text-white" style={{ fontWeight: 700 }}>
-                  {testimonial.name.split(" ").map((n) => n[0]).join("")}
-                </div>
-                <div className="flex-1">
-                  <p className="text-foreground text-[14px]" style={{ fontWeight: 600 }}>
-                    {testimonial.name}
-                  </p>
-                  <p className="text-muted-foreground text-[12px]">{testimonial.school}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[#10B981] text-[16px]" style={{ fontWeight: 700 }}>
-                    {testimonial.score}
-                  </p>
-                  <p className="text-muted-foreground text-[10px]">Score</p>
-                </div>
-              </div>
             </motion.div>
           ))}
         </div>
