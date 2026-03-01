@@ -9,7 +9,6 @@ import {
   Loader2,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
-import { useProfileSuggestions } from "../../hooks/useSupabaseData";
 import { ScoreRing } from "./ScoreRing";
 import { motion } from "motion/react";
 
@@ -22,8 +21,6 @@ function getScoreLabel(score: number): { label: string; color: string } {
 export function MyProfileScreen() {
   const navigate = useNavigate();
   const { profile, loading: authLoading } = useAuth();
-  const { suggestions } = useProfileSuggestions();
-
   const getUserInitials = () => {
     if (!profile) return "??";
     const first = profile.first_name?.[0] || "";
@@ -38,9 +35,7 @@ export function MyProfileScreen() {
     return profile.email || "User";
   };
 
-  const totalPotentialImpact = suggestions
-    .filter((s) => !s.completed)
-    .reduce((acc, s) => acc + s.impact, 0);
+  const totalPotentialImpact = 88;
 
   const score = profile?.renter_score || 0;
   const { label: scoreLabel, color: scoreColor } = getScoreLabel(score);
