@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { Eye, EyeOff, Loader2, Check, Sun, Moon, ArrowLeft } from "lucide-react";
 import { Logo } from "./Logo";
+import { GoogleIcon } from "./GoogleIcon";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "./ThemeProvider";
 
@@ -14,9 +15,20 @@ export function SignupScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { signUp } = useAuth();
+  const { user, signUp, signInWithGoogle, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+
+  const handleSignOutAndStay = async () => {
+    await signOut();
+    setError(null);
+  };
+
+  const handleGoogleSignUp = async () => {
+    setError(null);
+    const { error } = await signInWithGoogle();
+    if (error) setError(error.message);
+  };
 
   const passwordRequirements = [
     { label: "At least 8 characters", met: password.length >= 8 },
@@ -108,12 +120,27 @@ export function SignupScreen() {
         <div className="w-full max-w-md">
         {/* Card */}
         <div className="bg-card border border-border rounded-2xl p-8">
-          <h1 className="text-2xl font-bold text-white text-center mb-2">
+          <h1 className="text-2xl font-bold text-foreground text-center mb-2">
             Create your account
           </h1>
-          <p className="text-gray-400 text-center mb-8">
+          <p className="text-muted-foreground text-center mb-8">
             Start your smart apartment search today
           </p>
+
+          {user && (
+            <div className="mb-6 p-3 rounded-xl bg-muted/50 border border-border flex items-center justify-between gap-3">
+              <span className="text-sm text-muted-foreground">
+                Signed in as another account. Sign out to use a different one.
+              </span>
+              <button
+                type="button"
+                onClick={handleSignOutAndStay}
+                className="text-sm font-medium text-foreground hover:text-emerald-500 transition-colors shrink-0"
+              >
+                Sign out
+              </button>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
@@ -128,7 +155,7 @@ export function SignupScreen() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300">
+                <label className="text-sm font-medium text-muted-foreground">
                   First name
                 </label>
                 <input
@@ -136,12 +163,12 @@ export function SignupScreen() {
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   required
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all"
+                  className="w-full px-4 py-3 rounded-xl bg-input-background dark:bg-white/5 border-2 border-input-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all"
                   placeholder="John"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300">
+                <label className="text-sm font-medium text-muted-foreground">
                   Last name
                 </label>
                 <input
@@ -149,26 +176,26 @@ export function SignupScreen() {
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   required
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all"
+                  className="w-full px-4 py-3 rounded-xl bg-input-background dark:bg-white/5 border-2 border-input-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all"
                   placeholder="Doe"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300">Email</label>
+              <label className="text-sm font-medium text-muted-foreground">Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all"
+                className="w-full px-4 py-3 rounded-xl bg-input-background dark:bg-white/5 border-2 border-input-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all"
                 placeholder="you@example.com"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300">
+              <label className="text-sm font-medium text-muted-foreground">
                 Password
               </label>
               <div className="relative">
@@ -177,13 +204,13 @@ export function SignupScreen() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all pr-12"
+                  className="w-full px-4 py-3 rounded-xl bg-input-background dark:bg-white/5 border-2 border-input-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all pr-12"
                   placeholder="Create a password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {showPassword ? (
                     <EyeOff className="w-5 h-5" />
@@ -204,14 +231,14 @@ export function SignupScreen() {
                     <div
                       key={index}
                       className={`flex items-center gap-2 text-sm ${
-                        req.met ? "text-emerald-400" : "text-gray-500"
+                        req.met ? "text-emerald-500" : "text-muted-foreground"
                       }`}
                     >
                       <div
                         className={`w-4 h-4 rounded-full flex items-center justify-center ${
                           req.met
                             ? "bg-emerald-500/20"
-                            : "bg-white/5"
+                            : "bg-muted"
                         }`}
                       >
                         {req.met && <Check className="w-3 h-3" />}
@@ -237,14 +264,32 @@ export function SignupScreen() {
                 "Create account"
               )}
             </button>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-card px-3 text-muted-foreground">or</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGoogleSignUp}
+              className="w-full py-3 rounded-xl border-2 border-input-border bg-input-background dark:bg-white/5 text-foreground font-semibold hover:bg-muted dark:hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+            >
+              <GoogleIcon className="w-5 h-5 shrink-0" />
+              Sign up with Google
+            </button>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-gray-400">
+            <p className="text-muted-foreground">
               Already have an account?{" "}
               <Link
                 to="/login"
-                className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
+                className="text-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors"
               >
                 Sign in
               </Link>

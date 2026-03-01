@@ -202,11 +202,16 @@ export function MyProfileScreen() {
               className="bg-card rounded-2xl p-6 border border-border flex-1"
             >
               <div className="flex flex-col items-center mb-5">
-                <div
-                  className="w-20 h-20 rounded-full bg-gradient-to-br from-[#10B981] to-[#34D399] flex items-center justify-center text-white text-[26px] mb-3"
-                  style={{ fontWeight: 700 }}
-                >
-                  {getUserInitials()}
+                <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-[#10B981] to-[#34D399] flex items-center justify-center text-white text-[26px] mb-3 shrink-0">
+                  {profile?.avatar_url ? (
+                    <img
+                      src={profile.avatar_url}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span style={{ fontWeight: 700 }}>{getUserInitials()}</span>
+                  )}
                 </div>
                 <h3
                   className="text-foreground text-[20px]"
@@ -437,7 +442,7 @@ export function MyProfileScreen() {
               setDeleteAccountError(null);
               setDeleteDialogOpen(true);
             }}
-            className="flex items-center gap-2 text-[#EF4444] hover:text-red-400 transition-colors text-[14px]"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-[14px] font-medium bg-red-500/10 dark:bg-red-500/10 backdrop-blur-sm border border-red-500/20 dark:border-red-500/20 text-[#EF4444] hover:bg-red-500/20 dark:hover:bg-red-500/20 transition-colors"
             style={{ fontWeight: 600 }}
           >
             <Trash2 size={18} />
@@ -460,12 +465,12 @@ export function MyProfileScreen() {
               <span>{deleteAccountError}</span>
             </div>
           )}
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-3 flex-wrap">
             <button
               type="button"
               onClick={() => setDeleteDialogOpen(false)}
               disabled={deleteAccountLoading}
-              className="px-4 py-2.5 rounded-xl text-[14px] border border-border bg-background text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+              className="inline-flex items-center justify-center px-4 py-2.5 rounded-full text-[14px] font-medium bg-white/15 dark:bg-white/10 backdrop-blur-sm border border-white/20 dark:border-white/10 text-foreground hover:bg-white/25 dark:hover:bg-white/15 transition-colors disabled:opacity-50"
               style={{ fontWeight: 600 }}
             >
               Cancel
@@ -474,7 +479,7 @@ export function MyProfileScreen() {
               type="button"
               onClick={handleDeleteAccount}
               disabled={deleteAccountLoading}
-              className="px-4 py-2.5 rounded-xl text-[14px] bg-[#EF4444] text-white hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center px-4 py-2.5 rounded-full text-[14px] font-medium bg-red-500/15 dark:bg-red-500/10 backdrop-blur-sm border border-red-500/25 dark:border-red-500/20 text-[#EF4444] hover:bg-red-500/25 dark:hover:bg-red-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ fontWeight: 600 }}
             >
               {deleteAccountLoading ? (

@@ -18,6 +18,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from "./ui/sheet";
+import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 
 const navItems = [
   { path: "/home", label: "Dashboard" },
@@ -161,16 +162,16 @@ export function TopBar() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className="w-10 h-10 rounded-xl bg-muted hover:bg-accent transition-colors flex items-center justify-center overflow-hidden"
+                className="w-10 h-10 rounded-xl bg-muted hover:bg-accent transition-colors flex items-center justify-center overflow-hidden p-0.5"
                 aria-label="Your profile"
                 title="Your profile"
               >
-                <div
-                  className="w-9 h-9 rounded-full bg-gradient-to-br from-[#10B981] to-[#34D399] flex items-center justify-center text-white text-[13px]"
-                  style={{ fontWeight: 700 }}
-                >
-                  {getUserInitials()}
-                </div>
+                <Avatar className="w-9 h-9 rounded-full">
+                  <AvatarImage src={profile?.avatar_url ?? undefined} alt="" />
+                  <AvatarFallback className="bg-gradient-to-br from-[#10B981] to-[#34D399] text-white text-[13px]" style={{ fontWeight: 700 }}>
+                    {getUserInitials()}
+                  </AvatarFallback>
+                </Avatar>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">

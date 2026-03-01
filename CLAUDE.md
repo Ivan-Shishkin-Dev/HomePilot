@@ -68,7 +68,7 @@ Plain `useEffect` + `useState` pattern (no SWR/React Query). Hooks auto-seed def
 
 ## Database Schema
 
-All tables have Row Level Security (RLS). Migration scripts in `scripts/` (run 001–006 in order in Supabase SQL Editor). Run `010_documents_unique_icon.sql` after 002 to enforce one document per type per user and prevent duplicates.
+All tables have Row Level Security (RLS). Migration scripts in `scripts/` (run 001–006 in order in Supabase SQL Editor). Run `010_documents_unique_icon.sql` after 002 to enforce one document per type per user and prevent duplicates. Run `011_handle_new_user_google_profile.sql` after 001 so new users (including Google OAuth) get `first_name`, `last_name`, and `avatar_url` from provider metadata.
 
 | Table | Purpose |
 |---|---|

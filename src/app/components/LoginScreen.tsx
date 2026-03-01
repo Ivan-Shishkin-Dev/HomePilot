@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { Eye, EyeOff, Loader2, Sun, Moon, ArrowLeft } from "lucide-react";
 import { Logo } from "./Logo";
+import { GoogleIcon } from "./GoogleIcon";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "./ThemeProvider";
 
@@ -12,9 +13,20 @@ export function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { user, signIn, signInWithGoogle, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+
+  const handleSignOutAndStay = async () => {
+    await signOut();
+    setError(null);
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError(null);
+    const { error } = await signInWithGoogle();
+    if (error) setError(error.message);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,6 +108,21 @@ export function LoginScreen() {
             Sign in to continue to your dashboard
           </p>
 
+          {user && (
+            <div className="mb-6 p-3 rounded-xl bg-muted/50 border border-border flex items-center justify-between gap-3">
+              <span className="text-sm text-muted-foreground">
+                Signed in as another account. Sign out to use a different one.
+              </span>
+              <button
+                type="button"
+                onClick={handleSignOutAndStay}
+                className="text-sm font-medium text-foreground hover:text-emerald-500 transition-colors shrink-0"
+              >
+                Sign out
+              </button>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <motion.div
@@ -114,7 +141,7 @@ export function LoginScreen() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-xl bg-input-background dark:bg-white/5 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all"
+                className="w-full px-4 py-3 rounded-xl bg-input-background dark:bg-white/5 border-2 border-input-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all"
                 placeholder="you@example.com"
               />
             </div>
@@ -129,7 +156,7 @@ export function LoginScreen() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-3 rounded-xl bg-input-background dark:bg-white/5 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all pr-12"
+                  className="w-full px-4 py-3 rounded-xl bg-input-background dark:bg-white/5 border-2 border-input-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all pr-12"
                   placeholder="Enter your password"
                 />
                 <button
@@ -159,6 +186,24 @@ export function LoginScreen() {
               ) : (
                 "Sign in"
               )}
+            </button>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-card px-3 text-muted-foreground">or</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              className="w-full py-3 rounded-xl border-2 border-input-border bg-input-background dark:bg-white/5 text-foreground font-semibold hover:bg-muted dark:hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+            >
+              <GoogleIcon className="w-5 h-5 shrink-0" />
+              Sign in with Google
             </button>
           </form>
 
