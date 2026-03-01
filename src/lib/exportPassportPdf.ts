@@ -26,12 +26,13 @@ async function fetchAsArrayBuffer(signedUrl: string): Promise<ArrayBuffer> {
 
 /**
  * Combine all uploaded documents (PDFs and images) into a single PDF and trigger download.
- * Adds a cover page with user name and list of included documents.
- * Only documents with file_url are included, in the order they appear in the list.
+ * Page 1: cover with name, email, and list of included documents (in order).
+ * Following pages: each document in that same order.
  */
 export async function exportPassportToPdf(
   documents: UserDocument[],
-  fullName?: string | null
+  fullName?: string | null,
+  email?: string | null
 ): Promise<void> {
   const withFiles = documents.filter((d) => d.file_url);
   if (withFiles.length === 0) {
@@ -40,28 +41,42 @@ export async function exportPassportToPdf(
 
   const mergedPdf = await PDFDocument.create();
   const font = await mergedPdf.embedFont(StandardFonts.Helvetica);
+  const fontBold = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
 
-  // Cover page: full name - Renter Profile, then bullet list of uploaded documents
-  const coverPage = mergedPdf.addPage([595, 842]); // A4
+  // Cover page (A4): name, email, then list of documents (same order as following pages)
+  const coverPage = mergedPdf.addPage([595, 842]);
   const margin = 72;
   let y = 842 - margin;
 
-  const title = fullName ? `${fullName} - Renter Profile` : "Renter Profile";
-  coverPage.drawText(title, { x: margin, y, size: 24, font });
-  y -= 48;
+  coverPage.drawText("Renter Passport", { x: margin, y, size: 22, font: fontBold });
+  y -= 36;
 
-  coverPage.drawText("This document contains the following information:", {
+  if (fullName) {
+    coverPage.drawText("Name:", { x: margin, y, size: 11, font: fontBold });
+    coverPage.drawText(fullName, { x: margin + 80, y, size: 11, font });
+    y -= 22;
+  }
+
+  if (email) {
+    coverPage.drawText("Email:", { x: margin, y, size: 11, font: fontBold });
+    coverPage.drawText(email, { x: margin + 80, y, size: 11, font });
+    y -= 22;
+  }
+
+  y -= 12;
+
+  coverPage.drawText("This document contains the following:", {
     x: margin,
     y,
     size: 12,
-    font,
+    font: fontBold,
   });
-  y -= 24;
+  y -= 22;
 
-  for (const doc of withFiles) {
-    coverPage.drawText(`• ${doc.name}`, { x: margin, y, size: 11, font });
+  withFiles.forEach((doc, i) => {
+    coverPage.drawText(`${i + 1}. ${doc.name}`, { x: margin, y, size: 11, font });
     y -= 18;
-  }
+  });
 
   for (const doc of withFiles) {
     const signedUrl = await getSignedUrl(doc.file_url!);

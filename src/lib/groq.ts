@@ -253,3 +253,73 @@ Example output: ["Option A", "Option B", "Option C"]`;
   }
   return [`Example ${placeholderLabel}`, `Sample ${placeholderLabel}`, `My ${placeholderLabel}`];
 }
+
+/** Input for generating a per-listing AI suggestion (competition, crime, rent trend, profile completion). */
+export interface ListingSuggestionInput {
+  competition_score: number;
+  crime_index: number;
+  rent_trend: string | null;
+  match_percent: number;
+  crime_description?: string | null;
+  rent_trend_description?: string | null;
+  address?: string | null;
+}
+
+/**
+ * Generate one short AI suggestion for the listing detail card using competition, crime, rent trend,
+ * and optional profile completion (application nudge when completion is low and competition high).
+ * Returns null if Groq is not configured or the request fails.
+ */
+export async function generateListingSuggestion(
+  listing: ListingSuggestionInput,
+  profile: Profile | null
+): Promise<string | null> {
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+  if (!apiKey) return null;
+
+  const competition = listing.competition_score;
+  const competitionLabel =
+    competition >= 70 ? "High" : competition >= 40 ? "Medium" : "Low";
+  const crimeDesc = listing.crime_description ?? `Crime index ${listing.crime_index}/100`;
+  const rentTrend = listing.rent_trend?.trim() || "Stable";
+  const rentTrendDesc = listing.rent_trend_description ?? (rentTrend !== "Stable" ? "See trend" : "Prices stable or moderate");
+  const profileCompletion = profile?.profile_completion ?? 0;
+  const matchPercent = listing.match_percent;
+  const budget =
+    profile?.min_budget != null || profile?.max_budget != null
+      ? `$${profile.min_budget ?? "?"}-${profile.max_budget ?? "?"}/mo`
+      : null;
+  const beds = profile?.preferred_beds != null ? `${profile.preferred_beds} bed(s)` : null;
+  const baths = profile?.preferred_baths != null ? `${profile.preferred_baths} bath(s)` : null;
+  const priorities = [budget, beds, baths].filter(Boolean).join("; ") || "Not specified";
+
+  const system = `You are Atlas, a rental assistant. Give the renter 2-3 short, punchy suggestions or opinions about this listing. Be warm and direct.
+
+STYLE: Use phrases like "This might be a safe pick", "This could be your highest priority", "Worth applying", "One to watch", "Strong match for your priorities", etc. Mix a clear take (e.g. safe pick, high priority) with one concrete reason. Keep each suggestion to one short sentence. You can use 2-3 sentences total.
+
+CRITICAL: Use ONLY the exact numbers provided below. Do NOT invent, estimate, round, or substitute. The user sees these same numbers on the page — any mismatch will break trust. Mention at least 2-3 of: profile completion %, match %, priorities, crime index (exact X/100), rent trend (exact string), competition. No bullet list, no preamble. Max 60 words.`;
+
+  const user = `FACTS — use these exact values only:
+- crime_index: ${listing.crime_index}/100 (description: ${crimeDesc})
+- rent_trend: "${rentTrend}" (${rentTrendDesc})
+- competition: ${competitionLabel} (${competition}/100)
+- profile_completion: ${profileCompletion}%
+- match_percent: ${matchPercent}%
+- priorities: ${priorities}
+
+Write 2-3 short suggestion lines (e.g. safe pick, highest priority, worth applying) using these exact numbers.`;
+
+  try {
+    const raw = await callGroq(
+      [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+      2
+    );
+    const line = raw.trim().replace(/^["']|["']$/g, "").slice(0, 520);
+    return line || null;
+  } catch {
+    return null;
+  }
+}

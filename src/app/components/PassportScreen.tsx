@@ -14,6 +14,8 @@ import {
   Loader2,
   X,
   Eye,
+  Upload,
+  HelpCircle,
 } from "lucide-react";
 import { ScoreRing } from "./ScoreRing";
 import { useState } from "react";
@@ -21,6 +23,13 @@ import { useUserDocuments, useDocumentUpload, useDocumentFileUrl } from "../../h
 import { useAuth } from "../../contexts/AuthContext";
 import { motion } from "motion/react";
 import { exportPassportToPdf } from "../../lib/exportPassportPdf";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
 
 const iconMap: Record<string, typeof FileText> = {
   id: FileText,
@@ -29,6 +38,60 @@ const iconMap: Record<string, typeof FileText> = {
   employment: Briefcase,
   credit: CreditCard,
   references: Users,
+};
+
+/** Short guides to help users find each document type. */
+const DOC_GUIDES: Record<string, { title: string; steps: string[] }> = {
+  id: {
+    title: "Government ID",
+    steps: [
+      "Use a current, unexpired government-issued photo ID.",
+      "Accepted: driver's license, passport, or state ID card.",
+      "Ensure the document is clear and all four corners are visible in the photo.",
+    ],
+  },
+  income: {
+    title: "Proof of Income",
+    steps: [
+      "Employees: Use 2–3 months of recent pay stubs, a W-2, or an employment verification letter from your employer.",
+      "Self-employed: Use tax returns (last year), 1099 forms, or profit-and-loss statements.",
+      "Other: Bank statements showing regular deposits, benefits award letters, or official documentation for investments or alimony.",
+      "Income is often expected to be at least 2–3× the monthly rent.",
+    ],
+  },
+  bank: {
+    title: "Bank Statements",
+    steps: [
+      "Use statements from the last 2–3 months from your main checking or savings account.",
+      "Download them from your bank's website or app (PDF) or request official copies.",
+      "They show savings and ability to pay rent; redact other sensitive info if allowed by the landlord.",
+    ],
+  },
+  employment: {
+    title: "Employment Letter",
+    steps: [
+      "Request a letter from your HR department or direct manager, on company letterhead if possible.",
+      "It should include: your job title, salary (or hourly rate and typical hours), employment status (full-time/part-time), and length of employment.",
+      "The letter should be recent (within the last 30 days).",
+      "If you just started, an offer letter can sometimes be used instead.",
+    ],
+  },
+  credit: {
+    title: "Credit Report",
+    steps: [
+      "Landlords often run their own credit check; you may need to authorize it.",
+      "You can provide a copy of your own report from AnnualCreditReport.com (free once per year from each bureau).",
+      "If your score is limited, offering extra deposit or proof of consistent rent payments can help.",
+    ],
+  },
+  references: {
+    title: "References",
+    steps: [
+      "Previous landlords: name, phone or email, and dates you rented.",
+      "Employer or personal references if you're a first-time renter.",
+      "Have permission from each person before listing their contact info.",
+    ],
+  },
 };
 
 const statusConfig = {
@@ -69,16 +132,14 @@ function DocumentRow({
   const StatusIcon = status.icon;
   const isMissing = doc.status === "missing";
   const { url: fileUrl } = useDocumentFileUrl(doc.file_url);
+  const guide = DOC_GUIDES[doc.icon];
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 + index * 0.05 }}
-      onClick={onUpload}
-      className={`bg-card rounded-xl p-4 border border-border flex items-center gap-4 transition-colors ${
-        !uploading ? "hover:border-[#10B981]/30 cursor-pointer" : "cursor-default"
-      }`}
+      className="bg-card rounded-xl p-4 border border-border flex items-center gap-4 transition-colors"
     >
       <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center shrink-0">
         <Icon size={20} className="text-muted-foreground" />
@@ -101,27 +162,57 @@ function DocumentRow({
         </div>
       </div>
       {isMissing ? (
-        <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+        <div className="flex items-center gap-2 shrink-0">
+          {guide && (
+            <Dialog>
+              <DialogTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[13px] font-medium border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer"
+                >
+                  <HelpCircle size={14} />
+                  Guide
+                </button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md bg-card border-border">
+                <DialogHeader>
+                  <DialogTitle className="text-foreground">How to get: {guide.title}</DialogTitle>
+                </DialogHeader>
+                <ul className="text-muted-foreground text-[14px] space-y-2 list-disc list-inside mt-2">
+                  {guide.steps.map((step, i) => (
+                    <li key={i}>{step}</li>
+                  ))}
+                </ul>
+              </DialogContent>
+            </Dialog>
+          )}
+          <button
+            type="button"
+            onClick={onUpload}
+            disabled={uploading}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[13px] font-medium bg-[#10B981] text-white hover:bg-[#059669] transition-colors disabled:opacity-50 cursor-pointer"
+          >
+            {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+            Upload
+          </button>
+        </div>
       ) : (
         <div className="flex items-center gap-1 shrink-0">
           {doc.file_url && (
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (fileUrl) window.open(fileUrl);
-              }}
-              className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+              type="button"
+              onClick={() => fileUrl && window.open(fileUrl)}
+              className="p-1.5 rounded-lg hover:bg-muted transition-colors cursor-pointer"
               aria-label="View document"
             >
               <Eye size={16} className="text-muted-foreground hover:text-foreground" />
             </button>
           )}
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove();
-            }}
-            className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+            type="button"
+            onClick={onRemove}
+            className="p-1.5 rounded-lg hover:bg-muted transition-colors cursor-pointer"
+            aria-label="Remove document"
           >
             <X size={16} className="text-muted-foreground hover:text-foreground" />
           </button>
@@ -143,7 +234,7 @@ export function PassportScreen() {
     setExporting(true);
     try {
       const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || null;
-      await exportPassportToPdf(documents, fullName);
+      await exportPassportToPdf(documents, fullName, profile?.email ?? null);
     } catch (e) {
       setExportError(e instanceof Error ? e.message : "Export failed");
     } finally {

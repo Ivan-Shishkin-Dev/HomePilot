@@ -13,23 +13,28 @@ import {
   MapPin,
   Bed,
   Bath,
-  Square,
   Zap,
   Users,
   ChevronRight,
   ExternalLink,
   Loader2,
+  ShipWheel,
 } from "lucide-react";
 import { useListing } from "../../hooks/useSupabaseData";
+import { useAuth } from "../../contexts/AuthContext";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { motion, AnimatePresence } from "motion/react";
 import { MATCH_GREEN_MIN, MATCH_YELLOW_MIN } from "../lib/priorityMatch";
 import { fetchLivability, type LivabilityResult } from "../../services/livability";
+import { generateListingSuggestion } from "../../lib/groq";
+
+const suggestionCache = new Map<string, string>();
 
 export function ListingDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { listing, loading } = useListing(id);
+  const { profile } = useAuth();
   const { savedIds, toggleSave } = useSavedListings();
   const { trackExternalLinkClick, appliedIds, removeApplied } = useAppliedListings();
   const isSaved = id ? savedIds.has(id) : false;
@@ -37,6 +42,8 @@ export function ListingDetail() {
   const [showCopied, setShowCopied] = useState(false);
   const [livability, setLivability] = useState<LivabilityResult | null>(null);
   const [livabilityLoading, setLivabilityLoading] = useState(true);
+  const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
+  const [aiSuggestionLoading, setAiSuggestionLoading] = useState(false);
 
   useEffect(() => {
     if (!listing) {
@@ -50,6 +57,54 @@ export function ListingDetail() {
       .catch(() => setLivability(null))
       .finally(() => setLivabilityLoading(false));
   }, [listing?.id, listing?.address, listing?.city]);
+
+  // AI suggestion: use listing + livability (when loaded) and profile; cache by listing+data so we don't serve stale numbers; minimum 2s loading
+  const MIN_LOADING_MS = 2000;
+  useEffect(() => {
+    if (!listing || livabilityLoading) return;
+    const crimeIndex = livability?.crime_index ?? listing.crime_index ?? 40;
+    const rentTrend = livability?.rent_trend ?? listing.rent_trend ?? "Stable";
+    const competition = listing.competition_score ?? listing.competition_level ?? 50;
+    const cacheKey = `${listing.id}:${crimeIndex}:${rentTrend}:${competition}`;
+    const cached = suggestionCache.get(cacheKey);
+    if (cached) {
+      setAiSuggestion(cached);
+      return;
+    }
+    setAiSuggestionLoading(true);
+    const input = {
+      competition_score: competition,
+      crime_index: crimeIndex,
+      rent_trend: livability?.rent_trend ?? listing.rent_trend ?? null,
+      match_percent: Math.round(100 - crimeIndex),
+      crime_description: livability?.crime_description ?? null,
+      rent_trend_description: livability?.rent_trend_description ?? null,
+      address: listing.address ?? listing.city ?? null,
+    };
+    const start = Date.now();
+    Promise.all([
+      generateListingSuggestion(input, profile),
+      new Promise<void>((r) => setTimeout(r, MIN_LOADING_MS)),
+    ]).then(([s]) => {
+      const elapsed = Date.now() - start;
+      const remaining = Math.max(0, MIN_LOADING_MS - elapsed);
+      if (remaining > 0) {
+        setTimeout(() => {
+          if (s) {
+            suggestionCache.set(cacheKey, s);
+            setAiSuggestion(s);
+          }
+          setAiSuggestionLoading(false);
+        }, remaining);
+      } else {
+        if (s) {
+          suggestionCache.set(cacheKey, s);
+          setAiSuggestion(s);
+        }
+        setAiSuggestionLoading(false);
+      }
+    });
+  }, [listing?.id, listing, livability, livabilityLoading, profile]);
 
   const handleShare = async () => {
     const url = listing.listing_url || window.location.href;
@@ -233,12 +288,6 @@ export function ListingDetail() {
                     <Bath size={16} className="text-[#6B7280]" />
                     <span className="text-[14px]">{listing.baths} Bath</span>
                   </div>
-                  {listing.sqft > 0 && (
-                    <div className="flex items-center gap-1.5">
-                      <Square size={16} className="text-[#6B7280]" />
-                      <span className="text-[14px]">{listing.sqft} sqft</span>
-                    </div>
-                  )}
                 </div>
               </div>
             </motion.div>
@@ -313,24 +362,29 @@ export function ListingDetail() {
                       Competition
                     </span>
                   </div>
-                  <span
-                    className="text-[13px]"
-                    style={{
-                      fontWeight: 600,
-                      color:
-                        (listing.competition_level ?? listing.competition_score) > 70
-                          ? "#EF4444"
-                          : (listing.competition_level ?? listing.competition_score) > 40
-                          ? "#F59E0B"
-                          : "#10B981",
-                    }}
-                  >
-                    {(listing.competition_level ?? listing.competition_score) > 70
-                      ? "High Demand"
-                      : (listing.competition_level ?? listing.competition_score) > 40
-                      ? "Moderate"
-                      : "Low Demand"}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="text-[13px]"
+                      style={{
+                        fontWeight: 600,
+                        color:
+                          (listing.competition_level ?? listing.competition_score) > 70
+                            ? "#EF4444"
+                            : (listing.competition_level ?? listing.competition_score) > 40
+                            ? "#F59E0B"
+                            : "#10B981",
+                      }}
+                    >
+                      {(listing.competition_level ?? listing.competition_score) > 70
+                        ? "High Demand"
+                        : (listing.competition_level ?? listing.competition_score) > 40
+                        ? "Moderate"
+                        : "Low Demand"}
+                    </span>
+                    <span className="text-[#6B7280] text-[12px]">
+                      ({listing.competition_level ?? listing.competition_score}/100)
+                    </span>
+                  </div>
                 </div>
                 <div className="w-full h-2.5 bg-white/[0.06] rounded-full overflow-hidden mb-2">
                   <div
@@ -357,22 +411,67 @@ export function ListingDetail() {
                 transition={{ delay: 0.2 }}
                 className="bg-gradient-to-r from-[#10B981]/10 to-[#10B981]/5 rounded-2xl p-5 border border-[#10B981]/15"
               >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#10B981]/20 flex items-center justify-center shrink-0">
-                    <Zap size={20} className="text-[#10B981]" />
-                  </div>
-                  <div>
-                    <p className="text-[#10B981] text-[11px]" style={{ fontWeight: 700 }}>
-                      AI SUGGESTION
-                    </p>
-                    <p className="text-white text-[15px]" style={{ fontWeight: 500 }}>
-                      {listing.ai_reasons?.[0] || "Complete your profile for better matching"}
-                    </p>
-                  </div>
-                </div>
-                <button className="w-full bg-[#10B981]/15 text-[#10B981] py-2.5 rounded-xl text-[13px] hover:bg-[#10B981]/25 transition-colors" style={{ fontWeight: 600 }}>
-                  Apply Suggestion
-                </button>
+                <AnimatePresence mode="wait">
+                  {aiSuggestionLoading ? (
+                    <motion.div
+                      key="atlas-loading"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex flex-col gap-4"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-xl bg-[#10B981]/20 flex items-center justify-center shrink-0">
+                          <motion.div
+                            animate={{ rotate: [0, 360] }}
+                            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                            className="flex items-center justify-center"
+                          >
+                            <ShipWheel size={22} className="text-[#10B981]" />
+                          </motion.div>
+                        </div>
+                        <p className="text-[#10B981] text-[14px]" style={{ fontWeight: 600 }}>
+                          Atlas is thinking…
+                        </p>
+                      </div>
+                      <div className="flex justify-center gap-1">
+                        {[0, 1, 2].map((i) => (
+                          <motion.span
+                            key={i}
+                            className="w-1.5 h-1.5 rounded-full bg-[#10B981]/60"
+                            animate={{ y: [0, -4, 0], opacity: [0.5, 1, 0.5] }}
+                            transition={{
+                              duration: 0.6,
+                              repeat: Infinity,
+                              delay: i * 0.15,
+                              ease: "easeInOut",
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="atlas-result"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex flex-col gap-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-xl bg-[#10B981]/20 flex items-center justify-center shrink-0">
+                          <ShipWheel size={22} className="text-[#10B981]" />
+                        </div>
+                        <p className="text-[#10B981] text-[16px]" style={{ fontWeight: 700 }}>
+                          Atlas' suggestion
+                        </p>
+                      </div>
+                      <p className="text-white text-[15px] leading-snug pl-0" style={{ fontWeight: 500 }}>
+                        {aiSuggestion || listing.ai_reasons?.[0] || "Complete your profile for better matching"}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
 
               {/* CTA */}

@@ -28,8 +28,6 @@ function parseSearchParams(sp: URLSearchParams): SearchFilters {
     location: sp.get("location") ?? defaultSearchFilters.location,
     beds: sp.get("beds") != null ? +sp.get("beds")! : null,
     baths: sp.get("baths") != null ? +sp.get("baths")! : null,
-    minSqft: sp.get("minSqft") != null ? +sp.get("minSqft")! : null,
-    maxSqft: sp.get("maxSqft") != null ? +sp.get("maxSqft")! : null,
     maxPrice: sp.get("maxPrice") != null ? +sp.get("maxPrice")! : null,
     petFriendly: sp.get("petFriendly") === "1",
     studentFriendly: sp.get("studentFriendly") === "1",
@@ -42,8 +40,6 @@ function parsePriorityFromParams(sp: URLSearchParams): PriorityValues {
   const out: PriorityValues = {};
   const cost = sp.get("priorityCost");
   if (cost != null) { const n = parseInt(cost, 10); if (!isNaN(n) && n > 0) out.cost = n; }
-  const sqft = sp.get("prioritySqft");
-  if (sqft != null) { const n = parseInt(sqft, 10); if (!isNaN(n) && n > 0) out.sqft = n; }
   const beds = sp.get("priorityBeds");
   if (beds != null) { const n = parseInt(beds, 10); if (!isNaN(n) && n > 0) out.beds = n; }
   const baths = sp.get("priorityBaths");
@@ -63,7 +59,6 @@ function parseStateFromLocation(location: string): { city: string; state: string
 
 const PRIORITY_FIELDS: { key: keyof PriorityValues; label: string; placeholder: string }[] = [
   { key: "cost", label: PRIORITY_LABELS.cost, placeholder: "e.g. 2000" },
-  { key: "sqft", label: PRIORITY_LABELS.sqft, placeholder: "e.g. 800" },
   { key: "beds", label: PRIORITY_LABELS.beds, placeholder: "e.g. 2" },
   { key: "baths", label: PRIORITY_LABELS.baths, placeholder: "e.g. 1" },
 ];
@@ -78,13 +73,11 @@ export function ListingsResultsScreen() {
   const [searchInput, setSearchInput] = useState(initialFilters.location);
   const [pendingBeds, setPendingBeds] = useState<number | null>(initialFilters.beds);
   const [pendingBaths, setPendingBaths] = useState<number | null>(initialFilters.baths);
-  const [pendingMinSqft, setPendingMinSqft] = useState<number | null>(initialFilters.minSqft);
-  const [pendingMaxSqft, setPendingMaxSqft] = useState<number | null>(initialFilters.maxSqft);
   const [pendingMaxPrice, setPendingMaxPrice] = useState<number | null>(initialFilters.maxPrice);
   const [pendingSaved, setPendingSaved] = useState(initialFilters.saved);
   const [pendingApplied, setPendingApplied] = useState(initialFilters.applied);
   const priorityStateFromValues = (pv: PriorityValues) =>
-    (["cost", "sqft", "beds", "baths"] as const).reduce(
+    (["cost", "beds", "baths"] as const).reduce(
       (acc, k) => ({
         ...acc,
         [k]: {
@@ -164,8 +157,6 @@ export function ListingsResultsScreen() {
     let list = [...baseListings];
     if (committedFilters.beds != null) list = list.filter((l) => l.beds >= committedFilters.beds!);
     if (committedFilters.baths != null) list = list.filter((l) => l.baths >= committedFilters.baths!);
-    if (committedFilters.minSqft != null) list = list.filter((l) => l.sqft > 0 && l.sqft >= committedFilters.minSqft!);
-    if (committedFilters.maxSqft != null) list = list.filter((l) => l.sqft > 0 && l.sqft <= committedFilters.maxSqft!);
     if (committedFilters.maxPrice != null) list = list.filter((l) => l.price <= committedFilters.maxPrice!);
     if (!isFilterOnlyMode && committedFilters.saved) list = list.filter((l) => savedIds.has(l.id));
     if (!isFilterOnlyMode && committedFilters.applied) list = list.filter((l) => appliedIds.has(l.id));
@@ -176,7 +167,6 @@ export function ListingsResultsScreen() {
   const hasAnyPriority = useMemo(
     () =>
       (committedPriorities.cost != null && committedPriorities.cost > 0) ||
-      (committedPriorities.sqft != null && committedPriorities.sqft > 0) ||
       (committedPriorities.beds != null && committedPriorities.beds > 0) ||
       (committedPriorities.baths != null && committedPriorities.baths > 0),
     [committedPriorities]
@@ -185,7 +175,7 @@ export function ListingsResultsScreen() {
     const list = filteredListings.map((listing) => {
       const matchPercent = hasAnyPriority
         ? computeMatchPercentMulti(
-            { id: listing.id, price: listing.price, sqft: listing.sqft, beds: listing.beds, baths: listing.baths },
+            { id: listing.id, price: listing.price, beds: listing.beds, baths: listing.baths },
             committedPriorities
           )
         : 85;
@@ -196,7 +186,7 @@ export function ListingsResultsScreen() {
 
   const pendingPriorityParams: PriorityParams = useMemo(() => {
     const p: PriorityParams = {};
-    (["cost", "sqft", "beds", "baths"] as const).forEach((k) => {
+    (["cost", "beds", "baths"] as const).forEach((k) => {
       if (pendingPriorities[k].checked && pendingPriorities[k].value.trim()) {
         const n = parseInt(pendingPriorities[k].value, 10);
         if (!isNaN(n) && n > 0) p[k] = n;
@@ -217,8 +207,6 @@ export function ListingsResultsScreen() {
       location: overrides?.location ?? searchInput.trim(),
       beds: overrides?.beds !== undefined ? overrides.beds : pendingBeds,
       baths: overrides?.baths !== undefined ? overrides.baths : pendingBaths,
-      minSqft: overrides?.minSqft !== undefined ? overrides.minSqft : pendingMinSqft,
-      maxSqft: overrides?.maxSqft !== undefined ? overrides.maxSqft : pendingMaxSqft,
       maxPrice: overrides?.maxPrice !== undefined ? overrides.maxPrice : pendingMaxPrice,
       petFriendly: false,
       studentFriendly: false,
@@ -274,7 +262,6 @@ export function ListingsResultsScreen() {
     price: listing.price,
     beds: listing.beds,
     baths: listing.baths,
-    sqft: listing.sqft,
     matchPercent,
     demand:
       listing.demand ||
@@ -315,8 +302,6 @@ export function ListingsResultsScreen() {
     searchInput.trim() !== committedFilters.location ||
     pendingBeds !== committedFilters.beds ||
     pendingBaths !== committedFilters.baths ||
-    pendingMinSqft !== committedFilters.minSqft ||
-    pendingMaxSqft !== committedFilters.maxSqft ||
     pendingMaxPrice !== committedFilters.maxPrice ||
     JSON.stringify(pendingPriorityParams) !== JSON.stringify(committedPriorities);
 
@@ -434,7 +419,7 @@ export function ListingsResultsScreen() {
               }`}
             >
               <Target size={16} />
-              Set priority (required)
+              Priorities
               <ChevronDown
                 size={14}
                 className={`transition-transform ${showPriorityPanel ? "rotate-180" : ""}`}
@@ -474,26 +459,6 @@ export function ListingsResultsScreen() {
                   ))}
                 </select>
               </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-muted-foreground">Min sq ft</span>
-                <input
-                  type="number"
-                  placeholder="e.g. 600"
-                  value={pendingMinSqft ?? ""}
-                  onChange={(e) => setPendingMinSqft(e.target.value === "" ? null : Math.max(0, +e.target.value))}
-                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                />
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-muted-foreground">Max sq ft</span>
-                <input
-                  type="number"
-                  placeholder="e.g. 1500"
-                  value={pendingMaxSqft ?? ""}
-                  onChange={(e) => setPendingMaxSqft(e.target.value === "" ? null : Math.max(0, +e.target.value))}
-                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                />
-              </label>
               <label className="flex flex-col gap-1 sm:col-span-2">
                 <span className="text-xs text-muted-foreground">
                   Max price: {pendingMaxPrice != null ? `$${pendingMaxPrice.toLocaleString()}` : `$${MAX_PRICE_SLIDER.toLocaleString()}`}
@@ -524,8 +489,6 @@ export function ListingsResultsScreen() {
                   onClick={() => {
                     setPendingBeds(null);
                     setPendingBaths(null);
-                    setPendingMinSqft(null);
-                    setPendingMaxSqft(null);
                     setPendingMaxPrice(null);
                     setPendingSaved(false);
                     setPendingApplied(false);
@@ -545,9 +508,9 @@ export function ListingsResultsScreen() {
               className="mt-4 pt-4 border-t border-border"
             >
               <p className="text-xs text-muted-foreground mb-3">
-                Check at least one priority and enter a value. Match % is based on these. Location is required.
+                Check at least one priority and enter a value. Match percent is based on these.
               </p>
-              <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
                 {PRIORITY_FIELDS.map(({ key, label, placeholder }) => (
                   <div key={key} className="flex flex-wrap items-center gap-3">
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -787,8 +750,6 @@ export function ListingsResultsScreen() {
                   setSearchInput("");
                   setPendingBeds(null);
                   setPendingBaths(null);
-                  setPendingMinSqft(null);
-                  setPendingMaxSqft(null);
                   setPendingMaxPrice(null);
                   setPendingSaved(false);
                   setPendingApplied(false);
