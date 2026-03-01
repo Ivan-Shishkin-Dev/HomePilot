@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   phone TEXT,
   avatar_url TEXT,
   renter_score INTEGER DEFAULT 72,
-  profile_completion INTEGER DEFAULT 65,
+  profile_completion INTEGER DEFAULT 0,
   move_in_date DATE,
   min_budget INTEGER,
   max_budget INTEGER,

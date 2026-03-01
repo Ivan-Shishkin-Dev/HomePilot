@@ -18,8 +18,9 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { ScoreRing } from "./ScoreRing";
-import { useState } from "react";
-import { useUserDocuments, useDocumentUpload, useDocumentFileUrl } from "../../hooks/useSupabaseData";
+import { useState, useEffect } from "react";
+import { useUserDocuments, useDocumentUpload, useDocumentFileUrl, calculateProfileCompletion } from "../../hooks/useSupabaseData";
+import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
 import { motion } from "motion/react";
 import { exportPassportToPdf } from "../../lib/exportPassportPdf";
@@ -224,10 +225,22 @@ function DocumentRow({
 
 export function PassportScreen() {
   const { documents, loading, refetch: refetchDocs } = useUserDocuments();
-  const { profile } = useAuth();
+  const { profile, refreshProfile } = useAuth();
   const { triggerUpload, uploading, fileInputRef, handleFileChange, removeDocument } = useDocumentUpload();
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!profile || documents.length === 0) return;
+    const correct = calculateProfileCompletion(documents);
+    if (profile.profile_completion !== correct) {
+      supabase
+        .from("profiles")
+        .update({ profile_completion: correct, updated_at: new Date().toISOString() })
+        .eq("id", profile.id)
+        .then(() => refreshProfile());
+    }
+  }, [documents, profile, refreshProfile]);
 
   const handleExportPdf = async () => {
     setExportError(null);
@@ -244,7 +257,7 @@ export function PassportScreen() {
 
   const uploaded = documents.filter((d) => d.status !== "missing").length;
   const total = documents.length || 1;
-  const completionPct = profile?.profile_completion || Math.round((uploaded / total) * 100);
+  const completionPct = Math.round((uploaded / total) * 100);
   const scoreLabel = getScoreLabel(profile?.renter_score ?? 0);
 
   const handleDocClick = (doc: typeof documents[number]) => {
