@@ -7,7 +7,7 @@ export function Layout() {
     <ProtectedRoute>
       <div className="min-h-screen bg-background">
         <TopBar />
-        <main className="pt-[72px] min-h-screen">
+        <main className="-mt-[62px] pt-[68px] min-h-screen">
           <Outlet />
         </main>
       </div>

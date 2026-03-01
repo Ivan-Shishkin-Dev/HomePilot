@@ -2,6 +2,7 @@ import { useNavigate } from "react-router";
 import { MapPin, Bed, Bath, Clock, ExternalLink, Heart } from "lucide-react";
 import { useAppliedListings } from "../../contexts/AppliedListingsContext";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { cn } from "./ui/utils";
 
 interface Listing {
   id: string;
@@ -23,10 +24,12 @@ interface Listing {
 
 export function ListingCard({
   listing,
+  className,
   isSaved,
   onToggleSave,
 }: {
   listing: Listing;
+  className?: string;
   isSaved?: boolean;
   onToggleSave?: (listingId: string) => void;
 }) {
@@ -46,7 +49,7 @@ export function ListingCard({
   };
 
   return (
-    <div className="w-full bg-card rounded-2xl overflow-hidden border border-border hover:border-[#10B981]/30 transition-all text-left group flex flex-col">
+    <div className={cn("w-full bg-card rounded-2xl overflow-hidden border border-border hover:border-[#10B981]/30 transition-all text-left group flex flex-col", className)}>
       <button
         onClick={() => navigate(`/listing/${listing.id}`)}
         className="flex-1 text-left min-w-0"
