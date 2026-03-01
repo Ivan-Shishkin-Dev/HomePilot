@@ -81,6 +81,9 @@ export interface Listing {
   /** Optional: used by ListingDetail when present */
   competition_level?: number;
   ai_reasons?: string[] | null;
+  /** Optional: from Zillow or geocoding; used for livability lookups */
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface ProfileSuggestion {

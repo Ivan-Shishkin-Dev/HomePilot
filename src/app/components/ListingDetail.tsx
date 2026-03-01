@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useSavedListings } from "../../hooks/useSupabaseData";
 import { useAppliedListings } from "../../contexts/AppliedListingsContext";
@@ -23,6 +23,8 @@ import {
 import { useListing } from "../../hooks/useSupabaseData";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { motion, AnimatePresence } from "motion/react";
+import { MATCH_GREEN_MIN, MATCH_YELLOW_MIN } from "../lib/priorityMatch";
+import { fetchLivability, type LivabilityResult } from "../../services/livability";
 
 export function ListingDetail() {
   const { id } = useParams();
@@ -33,6 +35,21 @@ export function ListingDetail() {
   const isSaved = id ? savedIds.has(id) : false;
   const isApplied = id ? appliedIds.has(id) : false;
   const [showCopied, setShowCopied] = useState(false);
+  const [livability, setLivability] = useState<LivabilityResult | null>(null);
+  const [livabilityLoading, setLivabilityLoading] = useState(true);
+
+  useEffect(() => {
+    if (!listing) {
+      setLivability(null);
+      setLivabilityLoading(false);
+      return;
+    }
+    setLivabilityLoading(true);
+    fetchLivability(listing)
+      .then(setLivability)
+      .catch(() => setLivability(null))
+      .finally(() => setLivabilityLoading(false));
+  }, [listing?.id, listing?.address, listing?.city]);
 
   const handleShare = async () => {
     const url = listing.listing_url || window.location.href;
@@ -50,8 +67,8 @@ export function ListingDetail() {
   };
 
   const getMatchColor = (pct: number) => {
-    if (pct >= 80) return "#10B981";
-    if (pct >= 65) return "#F59E0B";
+    if (pct >= MATCH_GREEN_MIN) return "#10B981";
+    if (pct >= MATCH_YELLOW_MIN) return "#F59E0B";
     return "#EF4444";
   };
 
@@ -71,38 +88,28 @@ export function ListingDetail() {
     );
   }
 
+  const crimeIndex = livability?.crime_index ?? listing.crime_index;
+  const rentTrendValue = livability?.rent_trend ?? listing.rent_trend ?? "Stable";
+  const rentTrendDesc = livability?.rent_trend_description ?? (listing.rent_trend?.startsWith("-") ? "Prices decreasing" : "Prices rising");
+
   // Use crime_index as a proxy for match since DB doesn't have match_score
-  const matchScore = 100 - listing.crime_index; // Lower crime = higher match
+  const matchScore = 100 - crimeIndex;
   const matchColor = getMatchColor(matchScore);
 
-  const stats = [
+  const livabilityStats = [
     {
       icon: Shield,
       label: "Crime Index",
-      value: `${listing.crime_index}/100`,
-      color: listing.crime_index < 30 ? "#10B981" : listing.crime_index < 50 ? "#F59E0B" : "#EF4444",
-      desc: listing.crime_index < 30 ? "Safe area" : "Exercise caution",
+      value: livabilityLoading ? "—" : `${crimeIndex}/100`,
+      color: crimeIndex < 30 ? "#10B981" : crimeIndex < 50 ? "#F59E0B" : "#EF4444",
+      desc: livability?.crime_description ?? (crimeIndex < 30 ? "Safe area" : "Exercise caution"),
     },
     {
       icon: TrendingUp,
       label: "Rent Trend",
-      value: listing.rent_trend || "Stable",
-      color: listing.rent_trend?.startsWith("-") ? "#10B981" : "#F59E0B",
-      desc: listing.rent_trend?.startsWith("-") ? "Prices decreasing" : "Prices rising",
-    },
-    {
-      icon: AlertTriangle,
-      label: "Competition",
-      value: listing.competition_score > 70 ? "High" : listing.competition_score > 40 ? "Medium" : "Low",
-      color: listing.competition_score < 40 ? "#10B981" : listing.competition_score < 70 ? "#F59E0B" : "#EF4444",
-      desc: listing.competition_score > 70 ? "Many applicants" : "Fewer applicants",
-    },
-    {
-      icon: Shield,
-      label: "Scam Score",
-      value: `${listing.scam_score}/100`,
-      color: listing.scam_score < 10 ? "#10B981" : listing.scam_score < 30 ? "#F59E0B" : "#EF4444",
-      desc: listing.scam_score < 10 ? "Verified listing" : "Some flags detected",
+      value: livabilityLoading ? "—" : rentTrendValue,
+      color: rentTrendValue.startsWith("-") ? "#10B981" : "#F59E0B",
+      desc: rentTrendDesc,
     },
   ];
 
@@ -266,8 +273,8 @@ export function ListingDetail() {
               <h3 className="text-white text-[16px] mb-4" style={{ fontWeight: 600 }}>
                 Livability Analysis
               </h3>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {stats.map((stat) => (
+              <div className="grid grid-cols-2 gap-4">
+                {livabilityStats.map((stat) => (
                   <div
                     key={stat.label}
                     className="bg-white/[0.03] rounded-xl p-4"

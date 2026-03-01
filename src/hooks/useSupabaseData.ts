@@ -57,6 +57,22 @@ export function useListing(id: string | undefined) {
 export { useSavedListings } from "../contexts/SavedListingsContext";
 export { useAppliedListings } from "../contexts/AppliedListingsContext";
 
+// Canonical document types: one per icon, in display order
+const DOCUMENT_ICON_ORDER = ["id", "income", "bank", "employment", "credit", "references"] as const;
+
+function dedupeDocumentsByIcon(rows: UserDocument[]): UserDocument[] {
+  const byIcon = new Map<string, UserDocument>();
+  for (const doc of rows) {
+    const existing = byIcon.get(doc.icon);
+    const docUploaded = doc.status !== "missing" || !!doc.file_url;
+    const existingUploaded = existing ? existing.status !== "missing" || !!existing.file_url : false;
+    if (!existing || (docUploaded && !existingUploaded)) {
+      byIcon.set(doc.icon, doc);
+    }
+  }
+  return DOCUMENT_ICON_ORDER.map((icon) => byIcon.get(icon)).filter(Boolean) as UserDocument[];
+}
+
 // Hook to fetch user documents
 export function useUserDocuments() {
   const { user } = useAuth();
@@ -74,7 +90,7 @@ export function useUserDocuments() {
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-      setDocuments(data || []);
+      setDocuments(dedupeDocumentsByIcon(data || []));
     } catch (err) {
       setError(err as Error);
     } finally {
@@ -104,13 +120,17 @@ export function useUserDocuments() {
         { name: "References", status: "missing", icon: "references" },
       ];
 
+      const rows = defaultDocs.map((doc) => ({ ...doc, user_id: user.id }));
       const { data, error } = await supabase
         .from("documents")
-        .insert(defaultDocs.map(doc => ({ ...doc, user_id: user.id })))
+        .upsert(rows, { onConflict: "user_id,icon", ignoreDuplicates: true })
         .select();
 
-      if (!error && data) {
-        setDocuments(data);
+      if (!error && data && data.length > 0) {
+        setDocuments(dedupeDocumentsByIcon(data));
+      } else if (!error) {
+        // Rows already existed; refetch so we have the 6 docs in state
+        fetchDocuments();
       }
     }
 

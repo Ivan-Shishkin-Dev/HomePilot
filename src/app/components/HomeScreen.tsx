@@ -8,13 +8,56 @@ import { useZillowListings } from "../../hooks/useZillowListings";
 import { useAppliedListings } from "../../contexts/AppliedListingsContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { motion } from "motion/react";
+import {
+  getTopMatchesQueue,
+  getLastSearchParams,
+  removeFirstFromQueue,
+  ATLAS_INTRO_SEEN_KEY,
+  MATCH_GREEN_MIN,
+  MATCH_YELLOW_MIN,
+} from "../lib/priorityMatch";
+
+function getMatchBadgeColor(pct: number): string {
+  if (pct >= MATCH_GREEN_MIN) return "text-[#10B981]";
+  if (pct >= MATCH_YELLOW_MIN) return "text-[#F59E0B]";
+  return "text-[#EF4444]";
+}
 
 export function HomeScreen() {
   const navigate = useNavigate();
   const [showAlert, setShowAlert] = useState(true);
+  const [queue, setQueue] = useState<ReturnType<typeof getTopMatchesQueue>>([]);
+  const isFirstTime = typeof window !== "undefined" && !localStorage.getItem(ATLAS_INTRO_SEEN_KEY);
   const { savedIds, savedCount, toggleSave } = useSavedListings();
+
+  // Sync queue from localStorage on mount and when returning to this page
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setQueue(getTopMatchesQueue());
+    }
+  }, []);
+
+  const currentMatch = queue.length > 0 ? queue[0] : null;
+  const lastSearchParams = typeof window !== "undefined" ? getLastSearchParams() : null;
+
+  const handleDismiss = () => {
+    removeFirstFromQueue();
+    setQueue(getTopMatchesQueue());
+  };
+
+  const handleViewLatestSearch = () => {
+    const params = getLastSearchParams();
+    navigate(params ? `/listings/results?${params}` : "/listings/results");
+  };
   const { appliedCount } = useAppliedListings();
   const { profile } = useAuth();
+
+  const handleSearchListings = () => {
+    try {
+      localStorage.setItem(ATLAS_INTRO_SEEN_KEY, "1");
+    } catch {}
+    navigate("/listings");
+  };
 
   // Load "Top Matches" from the user's preferred cities, or a sensible default
   const defaultCity = useMemo(() => {
@@ -124,7 +167,29 @@ export function HomeScreen() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="lg:col-span-2"
           >
-            {showAlert ? (
+            {isFirstTime ? (
+              <div className="bg-gradient-to-r from-[#10B981]/15 to-[#10B981]/10 rounded-2xl p-5 lg:p-6 border border-[#10B981]/20 relative overflow-hidden h-full">
+                <div className="absolute top-0 right-0 w-40 h-40 bg-[#10B981]/10 rounded-full blur-3xl" />
+                <div className="flex items-start gap-4 relative">
+                  <div className="w-11 h-11 rounded-xl bg-[#10B981]/20 flex items-center justify-center shrink-0">
+                    <Zap size={22} className="text-[#10B981]" />
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-muted-foreground text-[12px] block mb-1">Atlas</span>
+                    <p className="text-foreground text-[16px] lg:text-[18px] mb-3" style={{ fontWeight: 600 }}>
+                      Our AI, Atlas, is ready to hunt the best match for you based on your searches.
+                    </p>
+                    <button
+                      onClick={handleSearchListings}
+                      className="bg-[#10B981] text-white px-6 py-2.5 rounded-xl text-[14px] hover:bg-[#059669] transition-colors"
+                      style={{ fontWeight: 600 }}
+                    >
+                      Search listings
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : showAlert && currentMatch ? (
               <div className="bg-gradient-to-r from-[#10B981]/15 to-[#10B981]/10 rounded-2xl p-5 lg:p-6 border border-[#10B981]/20 relative overflow-hidden h-full">
                 <div className="absolute top-0 right-0 w-40 h-40 bg-[#10B981]/10 rounded-full blur-3xl" />
                 <div className="flex items-start gap-4 relative">
@@ -133,8 +198,8 @@ export function HomeScreen() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1.5">
-                      <span className="text-[#F59E0B] text-[12px]" style={{ fontWeight: 700 }}>
-                        HIGH MATCH (82%)
+                      <span className={`text-[12px] ${getMatchBadgeColor(currentMatch.matchPercent)}`} style={{ fontWeight: 700 }}>
+                        HIGH MATCH ({currentMatch.matchPercent}%)
                       </span>
                       <span className="w-1.5 h-1.5 bg-[#EF4444] rounded-full animate-pulse" />
                       <span className="text-muted-foreground text-[12px] ml-auto hidden sm:block">
@@ -142,26 +207,28 @@ export function HomeScreen() {
                       </span>
                     </div>
                     <p className="text-foreground text-[16px] lg:text-[18px] mb-1" style={{ fontWeight: 600 }}>
-                      Sunny 2BR Near Campus — $1,450/mo
+                      {currentMatch.title} — ${currentMatch.price.toLocaleString()}/mo
                     </p>
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="flex items-center gap-1.5">
-                        <Clock size={13} className="text-[#F59E0B]" />
-                        <span className="text-[#F59E0B] text-[13px]" style={{ fontWeight: 500 }}>
-                          Apply within 2 hours
-                        </span>
+                    {currentMatch.timeLeft && (
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="flex items-center gap-1.5">
+                          <Clock size={13} className="text-[#F59E0B]" />
+                          <span className="text-[#F59E0B] text-[13px]" style={{ fontWeight: 500 }}>
+                            {currentMatch.timeLeft}
+                          </span>
+                        </div>
                       </div>
-                    </div>
+                    )}
                     <div className="flex gap-3">
                       <button
-                        onClick={() => navigate("/listing/2")}
+                        onClick={() => navigate(`/listing/${currentMatch.id}`)}
                         className="bg-[#10B981] text-white px-6 py-2.5 rounded-xl text-[14px] hover:bg-[#059669] transition-colors"
                         style={{ fontWeight: 600 }}
                       >
                         View Listing
                       </button>
                       <button
-                        onClick={() => setShowAlert(false)}
+                        onClick={handleDismiss}
                         className="px-5 bg-muted text-muted-foreground py-2.5 rounded-xl text-[14px] hover:bg-accent transition-colors"
                         style={{ fontWeight: 500 }}
                       >
@@ -170,11 +237,48 @@ export function HomeScreen() {
                     </div>
                   </div>
                   <button
-                    onClick={() => setShowAlert(false)}
+                    onClick={handleDismiss}
                     className="text-muted-foreground text-[20px] leading-none hover:text-foreground transition-colors"
                   >
                     &times;
                   </button>
+                </div>
+              </div>
+            ) : showAlert && queue.length === 0 && lastSearchParams ? (
+              <div className="bg-card rounded-2xl p-6 border border-border h-full flex items-center justify-center">
+                <div className="text-center">
+                  <Sparkles size={24} className="text-[#10B981] mx-auto mb-2" />
+                  <p className="text-muted-foreground text-[14px] mb-3">
+                    No more high matches from your last search.
+                  </p>
+                  <button
+                    onClick={handleViewLatestSearch}
+                    className="bg-[#10B981] text-white px-6 py-2.5 rounded-xl text-[14px] hover:bg-[#059669] transition-colors font-medium"
+                  >
+                    View latest search results
+                  </button>
+                </div>
+              </div>
+            ) : showAlert && queue.length === 0 ? (
+              <div className="bg-gradient-to-r from-[#10B981]/15 to-[#10B981]/10 rounded-2xl p-5 lg:p-6 border border-[#10B981]/20 relative overflow-hidden h-full">
+                <div className="absolute top-0 right-0 w-40 h-40 bg-[#10B981]/10 rounded-full blur-3xl" />
+                <div className="flex items-start gap-4 relative">
+                  <div className="w-11 h-11 rounded-xl bg-[#10B981]/20 flex items-center justify-center shrink-0">
+                    <Zap size={22} className="text-[#10B981]" />
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-muted-foreground text-[12px] block mb-1">Atlas</span>
+                    <p className="text-foreground text-[16px] lg:text-[18px] mb-3" style={{ fontWeight: 600 }}>
+                      Our AI, Atlas, is ready to hunt the best match for you based on your searches.
+                    </p>
+                    <button
+                      onClick={handleSearchListings}
+                      className="bg-[#10B981] text-white px-6 py-2.5 rounded-xl text-[14px] hover:bg-[#059669] transition-colors"
+                      style={{ fontWeight: 600 }}
+                    >
+                      Search listings
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -182,6 +286,12 @@ export function HomeScreen() {
                 <div className="text-center">
                   <Sparkles size={24} className="text-[#10B981] mx-auto mb-2" />
                   <p className="text-muted-foreground text-[14px]">AI is hunting for your next match...</p>
+                  <button
+                    onClick={lastSearchParams ? handleViewLatestSearch : handleSearchListings}
+                    className="mt-3 text-[#10B981] text-[13px] hover:underline font-medium"
+                  >
+                    {lastSearchParams ? "View latest search results" : "Search listings"}
+                  </button>
                 </div>
               </div>
             )}
