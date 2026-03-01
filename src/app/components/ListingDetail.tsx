@@ -226,10 +226,12 @@ export function ListingDetail() {
                     <Bath size={16} className="text-[#6B7280]" />
                     <span className="text-[14px]">{listing.baths} Bath</span>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <Square size={16} className="text-[#6B7280]" />
-                    <span className="text-[14px]">{listing.sqft} sqft</span>
-                  </div>
+                  {listing.sqft > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <Square size={16} className="text-[#6B7280]" />
+                      <span className="text-[14px]">{listing.sqft} sqft</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>

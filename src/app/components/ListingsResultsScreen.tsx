@@ -121,7 +121,7 @@ export function ListingsResultsScreen() {
     let list = [...baseListings];
     if (committedFilters.beds != null) list = list.filter((l) => l.beds >= committedFilters.beds!);
     if (committedFilters.baths != null) list = list.filter((l) => l.baths >= committedFilters.baths!);
-    if (committedFilters.minSqft != null) list = list.filter((l) => l.sqft >= committedFilters.minSqft!);
+    if (committedFilters.minSqft != null) list = list.filter((l) => l.sqft > 0 && l.sqft >= committedFilters.minSqft!);
     if (committedFilters.maxSqft != null) list = list.filter((l) => l.sqft > 0 && l.sqft <= committedFilters.maxSqft!);
     if (committedFilters.maxPrice != null) list = list.filter((l) => l.price <= committedFilters.maxPrice!);
     if (!isFilterOnlyMode && committedFilters.saved) list = list.filter((l) => savedIds.has(l.id));
