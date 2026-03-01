@@ -71,6 +71,10 @@ export function useListing(id: string | undefined) {
   return { listing, loading, error };
 }
 
+// Re-export from contexts so state is shared across all screens
+export { useSavedListings } from "../contexts/SavedListingsContext";
+export { useAppliedListings } from "../contexts/AppliedListingsContext";
+
 // Hook to fetch user documents
 export function useUserDocuments() {
   const { user } = useAuth();

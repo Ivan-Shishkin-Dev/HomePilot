@@ -3,7 +3,8 @@ import { useNavigate } from "react-router";
 import { Bell, Sparkles, TrendingUp, Clock, ChevronRight, Zap, ArrowUpRight, Loader2 } from "lucide-react";
 import { ScoreRing } from "./ScoreRing";
 import { ListingCard } from "./ListingCard";
-import { useListings } from "../../hooks/useSupabaseData";
+import { useListings, useSavedListings } from "../../hooks/useSupabaseData";
+import { useAppliedListings } from "../../contexts/AppliedListingsContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { motion } from "motion/react";
 
@@ -11,6 +12,8 @@ export function HomeScreen() {
   const navigate = useNavigate();
   const [showAlert, setShowAlert] = useState(true);
   const { listings, loading } = useListings();
+  const { savedIds, savedCount, toggleSave } = useSavedListings();
+  const { appliedCount } = useAppliedListings();
   const { profile } = useAuth();
 
   const getGreeting = () => {
@@ -194,14 +197,31 @@ export function HomeScreen() {
           className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8"
         >
           {[
-            { label: "Active Hunts", value: "12", icon: Sparkles, color: "#10B981", change: "+3 today" },
-            { label: "Applications", value: "3", icon: TrendingUp, color: "#10B981", change: "1 pending" },
-            { label: "Avg Match", value: "79%", icon: Zap, color: "#10B981", change: "+5% this week" },
-            { label: "Saved Listings", value: "8", icon: ArrowUpRight, color: "#10B981", change: "2 expiring" },
+            { label: "Active Hunts", value: "12", icon: Sparkles, color: "#10B981", change: "+3 today", onClick: undefined },
+            {
+              label: "Applications",
+              value: String(appliedCount),
+              icon: TrendingUp,
+              color: "#10B981",
+              change: appliedCount > 0 ? "View applied" : "Track applications",
+              onClick: () => navigate("/listings?filter=applied"),
+            },
+            { label: "Avg Match", value: "79%", icon: Zap, color: "#10B981", change: "+5% this week", onClick: undefined },
+            {
+              label: "Saved Listings",
+              value: String(savedCount),
+              icon: ArrowUpRight,
+              color: "#10B981",
+              change: savedCount > 0 ? "View saved" : "Save listings",
+              onClick: () => navigate("/listings?filter=saved"),
+            },
           ].map((stat) => (
             <div
               key={stat.label}
-              className="bg-card rounded-xl p-4 lg:p-5 border border-border hover:border-muted transition-colors cursor-default"
+              onClick={stat.onClick}
+              className={`bg-card rounded-xl p-4 lg:p-5 border border-border hover:border-muted transition-colors ${
+                stat.onClick ? "cursor-pointer" : "cursor-default"
+              }`}
             >
               <div className="flex items-center justify-between mb-3">
                 <stat.icon size={18} style={{ color: stat.color }} />
@@ -236,7 +256,11 @@ export function HomeScreen() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.3 + i * 0.1 }}
             >
-              <ListingCard listing={formatListing(listing)} />
+              <ListingCard
+              listing={formatListing(listing)}
+              isSaved={savedIds.has(listing.id)}
+              onToggleSave={toggleSave}
+            />
             </motion.div>
           ))}
         </div>

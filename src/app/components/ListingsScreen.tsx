@@ -1,18 +1,30 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router";
 import { Search, SlidersHorizontal, MapPin, Grid2x2, LayoutList, Loader2 } from "lucide-react";
 import { ListingCard } from "./ListingCard";
-import { useListings } from "../../hooks/useSupabaseData";
+import { useListings, useSavedListings, useAppliedListings } from "../../hooks/useSupabaseData";
 import { useAuth } from "../../contexts/AuthContext";
 import { motion } from "motion/react";
 
-const filters = ["All", "Best Match", "Lowest Price", "Newest", "Pet Friendly"];
+const filters = ["All", "Saved Listings", "Applied Listings", "Best Match", "Lowest Price", "Newest", "Pet Friendly"];
 
 export function ListingsScreen() {
-  const [activeFilter, setActiveFilter] = useState("All");
+  const [searchParams] = useSearchParams();
+  const filterFromUrl = searchParams.get("filter");
+  const [activeFilter, setActiveFilter] = useState(
+    filterFromUrl === "saved" ? "Saved Listings" : filterFromUrl === "applied" ? "Applied Listings" : "All"
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const { listings, loading } = useListings();
+  const { savedIds, toggleSave } = useSavedListings();
+  const { appliedIds } = useAppliedListings();
   const { profile } = useAuth();
+
+  useEffect(() => {
+    if (filterFromUrl === "saved") setActiveFilter("Saved Listings");
+    if (filterFromUrl === "applied") setActiveFilter("Applied Listings");
+  }, [filterFromUrl]);
 
   // Convert listing format for ListingCard (using actual DB schema)
   const formatListing = (listing: typeof listings[0]) => ({
@@ -39,8 +51,14 @@ export function ListingsScreen() {
     source: listing.source,
   });
 
-  // In-memory filter by chip (Pet Friendly) and search
+  // In-memory filter by chip and search
   const filteredByChip = listings.filter((l) => {
+    if (activeFilter === "Saved Listings") {
+      if (!savedIds.has(l.id)) return false;
+    }
+    if (activeFilter === "Applied Listings") {
+      if (!appliedIds.has(l.id)) return false;
+    }
     if (activeFilter === "Pet Friendly") {
       const ok = l.pet_policy?.cats || l.pet_policy?.dogs;
       if (!ok) return false;
@@ -164,7 +182,11 @@ export function ListingsScreen() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, delay: i * 0.06 }}
             >
-              <ListingCard listing={formatListing(listing)} />
+              <ListingCard
+                listing={formatListing(listing)}
+                isSaved={savedIds.has(listing.id)}
+                onToggleSave={toggleSave}
+              />
             </motion.div>
           ))}
         </div>
