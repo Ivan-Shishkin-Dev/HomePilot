@@ -51,12 +51,9 @@ export function ListingCard({
 
   return (
     <div className={cn("w-full bg-card rounded-2xl overflow-hidden border border-border hover:border-[#10B981]/30 transition-all text-left group flex flex-col", className)}>
-      <div
-        role="button"
-        tabIndex={0}
+      <button
         onClick={() => navigate(`/listing/${listing.id}`)}
-        onKeyDown={(e) => { if (e.key === "Enter") navigate(`/listing/${listing.id}`); }}
-        className="flex-1 text-left min-w-0 cursor-pointer"
+        className="flex-1 text-left min-w-0"
       >
       <div className="relative h-44 lg:h-48">
         <ImageWithFallback
@@ -153,7 +150,7 @@ export function ListingCard({
           ))}
         </div>
       </div>
-      </div>
+      </button>
       {listing.listingUrl && (
         <div
           className="px-4 pb-4 pt-1 flex flex-wrap gap-2 border-t border-border mt-1"

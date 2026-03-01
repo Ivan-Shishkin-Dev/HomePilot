@@ -13,6 +13,8 @@ export interface SearchFilters {
   minSqft: number | null;
   maxSqft: number | null;
   maxPrice: number | null;
+  petFriendly: boolean;
+  studentFriendly: boolean;
   saved: boolean;
   applied: boolean;
 }
@@ -24,6 +26,8 @@ export const defaultSearchFilters: SearchFilters = {
   minSqft: null,
   maxSqft: null,
   maxPrice: null,
+  petFriendly: false,
+  studentFriendly: false,
   saved: false,
   applied: false,
 };
@@ -36,6 +40,8 @@ function buildSearchParams(f: SearchFilters): URLSearchParams {
   if (f.minSqft != null) p.set("minSqft", String(f.minSqft));
   if (f.maxSqft != null) p.set("maxSqft", String(f.maxSqft));
   if (f.maxPrice != null) p.set("maxPrice", String(f.maxPrice));
+  if (f.petFriendly) p.set("petFriendly", "1");
+  if (f.studentFriendly) p.set("studentFriendly", "1");
   if (f.saved) p.set("saved", "1");
   if (f.applied) p.set("applied", "1");
   return p;
@@ -273,21 +279,6 @@ export function ListingsScreen() {
                   className="rounded-lg border border-gray-200 bg-gray-100 text-gray-900 px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#10B981]/40"
                 />
               </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-gray-600">Max sq ft</span>
-                <input
-                  type="number"
-                  placeholder="e.g. 1500"
-                  value={filters.maxSqft ?? ""}
-                  onChange={(e) =>
-                    setFilters((p) => ({
-                      ...p,
-                      maxSqft: e.target.value === "" ? null : Math.max(0, +e.target.value),
-                    }))
-                  }
-                  className="rounded-lg border border-gray-200 bg-gray-100 text-gray-900 px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#10B981]/40"
-                />
-              </label>
               <label className="flex flex-col gap-1 sm:col-span-2">
                 <span className="text-xs text-gray-600">
                   Max price: {filters.maxPrice != null ? `$${filters.maxPrice.toLocaleString()}` : `$${MAX_PRICE_SLIDER.toLocaleString()}`}
@@ -307,6 +298,26 @@ export function ListingsScreen() {
                   }}
                   className="w-full h-2 rounded-full appearance-none bg-gray-200 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#10B981] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#10B981] [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
                 />
+              </label>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-4">
+              <label className="flex items-center gap-2 cursor-pointer text-gray-800">
+                <input
+                  type="checkbox"
+                  checked={filters.petFriendly}
+                  onChange={(e) => setFilters((p) => ({ ...p, petFriendly: e.target.checked }))}
+                  className="rounded border-border text-[#10B981] focus:ring-[#10B981] focus:ring-offset-0"
+                />
+                <span className="text-sm">Pet friendly</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-gray-800">
+                <input
+                  type="checkbox"
+                  checked={filters.studentFriendly}
+                  onChange={(e) => setFilters((p) => ({ ...p, studentFriendly: e.target.checked }))}
+                  className="rounded border-border text-[#10B981] focus:ring-[#10B981] focus:ring-offset-0"
+                />
+                <span className="text-sm">University students</span>
               </label>
             </div>
           </motion.div>
