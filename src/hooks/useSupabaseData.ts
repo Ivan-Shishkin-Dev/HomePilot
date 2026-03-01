@@ -4,7 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { getStaticListings } from "../data/staticListings";
 
 // Score calculation constants
-const DOCUMENT_SCORE_VALUES: Record<string, number> = {
+export const DOCUMENT_SCORE_VALUES: Record<string, number> = {
   id: 130,
   income: 150,
   credit: 140,
