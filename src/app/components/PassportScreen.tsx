@@ -13,6 +13,7 @@ import {
   Lock,
   Loader2,
   X,
+  Eye,
 } from "lucide-react";
 import { ScoreRing } from "./ScoreRing";
 import { useState } from "react";
@@ -109,15 +110,29 @@ function DocumentRow({
       {isMissing ? (
         <ChevronRight size={16} className="text-muted-foreground shrink-0" />
       ) : (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove();
-          }}
-          className="p-1.5 rounded-lg hover:bg-muted transition-colors shrink-0"
-        >
-          <X size={16} className="text-muted-foreground hover:text-foreground" />
-        </button>
+        <div className="flex items-center gap-1 shrink-0">
+          {doc.file_url && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (fileUrl) window.open(fileUrl);
+              }}
+              className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+              aria-label="View document"
+            >
+              <Eye size={16} className="text-muted-foreground hover:text-foreground" />
+            </button>
+          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+            className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+          >
+            <X size={16} className="text-muted-foreground hover:text-foreground" />
+          </button>
+        </div>
       )}
     </motion.div>
   );

@@ -11,10 +11,12 @@ import {
   X,
   Sun,
   Moon,
+  Eye,
 } from "lucide-react";
 import {
   useUserDocuments,
   useDocumentUpload,
+  getDocumentSignedUrl,
 } from "../../hooks/useSupabaseData";
 import { Logo } from "./Logo";
 import { useTheme } from "./ThemeProvider";
@@ -175,6 +177,8 @@ export function OnboardingScreen() {
                 <div className="space-y-3">
                   {documents.map((doc) => {
                     const uploaded = isDocUploaded(doc.id);
+                    const dbIcon = onboardingToDbIcon[doc.id];
+                    const dbDoc = dbDocuments.find((d) => d.icon === dbIcon);
                     return (
                       <button
                         key={doc.id}
@@ -219,29 +223,43 @@ export function OnboardingScreen() {
                           </p>
                         </div>
                         {uploaded ? (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (hasDbDocs) {
-                                const dbIcon = onboardingToDbIcon[doc.id];
-                                const dbDoc = dbDocuments.find(
-                                  (d) => d.icon === dbIcon,
-                                );
-                                if (dbDoc)
-                                  removeDocument(dbDoc.id, refetchDocs);
-                              } else {
-                                setLocalUploadedDocs((prev) =>
-                                  prev.filter((d) => d !== doc.id),
-                                );
-                              }
-                            }}
-                            className="p-1.5 rounded-lg hover:bg-white/[0.1] transition-colors"
+                          <div
+                            className="flex items-center gap-1"
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            <X
-                              size={16}
-                              className="text-gray-400 hover:text-white"
-                            />
-                          </button>
+                            {dbDoc?.file_url && (
+                              <button
+                                onClick={async () => {
+                                  const url = await getDocumentSignedUrl(dbDoc.file_url);
+                                  if (url) window.open(url);
+                                }}
+                                className="p-1.5 rounded-lg hover:bg-white/[0.1] transition-colors"
+                                aria-label="View document"
+                              >
+                                <Eye
+                                  size={16}
+                                  className="text-gray-400 hover:text-white"
+                                />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                if (hasDbDocs && dbDoc) {
+                                  removeDocument(dbDoc.id, refetchDocs);
+                                } else {
+                                  setLocalUploadedDocs((prev) =>
+                                    prev.filter((d) => d !== doc.id),
+                                  );
+                                }
+                              }}
+                              className="p-1.5 rounded-lg hover:bg-white/[0.1] transition-colors"
+                            >
+                              <X
+                                size={16}
+                                className="text-gray-400 hover:text-white"
+                              />
+                            </button>
+                          </div>
                         ) : (
                           <span
                             className="text-blue-400 text-[13px]"
