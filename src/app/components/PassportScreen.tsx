@@ -1,5 +1,4 @@
 import {
-  Shield,
   FileText,
   DollarSign,
   Building2,
@@ -9,7 +8,6 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
-  Share2,
   ChevronRight,
   Download,
   Lock,
@@ -17,9 +15,11 @@ import {
   X,
 } from "lucide-react";
 import { ScoreRing } from "./ScoreRing";
-import { useUserDocuments, useDocumentUpload } from "../../hooks/useSupabaseData";
+import { useState } from "react";
+import { useUserDocuments, useDocumentUpload, useDocumentFileUrl } from "../../hooks/useSupabaseData";
 import { useAuth } from "../../contexts/AuthContext";
 import { motion } from "motion/react";
+import { exportPassportToPdf } from "../../lib/exportPassportPdf";
 
 const iconMap: Record<string, typeof FileText> = {
   id: FileText,
@@ -36,19 +36,121 @@ const statusConfig = {
   missing: { icon: AlertCircle, color: "#EF4444", label: "Missing" },
 };
 
+function getScoreLabel(score: number): { label: string; color: string } {
+  if (score >= 800) return { label: "Excellent", color: "#10B981" };
+  if (score >= 650) return { label: "Good", color: "#F59E0B" };
+  return { label: "Poor", color: "#EF4444" };
+}
+
+type Doc = {
+  id: string;
+  name: string;
+  status: string;
+  icon: string;
+  file_url: string | null;
+};
+
+function DocumentRow({
+  doc,
+  index,
+  uploading,
+  onUpload,
+  onRemove,
+}: {
+  doc: Doc;
+  index: number;
+  uploading: boolean;
+  onUpload: () => void;
+  onRemove: () => void;
+}) {
+  const Icon = iconMap[doc.icon] || FileText;
+  const status = statusConfig[doc.status as keyof typeof statusConfig];
+  const StatusIcon = status.icon;
+  const isMissing = doc.status === "missing";
+  const { url: fileUrl, loading: urlLoading } = useDocumentFileUrl(doc.file_url);
+  const isImage = fileUrl && /\.(jpe?g|png|gif|webp)$/i.test(doc.file_url ?? "");
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 + index * 0.05 }}
+      onClick={onUpload}
+      className={`bg-card rounded-xl p-4 border border-border flex items-center gap-4 transition-colors ${
+        !uploading ? "hover:border-[#10B981]/30 cursor-pointer" : "cursor-default"
+      }`}
+    >
+      <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center overflow-hidden shrink-0">
+        {urlLoading ? (
+          <Loader2 size={20} className="text-muted-foreground animate-spin" />
+        ) : fileUrl && isImage ? (
+          <img src={fileUrl} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <Icon size={20} className="text-muted-foreground" />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-foreground text-[14px]" style={{ fontWeight: 500 }}>
+          {doc.name}
+        </p>
+        <div className="flex items-center gap-1.5 mt-1">
+          <StatusIcon size={13} style={{ color: status.color }} />
+          <span className="text-[12px]" style={{ color: status.color }}>
+            {isMissing
+              ? "Click to upload"
+              : doc.status === "pending"
+                ? "Processing"
+                : doc.file_url
+                  ? "Uploaded"
+                  : status.label}
+          </span>
+        </div>
+      </div>
+      {isMissing ? (
+        <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+      ) : (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          className="p-1.5 rounded-lg hover:bg-muted transition-colors shrink-0"
+        >
+          <X size={16} className="text-muted-foreground hover:text-foreground" />
+        </button>
+      )}
+    </motion.div>
+  );
+}
+
 export function PassportScreen() {
   const { documents, loading, refetch: refetchDocs } = useUserDocuments();
   const { profile } = useAuth();
   const { triggerUpload, uploading, fileInputRef, handleFileChange, removeDocument } = useDocumentUpload();
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  const handleExportPdf = async () => {
+    setExportError(null);
+    setExporting(true);
+    try {
+      const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || null;
+      await exportPassportToPdf(documents, fullName);
+    } catch (e) {
+      setExportError(e instanceof Error ? e.message : "Export failed");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const uploaded = documents.filter((d) => d.status !== "missing").length;
   const total = documents.length || 1;
   const completionPct = profile?.profile_completion || Math.round((uploaded / total) * 100);
+  const scoreLabel = getScoreLabel(profile?.renter_score ?? 0);
 
   const handleDocClick = (doc: typeof documents[number]) => {
-    if (doc.status === "missing") {
-      triggerUpload(doc.id, refetchDocs);
-    }
+    // Click to upload (if missing) or replace (if already has file)
+    triggerUpload(doc.id, refetchDocs);
   };
 
   if (loading) {
@@ -72,16 +174,26 @@ export function PassportScreen() {
               Your verified renter profile for instant applications
             </p>
           </div>
-          <div className="flex gap-2">
-            <button className="hidden sm:flex items-center gap-2 bg-muted text-muted-foreground px-4 py-2.5 rounded-xl text-[14px] hover:bg-accent transition-colors" style={{ fontWeight: 500 }}>
-              <Download size={16} />
-              Export PDF
-            </button>
-            <button className="flex items-center gap-2 bg-[#10B981] text-white px-5 py-2.5 rounded-xl text-[14px] hover:bg-[#059669] transition-colors" style={{ fontWeight: 600 }}>
-              <Share2 size={16} />
-              Share Passport
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-[#10B981]/10 rounded-xl px-3 py-2 border border-[#10B981]/15">
+              <Lock size={16} className="text-[#10B981]" />
+              <p className="text-[#10B981] text-[13px]" style={{ fontWeight: 600 }}>
+                Bank-level encryption
+              </p>
+            </div>
+            <button
+              onClick={handleExportPdf}
+              disabled={exporting || documents.filter((d) => d.file_url).length === 0}
+              className="flex items-center gap-2 bg-[#10B981] text-white px-5 py-2.5 rounded-xl text-[14px] hover:bg-[#059669] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ fontWeight: 600 }}
+            >
+              {exporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+              {exporting ? "Exporting…" : "Download Passport"}
             </button>
           </div>
+          {exportError && (
+            <p className="text-[#EF4444] text-[13px] mt-2">{exportError}</p>
+          )}
         </div>
       </div>
 
@@ -96,14 +208,9 @@ export function PassportScreen() {
               className="bg-card rounded-2xl p-6 lg:p-8 border border-border mb-5 flex flex-col items-center"
             >
               <ScoreRing score={profile?.renter_score || 0} size={150} strokeWidth={9} />
-              <div className="mt-4 text-center">
-                <p className="text-[#10B981] text-[15px] mb-1" style={{ fontWeight: 600 }}>
-                  Excellent
-                </p>
-                <p className="text-muted-foreground text-[13px]">
-                  Your passport is accepted by 92% of landlords
-                </p>
-              </div>
+              <p className="text-[15px] mt-4" style={{ fontWeight: 600, color: scoreLabel.color }}>
+                {scoreLabel.label}
+              </p>
             </motion.div>
 
             {/* Completion Bar */}
@@ -133,22 +240,6 @@ export function PassportScreen() {
                 {uploaded} of {total} documents uploaded
               </p>
             </motion.div>
-
-            {/* Security badge */}
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className="bg-[#10B981]/10 rounded-2xl p-4 border border-[#10B981]/15 flex items-center gap-3"
-            >
-              <Lock size={18} className="text-[#10B981]" />
-              <div>
-                <p className="text-[#10B981] text-[13px]" style={{ fontWeight: 600 }}>
-                  Bank-level encryption
-                </p>
-                <p className="text-muted-foreground text-[11px]">Your data is secured with AES-256</p>
-              </div>
-            </motion.div>
           </div>
 
           {/* Right Column: Documents */}
@@ -164,58 +255,20 @@ export function PassportScreen() {
               accept="image/*,.pdf,.doc,.docx"
             />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {documents.map((doc, i) => {
-                const Icon = iconMap[doc.icon] || FileText;
-                const status = statusConfig[doc.status as keyof typeof statusConfig];
-                const StatusIcon = status.icon;
-                const isMissing = doc.status === "missing";
-                return (
-                  <motion.div
-                    key={doc.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 + i * 0.05 }}
-                    onClick={() => handleDocClick(doc)}
-                    className={`bg-card rounded-xl p-4 border border-border flex items-center gap-4 transition-colors ${
-                      isMissing && !uploading
-                        ? "hover:border-[#10B981]/30 cursor-pointer"
-                        : "hover:border-muted cursor-default"
-                    }`}
-                  >
-                    <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
-                      <Icon size={20} className="text-muted-foreground" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-foreground text-[14px]" style={{ fontWeight: 500 }}>
-                        {doc.name}
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <StatusIcon size={13} style={{ color: status.color }} />
-                        <span className="text-[12px]" style={{ color: status.color }}>
-                          {isMissing ? "Click to upload" : status.label}
-                        </span>
-                      </div>
-                    </div>
-                    {isMissing ? (
-                      <ChevronRight size={16} className="text-muted-foreground" />
-                    ) : (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeDocument(doc.id, refetchDocs);
-                        }}
-                        className="p-1.5 rounded-lg hover:bg-muted transition-colors"
-                      >
-                        <X size={16} className="text-muted-foreground hover:text-foreground" />
-                      </button>
-                    )}
-                  </motion.div>
-                );
-              })}
+              {documents.map((doc, i) => (
+                <DocumentRow
+                  key={doc.id}
+                  doc={doc}
+                  index={i}
+                  uploading={uploading}
+                  onUpload={() => handleDocClick(doc)}
+                  onRemove={() => removeDocument(doc.id, refetchDocs)}
+                />
+              ))}
             </div>
 
             <p className="text-muted-foreground text-[12px] mt-6">
-              Securely share your verified renter profile with landlords. Documents are encrypted and only shared with your explicit consent.
+              Download your passport to combine all uploaded documents into one easily shareable PDF you can send to landlords.
             </p>
           </div>
         </div>
