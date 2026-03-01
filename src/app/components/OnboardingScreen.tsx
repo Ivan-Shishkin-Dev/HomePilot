@@ -96,9 +96,9 @@ export function OnboardingScreen() {
   const handleNext = () => navigate("/home");
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#111117] to-[#0a0a0f] text-white flex flex-col">
-      {/* Ambient */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+    <div className="min-h-screen bg-background dark:bg-gradient-to-br dark:from-[#0a0a0f] dark:via-[#111117] dark:to-[#0a0a0f] text-foreground flex flex-col">
+      {/* Ambient (dark mode only) */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none dark:block hidden">
         <div className="absolute -top-40 right-0 w-[400px] h-[400px] bg-emerald-500/10 rounded-full blur-[150px]" />
         <div className="absolute bottom-0 -left-20 w-[300px] h-[300px] bg-green-500/10 rounded-full blur-[120px]" />
       </div>
@@ -129,12 +129,6 @@ export function OnboardingScreen() {
               <Moon size={18} className="text-muted-foreground" />
             )}
           </button>
-          <button
-            onClick={() => navigate("/home")}
-            className="text-muted-foreground text-[14px] hover:text-foreground transition-colors"
-          >
-            Skip for now
-          </button>
         </div>
       </div>
 
@@ -146,17 +140,26 @@ export function OnboardingScreen() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
+                <div className="flex justify-start mb-1">
+                  <button
+                    onClick={() => navigate("/")}
+                    className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-[14px]"
+                  >
+                    <ArrowLeft size={16} />
+                    Home
+                  </button>
+                </div>
                 <h2
                   className="text-[28px] md:text-[36px] mb-2"
                   style={{ fontWeight: 700 }}
                 >
                   Build your Passport
                 </h2>
-                <p className="text-gray-400 text-[16px] mb-4">
+                <p className="text-muted-foreground text-[16px] mb-4">
                   Upload documents to increase your approval rate. You can
                   always add more later.
                 </p>
-                <div className="bg-gradient-to-r from-[#10B981]/10 to-[#10B981]/5 rounded-xl px-4 py-3 border border-[#10B981]/15 flex items-center gap-3 mb-8">
+                <div className="bg-[#10B981]/10 dark:bg-gradient-to-r dark:from-[#10B981]/10 dark:to-[#10B981]/5 rounded-xl px-4 py-3 border border-[#10B981]/20 dark:border-[#10B981]/15 flex items-center gap-3 mb-8">
                   <Shield size={18} className="text-[#10B981]" />
                   <span
                     className="text-[#10B981] text-[13px]"
@@ -180,69 +183,73 @@ export function OnboardingScreen() {
                     const dbIcon = onboardingToDbIcon[doc.id];
                     const dbDoc = dbDocuments.find((d) => d.icon === dbIcon);
                     return (
-                      <button
+                      <div
                         key={doc.id}
-                        onClick={() => handleDocClick(doc.id)}
-                        disabled={uploading}
                         className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all text-left ${
                           uploaded
                             ? "bg-[#10B981]/10 border-[#10B981]/20"
-                            : "bg-white/[0.03] border-white/[0.08] hover:bg-white/[0.06]"
+                            : "bg-muted/50 dark:bg-white/[0.03] border-border dark:border-white/[0.08]"
                         }`}
                       >
-                        <div
-                          className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                            uploaded ? "bg-[#10B981]/15" : "bg-white/[0.05]"
-                          }`}
-                        >
-                          {uploaded ? (
+                        {uploaded ? (
+                          <div
+                            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-[#10B981]/15"
+                          >
                             <CheckCircle2
                               size={20}
                               className="text-[#10B981]"
                             />
-                          ) : uploading ? (
-                            <Loader2
-                              size={18}
-                              className="text-gray-500 animate-spin"
-                            />
-                          ) : (
-                            <Upload size={18} className="text-gray-500" />
-                          )}
-                        </div>
-                        <div className="flex-1">
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleDocClick(doc.id)}
+                            disabled={uploading}
+                            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-white/15 dark:bg-white/10 backdrop-blur-sm border border-white/20 dark:border-white/10 hover:bg-white/25 dark:hover:bg-white/15 transition-colors disabled:opacity-50 cursor-pointer"
+                          >
+                            {uploading ? (
+                              <Loader2
+                                size={18}
+                                className="text-muted-foreground animate-spin"
+                              />
+                            ) : (
+                              <Upload size={18} className="text-muted-foreground" />
+                            )}
+                          </button>
+                        )}
+                        <div className="flex-1 min-w-0">
                           <p
-                            className={`text-[14px] ${uploaded ? "text-white" : "text-gray-300"}`}
+                            className={`text-[14px] ${uploaded ? "text-foreground" : "text-muted-foreground"}`}
                             style={{ fontWeight: 500 }}
                           >
                             {doc.label}
                           </p>
-                          <p className="text-[12px] text-gray-500">
+                          <p className="text-[12px] text-muted-foreground">
                             {uploaded
                               ? "Uploaded — Pending verification"
                               : "Click to upload"}
                           </p>
                         </div>
                         {uploaded ? (
-                          <div
-                            className="flex items-center gap-1"
-                            onClick={(e) => e.stopPropagation()}
-                          >
+                          <div className="flex items-center gap-1">
                             {dbDoc?.file_url && (
                               <button
+                                type="button"
                                 onClick={async () => {
                                   const url = await getDocumentSignedUrl(dbDoc.file_url);
                                   if (url) window.open(url);
                                 }}
-                                className="p-1.5 rounded-lg hover:bg-white/[0.1] transition-colors"
+                                className="p-1.5 rounded-lg hover:bg-muted dark:hover:bg-white/[0.1] transition-colors"
                                 aria-label="View document"
                               >
                                 <Eye
                                   size={16}
-                                  className="text-gray-400 hover:text-white"
+                                  className="text-muted-foreground hover:text-foreground"
                                 />
                               </button>
                             )}
                             <button
+                              type="button"
                               onClick={() => {
                                 if (hasDbDocs && dbDoc) {
                                   removeDocument(dbDoc.id, refetchDocs);
@@ -252,27 +259,31 @@ export function OnboardingScreen() {
                                   );
                                 }
                               }}
-                              className="p-1.5 rounded-lg hover:bg-white/[0.1] transition-colors"
+                              className="p-1.5 rounded-lg hover:bg-muted dark:hover:bg-white/[0.1] transition-colors"
                             >
                               <X
                                 size={16}
-                                className="text-gray-400 hover:text-white"
+                                className="text-muted-foreground hover:text-foreground"
                               />
                             </button>
                           </div>
                         ) : (
-                          <span
-                            className="text-blue-400 text-[13px]"
+                          <button
+                            type="button"
+                            onClick={() => handleDocClick(doc.id)}
+                            disabled={uploading}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium bg-white/15 dark:bg-white/10 backdrop-blur-sm border border-white/20 dark:border-white/10 text-foreground hover:bg-white/25 dark:hover:bg-white/15 transition-colors disabled:opacity-50 cursor-pointer"
                             style={{ fontWeight: 500 }}
                           >
+                            <Upload size={14} />
                             Upload
-                          </span>
+                          </button>
                         )}
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
-                <p className="text-gray-600 text-[13px] mt-4">
+                <p className="text-muted-foreground text-[13px] mt-4">
                   {uploadedCount} of {documents.length} uploaded
                 </p>
           </motion.div>
@@ -283,15 +294,15 @@ export function OnboardingScreen() {
       <div className="relative z-10 px-6 py-6">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <button
-            onClick={() => navigate("/")}
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-[14px]"
+            onClick={() => navigate("/home")}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-[14px]"
           >
-            <ArrowLeft size={16} />
-            Home
+            Skip for now
           </button>
           <button
             onClick={handleNext}
-            className="flex items-center gap-2 px-8 py-3 rounded-xl text-[15px] transition-all bg-gradient-to-r from-emerald-600 to-green-600 text-white hover:from-emerald-500 hover:to-green-500 shadow-lg shadow-emerald-500/20"
+            disabled={uploadedCount < 1}
+            className="flex items-center gap-2 px-8 py-3 rounded-xl text-[15px] transition-all bg-gradient-to-r from-emerald-600 to-green-600 text-white hover:from-emerald-500 hover:to-green-500 shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-emerald-600 disabled:hover:to-green-600"
             style={{ fontWeight: 600 }}
           >
             <Sparkles size={18} />

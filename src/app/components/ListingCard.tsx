@@ -3,6 +3,7 @@ import { MapPin, Bed, Bath, Clock, ExternalLink, Heart, ClipboardCheck } from "l
 import { useAppliedListings } from "../../contexts/AppliedListingsContext";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { cn } from "./ui/utils";
+import { MATCH_GREEN_MIN, MATCH_YELLOW_MIN } from "../lib/priorityMatch";
 
 interface Listing {
   id: string;
@@ -38,8 +39,8 @@ export function ListingCard({
   const isApplied = appliedIds.has(listing.id);
 
   const getMatchColor = (pct: number) => {
-    if (pct >= 80) return "bg-[#10B981]";
-    if (pct >= 65) return "bg-[#F59E0B]";
+    if (pct >= MATCH_GREEN_MIN) return "bg-[#10B981]";
+    if (pct >= MATCH_YELLOW_MIN) return "bg-[#F59E0B]";
     return "bg-[#EF4444]";
   };
 

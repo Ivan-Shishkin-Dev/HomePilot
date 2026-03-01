@@ -71,6 +71,9 @@ const STATIC_CRIME_ESTIMATES: Record<string, number> = {
   portland: 44,
 };
 
+const FRED_OBSERVATIONS = "https://api.stlouisfed.org/fred/series/observations";
+const FRED_RENT_SERIES = "CUSR0000SEHA"; // CPI Rent of Primary Residence, US City Average
+
 /** Result from CrimeoMeter; we use CSI (0–100, higher = more crime) as crime_index */
 export interface LivabilityResult {
   crime_index: number;
@@ -81,6 +84,10 @@ export interface LivabilityResult {
   incidents_types: { incident_type: string; incident_type_count: number }[];
   /** 'api' = Teleport/CrimeoMeter, 'estimate' = static fallback when API unavailable */
   source?: "api" | "estimate";
+  /** Rent trend label, e.g. "+2.5% YoY" or "Stable" */
+  rent_trend?: string | null;
+  /** Short description, e.g. "Prices rising" */
+  rent_trend_description?: string;
 }
 
 /** Geocode address or city, state to lat/lng using Nominatim (free, no key). */
@@ -171,6 +178,37 @@ function describeCrime(crimeIndex: number): string {
   if (crimeIndex < 50) return "Moderate crime";
   if (crimeIndex < 75) return "Exercise caution";
   return "Higher crime area";
+}
+
+/** US national rent CPI YoY change from FRED (optional VITE_FRED_API_KEY). */
+export async function fetchRentTrend(): Promise<{ value: string; description: string } | null> {
+  const apiKey = import.meta.env.VITE_FRED_API_KEY;
+  if (!apiKey?.trim()) return null;
+
+  const url = new URL(FRED_OBSERVATIONS);
+  url.searchParams.set("series_id", FRED_RENT_SERIES);
+  url.searchParams.set("api_key", apiKey.trim());
+  url.searchParams.set("file_type", "json");
+  url.searchParams.set("sort_order", "desc");
+  url.searchParams.set("limit", "13");
+
+  try {
+    const res = await fetch(url.toString(), { signal: AbortSignal.timeout(10000) });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { observations?: Array<{ value: string; date: string }> };
+    const obs = data.observations ?? [];
+    if (obs.length < 12) return null;
+    const current = parseFloat(obs[0]?.value ?? "0");
+    const yearAgo = parseFloat(obs[12]?.value ?? "0");
+    if (!current || !yearAgo) return null;
+    const pct = (((current - yearAgo) / yearAgo) * 100);
+    const value = pct >= 0 ? `+${pct.toFixed(1)}%` : `${pct.toFixed(1)}%`;
+    const trendDesc = pct < 0 ? "Prices decreasing" : pct < 1 ? "Stable" : "Prices rising";
+    const description = `${trendDesc} (US avg)`;
+    return { value, description };
+  } catch {
+    return null;
+  }
 }
 
 /** Reverse geocode lat/lng to city name using Nominatim. */
@@ -287,28 +325,30 @@ async function fetchTeleportSafety(cityName: string | null): Promise<{ crime_ind
   return null;
 }
 
+function fallbackCrime(listing: Listing): { crime_index: number; crime_description: string } {
+  const idx = listing.crime_index ?? 25;
+  return { crime_index: idx, crime_description: describeCrime(idx) };
+}
+
+function fallbackRentTrend(listing: Listing): { value: string; description: string } {
+  const raw = listing.rent_trend?.trim();
+  if (raw?.startsWith("-")) return { value: raw, description: "Prices decreasing" };
+  if (raw) return { value: raw, description: "Prices rising" };
+  return { value: "Stable", description: "Prices rising" };
+}
+
 /**
- * Fetch livability (crime) data for a listing.
- * 1) Tries Teleport (free) by listing city, then by city from geocode if needed.
- * 2) If CrimeoMeter key is set, tries CrimeoMeter by lat/lng for finer-grained data.
+ * Fetch livability (crime + rent trend) for a listing using its address/city.
+ * Crime: Teleport (free) or CrimeoMeter (if key set); fallback to listing values or static estimates.
+ * Rent trend: FRED US rent CPI YoY (if VITE_FRED_API_KEY set); fallback to listing.rent_trend or "Stable".
+ * Always returns an object; never null.
  */
-export async function fetchLivability(listing: Listing): Promise<LivabilityResult | null> {
+export async function fetchLivability(listing: Listing): Promise<LivabilityResult> {
   const city = listing.city ?? null;
+  type CrimePart = Pick<LivabilityResult, "crime_index" | "crime_description" | "incidents_count" | "population_count" | "incidents_types" | "source">;
+  let crimeResult: CrimePart | null = null;
 
-  // 1a. Teleport by listing city (and normalized variants e.g. "Irvine" from "Irvine, CA")
-  let teleport = await fetchTeleportSafety(city);
-  if (teleport) {
-    return {
-      crime_index: teleport.crime_index,
-      crime_description: describeCrime(teleport.crime_index),
-      incidents_count: null,
-      population_count: null,
-      incidents_types: [],
-      source: "api",
-    };
-  }
-
-  // 1b. Geocode listing location, reverse to get city name, try Teleport again
+  // Resolve lat/lon from listing or geocode by address so we can use address-level data when possible
   let lat: number | null = listing.latitude ?? null;
   let lon: number | null = listing.longitude ?? null;
   if (lat == null || lon == null) {
@@ -322,11 +362,26 @@ export async function fetchLivability(listing: Listing): Promise<LivabilityResul
       lon = geo.lon;
     }
   }
+
+  // 1) CrimeoMeter (if key set): address-level stats so each listing can differ
   if (lat != null && lon != null) {
+    const crime = await fetchCrimeStats(lat, lon);
+    if (crime) {
+      crimeResult = {
+        ...crime,
+        crime_description: describeCrime(crime.crime_index),
+        source: "api",
+      };
+    }
+  }
+
+  // 2) Teleport by city from address (reverse geocode) so different addresses → different cities when possible
+  if (!crimeResult && lat != null && lon != null) {
     const reverseCity = await reverseGeocode(lat, lon);
-    if (reverseCity) teleport = await fetchTeleportSafety(reverseCity);
+    const cityToUse = reverseCity || city;
+    const teleport = await fetchTeleportSafety(cityToUse);
     if (teleport) {
-      return {
+      crimeResult = {
         crime_index: teleport.crime_index,
         crime_description: describeCrime(teleport.crime_index),
         incidents_count: null,
@@ -337,32 +392,48 @@ export async function fetchLivability(listing: Listing): Promise<LivabilityResul
     }
   }
 
-  // 2. CrimeoMeter when API key is set
-  if (lat != null && lon != null) {
-    const crime = await fetchCrimeStats(lat, lon);
-    if (crime) {
-      return {
-        ...crime,
-        crime_description: describeCrime(crime.crime_index),
+  // 3) Teleport by listing.city only if we still don't have coords or Teleport failed
+  if (!crimeResult) {
+    const teleport = await fetchTeleportSafety(city);
+    if (teleport) {
+      crimeResult = {
+        crime_index: teleport.crime_index,
+        crime_description: describeCrime(teleport.crime_index),
+        incidents_count: null,
+        population_count: null,
+        incidents_types: [],
         source: "api",
       };
     }
   }
 
-  // 3. Static estimate when APIs are down (e.g. Teleport 530)
-  const slugKey = (city ?? "").trim().toLowerCase().replace(/\s+/g, " ");
-  const slug = slugKey ? CITY_SLUG_FALLBACKS[slugKey] ?? CITY_SLUG_FALLBACKS[normalizeCityForTeleport(city)[0]?.toLowerCase().replace(/\s+/g, " ") ?? ""] : undefined;
-  const estimatedIndex = slug ? STATIC_CRIME_ESTIMATES[slug] : null;
-  if (estimatedIndex != null) {
-    return {
-      crime_index: estimatedIndex,
-      crime_description: describeCrime(estimatedIndex),
-      incidents_count: null,
-      population_count: null,
-      incidents_types: [],
-      source: "estimate",
-    };
+  // 4) Static estimate by city slug (so different cities in DB → different numbers)
+  if (!crimeResult) {
+    const variants = normalizeCityForTeleport(city);
+    const slugKey = (city ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+    const slug = slugKey ? CITY_SLUG_FALLBACKS[slugKey] ?? CITY_SLUG_FALLBACKS[variants[0]?.toLowerCase().replace(/\s+/g, " ") ?? ""] : undefined;
+    const estimatedIndex = slug ? STATIC_CRIME_ESTIMATES[slug] : null;
+    if (estimatedIndex != null) {
+      crimeResult = {
+        crime_index: estimatedIndex,
+        crime_description: describeCrime(estimatedIndex),
+        incidents_count: null,
+        population_count: null,
+        incidents_types: [],
+        source: "estimate",
+      };
+    }
   }
 
-  return null;
+  const crime = crimeResult ?? fallbackCrime(listing);
+  const rentTrend = (await fetchRentTrend()) ?? fallbackRentTrend(listing);
+
+  return {
+    ...crime,
+    incidents_count: crime.incidents_count ?? null,
+    population_count: crime.population_count ?? null,
+    incidents_types: crime.incidents_types ?? [],
+    rent_trend: rentTrend.value,
+    rent_trend_description: rentTrend.description,
+  };
 }

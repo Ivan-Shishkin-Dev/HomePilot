@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router";
-import { Search, SlidersHorizontal, MapPin, Grid2x2, LayoutList, Loader2, ChevronDown, Globe, Home, RefreshCw, AlertTriangle } from "lucide-react";
+import { Search, SlidersHorizontal, MapPin, Grid2x2, LayoutList, Loader2, ChevronDown, Globe, Home, RefreshCw, AlertTriangle, Target } from "lucide-react";
 import { ListingCard } from "./ListingCard";
 import { useSavedListings, useAppliedListings } from "../../hooks/useSupabaseData";
 import { useZillowListings } from "../../hooks/useZillowListings";
@@ -9,9 +9,17 @@ import {
   defaultSearchFilters,
   buildSearchParams,
   type SearchFilters,
+  type PriorityParams,
   MAX_PRICE_SLIDER,
 } from "./ListingsScreen";
 import { motion, AnimatePresence } from "motion/react";
+import {
+  computeMatchPercentMulti,
+  setTopMatchesQueue,
+  type PriorityValues,
+  type LastTopMatchSnapshot,
+} from "../lib/priorityMatch";
+import { PRIORITY_LABELS } from "../lib/priorityMatch";
 
 type ViewMode = "grid" | "list";
 
@@ -30,6 +38,19 @@ function parseSearchParams(sp: URLSearchParams): SearchFilters {
   };
 }
 
+function parsePriorityFromParams(sp: URLSearchParams): PriorityValues {
+  const out: PriorityValues = {};
+  const cost = sp.get("priorityCost");
+  if (cost != null) { const n = parseInt(cost, 10); if (!isNaN(n) && n > 0) out.cost = n; }
+  const sqft = sp.get("prioritySqft");
+  if (sqft != null) { const n = parseInt(sqft, 10); if (!isNaN(n) && n > 0) out.sqft = n; }
+  const beds = sp.get("priorityBeds");
+  if (beds != null) { const n = parseInt(beds, 10); if (!isNaN(n) && n > 0) out.beds = n; }
+  const baths = sp.get("priorityBaths");
+  if (baths != null) { const n = parseInt(baths, 10); if (!isNaN(n) && n > 0) out.baths = n; }
+  return out;
+}
+
 function parseStateFromLocation(location: string): { city: string; state: string } {
   const parts = location.split(",").map((s) => s.trim());
   if (parts.length >= 2) {
@@ -40,10 +61,18 @@ function parseStateFromLocation(location: string): { city: string; state: string
   return { city: location.trim(), state: "ca" };
 }
 
+const PRIORITY_FIELDS: { key: keyof PriorityValues; label: string; placeholder: string }[] = [
+  { key: "cost", label: PRIORITY_LABELS.cost, placeholder: "e.g. 2000" },
+  { key: "sqft", label: PRIORITY_LABELS.sqft, placeholder: "e.g. 800" },
+  { key: "beds", label: PRIORITY_LABELS.beds, placeholder: "e.g. 2" },
+  { key: "baths", label: PRIORITY_LABELS.baths, placeholder: "e.g. 1" },
+];
+
 export function ListingsResultsScreen() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const initialFilters = useMemo(() => parseSearchParams(searchParams), []);
+  const initialPriority = useMemo(() => parsePriorityFromParams(searchParams), []);
 
   // ---- Pending (draft) filter state — updated instantly by controls, no API call ----
   const [searchInput, setSearchInput] = useState(initialFilters.location);
@@ -54,8 +83,21 @@ export function ListingsResultsScreen() {
   const [pendingMaxPrice, setPendingMaxPrice] = useState<number | null>(initialFilters.maxPrice);
   const [pendingSaved, setPendingSaved] = useState(initialFilters.saved);
   const [pendingApplied, setPendingApplied] = useState(initialFilters.applied);
+  const priorityStateFromValues = (pv: PriorityValues) =>
+    (["cost", "sqft", "beds", "baths"] as const).reduce(
+      (acc, k) => ({
+        ...acc,
+        [k]: {
+          checked: pv[k] != null && pv[k]! > 0,
+          value: pv[k] != null ? String(pv[k]) : "",
+        },
+      }),
+      {} as Record<keyof PriorityValues, { checked: boolean; value: string }>
+    );
+  const [pendingPriorities, setPendingPriorities] = useState(priorityStateFromValues(initialPriority));
 
   const [showFiltersPanel, setShowFiltersPanel] = useState(false);
+  const [showPriorityPanel, setShowPriorityPanel] = useState(false);
   const [typeaheadOpen, setTypeaheadOpen] = useState(false);
   const typeaheadRef = useRef<HTMLDivElement>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -65,6 +107,7 @@ export function ListingsResultsScreen() {
 
   // ---- Committed state — only changes when Search is clicked ----
   const [committedFilters, setCommittedFilters] = useState<SearchFilters>(initialFilters);
+  const [committedPriorities, setCommittedPriorities] = useState<PriorityValues>(initialPriority);
   const [zillowPage, setZillowPage] = useState(1);
 
   const zillowOpts = useMemo(() => {
@@ -129,8 +172,47 @@ export function ListingsResultsScreen() {
     return list;
   }, [baseListings, committedFilters, savedIds, appliedIds, isFilterOnlyMode]);
 
+  // Compute match % per listing from committed priorities (multi), then sort by match desc
+  const hasAnyPriority = useMemo(
+    () =>
+      (committedPriorities.cost != null && committedPriorities.cost > 0) ||
+      (committedPriorities.sqft != null && committedPriorities.sqft > 0) ||
+      (committedPriorities.beds != null && committedPriorities.beds > 0) ||
+      (committedPriorities.baths != null && committedPriorities.baths > 0),
+    [committedPriorities]
+  );
+  const listingsWithMatch = useMemo(() => {
+    const list = filteredListings.map((listing) => {
+      const matchPercent = hasAnyPriority
+        ? computeMatchPercentMulti(
+            { id: listing.id, price: listing.price, sqft: listing.sqft, beds: listing.beds, baths: listing.baths },
+            committedPriorities
+          )
+        : 85;
+      return { listing, matchPercent };
+    });
+    return [...list].sort((a, b) => b.matchPercent - a.matchPercent);
+  }, [filteredListings, committedPriorities, hasAnyPriority]);
+
+  const pendingPriorityParams: PriorityParams = useMemo(() => {
+    const p: PriorityParams = {};
+    (["cost", "sqft", "beds", "baths"] as const).forEach((k) => {
+      if (pendingPriorities[k].checked && pendingPriorities[k].value.trim()) {
+        const n = parseInt(pendingPriorities[k].value, 10);
+        if (!isNaN(n) && n > 0) p[k] = n;
+      }
+    });
+    return p;
+  }, [pendingPriorities]);
+
+  const locationValid = searchInput.trim().length > 0;
+  const priorityValid = Object.keys(pendingPriorityParams).length > 0;
+  const canCommitSearch = locationValid && priorityValid;
+
   // ---- Commit: build current pending state into filters, fire search ----
   const commitSearch = (overrides?: Partial<SearchFilters>) => {
+    const onlySavedApplied = overrides && Object.keys(overrides).every((k) => k === "saved" || k === "applied");
+    if (!onlySavedApplied && !canCommitSearch) return;
     const next: SearchFilters = {
       location: overrides?.location ?? searchInput.trim(),
       beds: overrides?.beds !== undefined ? overrides.beds : pendingBeds,
@@ -143,9 +225,11 @@ export function ListingsResultsScreen() {
       saved: overrides?.saved !== undefined ? overrides.saved : pendingSaved,
       applied: overrides?.applied !== undefined ? overrides.applied : pendingApplied,
     };
+    const nextPriorities: PriorityValues = { ...pendingPriorityParams };
     setCommittedFilters(next);
+    setCommittedPriorities(nextPriorities);
     setZillowPage(1);
-    setSearchParams(buildSearchParams(next));
+    setSearchParams(buildSearchParams(next, nextPriorities));
     setTypeaheadOpen(false);
   };
 
@@ -153,7 +237,7 @@ export function ListingsResultsScreen() {
 
   const handleSelectSuggestion = (city: string) => {
     setSearchInput(city);
-    commitSearch({ location: city });
+    if (priorityValid) commitSearch({ location: city });
   };
 
   // Typeahead
@@ -179,7 +263,10 @@ export function ListingsResultsScreen() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const formatListing = (listing: (typeof zillowListings)[0]) => ({
+  const displayLocation = committedFilters.location || "all areas";
+  const hasSearched = committedFilters.location.trim().length > 0 || isFilterOnlyMode;
+
+  const formatListing = (listing: (typeof zillowListings)[0], matchPercent: number) => ({
     id: listing.id,
     title: listing.title,
     address: listing.address,
@@ -188,7 +275,7 @@ export function ListingsResultsScreen() {
     beds: listing.beds,
     baths: listing.baths,
     sqft: listing.sqft,
-    matchPercent: 85,
+    matchPercent,
     demand:
       listing.demand ||
       (listing.competition_score > 70 ? "High" : listing.competition_score > 40 ? "Medium" : "Low"),
@@ -205,8 +292,23 @@ export function ListingsResultsScreen() {
     source: listing.source,
   });
 
-  const displayLocation = committedFilters.location || "all areas";
-  const hasSearched = committedFilters.location.trim().length > 0 || isFilterOnlyMode;
+  // Persist queue of high matches (≥75%) + last search params for dashboard next-in-line
+  const searchParamsString = searchParams.toString();
+  useEffect(() => {
+    if (listingsWithMatch.length > 0 && hasSearched && !loading) {
+      const snapshots: LastTopMatchSnapshot[] = listingsWithMatch.map(({ listing, matchPercent }) => ({
+        id: listing.id,
+        matchPercent,
+        title: listing.title,
+        price: listing.price,
+        address: listing.address,
+        city: listing.city || "",
+        image: listing.image,
+        timeLeft: listing.time_left || "",
+      }));
+      setTopMatchesQueue(snapshots, searchParamsString);
+    }
+  }, [listingsWithMatch, hasSearched, loading, searchParamsString]);
 
   // Check if pending filters differ from committed (to hint the user to click Search)
   const hasPendingChanges =
@@ -215,7 +317,8 @@ export function ListingsResultsScreen() {
     pendingBaths !== committedFilters.baths ||
     pendingMinSqft !== committedFilters.minSqft ||
     pendingMaxSqft !== committedFilters.maxSqft ||
-    pendingMaxPrice !== committedFilters.maxPrice;
+    pendingMaxPrice !== committedFilters.maxPrice ||
+    JSON.stringify(pendingPriorityParams) !== JSON.stringify(committedPriorities);
 
   return (
     <div className="min-h-screen bg-background">
@@ -270,7 +373,8 @@ export function ListingsResultsScreen() {
               <button
                 type="button"
                 onClick={handleSearch}
-                className={`shrink-0 px-4 py-2.5 rounded-xl text-white text-sm font-medium transition-colors flex items-center gap-2 ${
+                disabled={!canCommitSearch}
+                className={`shrink-0 px-4 py-2.5 rounded-xl text-white text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   hasPendingChanges
                     ? "bg-[#10B981] hover:bg-[#0d9668] ring-2 ring-[#10B981]/30"
                     : "bg-[#10B981] hover:bg-[#0d9668]"
@@ -318,6 +422,22 @@ export function ListingsResultsScreen() {
               <ChevronDown
                 size={14}
                 className={`transition-transform ${showFiltersPanel ? "rotate-180" : ""}`}
+              />
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowPriorityPanel(!showPriorityPanel)}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
+                Object.keys(committedPriorities).length > 0
+                  ? "bg-[#10B981] text-white border-[#10B981]"
+                  : "border-border bg-background text-foreground hover:bg-accent"
+              }`}
+            >
+              <Target size={16} />
+              Set priority (required)
+              <ChevronDown
+                size={14}
+                className={`transition-transform ${showPriorityPanel ? "rotate-180" : ""}`}
               />
             </button>
           </div>
@@ -414,6 +534,50 @@ export function ListingsResultsScreen() {
                 >
                   Reset filters
                 </button>
+              </div>
+            </motion.div>
+          )}
+
+          {showPriorityPanel && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              className="mt-4 pt-4 border-t border-border"
+            >
+              <p className="text-xs text-muted-foreground mb-3">
+                Check at least one priority and enter a value. Match % is based on these. Location is required.
+              </p>
+              <div className="space-y-3">
+                {PRIORITY_FIELDS.map(({ key, label, placeholder }) => (
+                  <div key={key} className="flex flex-wrap items-center gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={pendingPriorities[key].checked}
+                        onChange={(e) =>
+                          setPendingPriorities((p) => ({
+                            ...p,
+                            [key]: { ...p[key], checked: e.target.checked, value: e.target.checked ? p[key].value : "" },
+                          }))
+                        }
+                        className="rounded border-border text-[#10B981] focus:ring-[#10B981]"
+                      />
+                      <span className="text-sm font-medium">{label}</span>
+                    </label>
+                    {pendingPriorities[key].checked && (
+                      <input
+                        type="number"
+                        min={1}
+                        placeholder={placeholder}
+                        value={pendingPriorities[key].value}
+                        onChange={(e) =>
+                          setPendingPriorities((p) => ({ ...p, [key]: { ...p[key], value: e.target.value } }))
+                        }
+                        className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm w-28"
+                      />
+                    )}
+                  </div>
+                ))}
               </div>
             </motion.div>
           )}
@@ -524,7 +688,7 @@ export function ListingsResultsScreen() {
                   : "flex flex-col gap-4 max-w-3xl mx-auto"
               }
             >
-              {filteredListings.map((listing, i) => (
+              {listingsWithMatch.map(({ listing, matchPercent }, i) => (
                 <motion.div
                   key={listing.id}
                   className={viewMode === "grid" ? "h-full min-h-0" : undefined}
@@ -533,7 +697,7 @@ export function ListingsResultsScreen() {
                   transition={{ duration: 0.35, delay: i * 0.05 }}
                 >
                   <ListingCard
-                    listing={formatListing(listing)}
+                    listing={formatListing(listing, matchPercent)}
                     isSaved={savedIds.has(listing.id)}
                     onToggleSave={toggleSave}
                     className={viewMode === "grid" ? "h-full" : undefined}
@@ -628,7 +792,9 @@ export function ListingsResultsScreen() {
                   setPendingMaxPrice(null);
                   setPendingSaved(false);
                   setPendingApplied(false);
+                  setPendingPriorities(priorityStateFromValues({}));
                   setCommittedFilters(defaultSearchFilters);
+                  setCommittedPriorities({});
                   setSearchParams(new URLSearchParams());
                 }}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#10B981] text-white text-sm font-medium hover:bg-[#0d9668] transition-colors"
