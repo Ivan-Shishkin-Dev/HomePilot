@@ -11,7 +11,6 @@ import {
   Landmark,
   Briefcase,
   Users,
-  PartyPopper,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useUserDocuments, DOCUMENT_SCORE_VALUES } from "../../hooks/useSupabaseData";
@@ -94,60 +93,49 @@ export function ProfileScreen() {
       </div>
 
       <div className="px-6 lg:px-10 py-6 lg:py-8 max-w-4xl mx-auto">
-          {/* Impact Summary */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="bg-[#10B981]/10 rounded-2xl px-4 py-3.5 border border-[#10B981]/15 flex items-center gap-3 mb-6"
-          >
-            <TrendingUp size={18} className="text-[#10B981]" />
-            <span className="text-[#10B981] text-[13px]" style={{ fontWeight: 600 }}>
-              {allUploaded
-                ? "All documents uploaded!"
-                : `Potential: +${totalPotentialPoints} score points`}
-            </span>
-          </motion.div>
-
           {/* Suggestions */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-foreground text-[18px]" style={{ fontWeight: 600 }}>
+              <h3 className="text-foreground text-[18px] flex items-center gap-2" style={{ fontWeight: 600 }}>
+                <span className="w-8 h-8 rounded-lg bg-[#10B981]/15 flex items-center justify-center">
+                  <Sparkles size={16} className="text-[#10B981]" />
+                </span>
                 Suggestions by Impact
               </h3>
               <div className="flex items-center gap-2">
-                <Sparkles size={16} className="text-[#10B981]" />
                 <span className="text-muted-foreground text-[13px]">
                   {allUploaded ? "All complete" : `${missingDocs.length} remaining`}
                 </span>
               </div>
             </div>
 
-            {allUploaded ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="bg-card rounded-2xl border border-[#10B981]/20 p-10 flex flex-col items-center text-center"
-              >
-                <div className="w-16 h-16 rounded-full bg-[#10B981]/15 flex items-center justify-center mb-4">
-                  <PartyPopper size={32} className="text-[#10B981]" />
-                </div>
-                <h3 className="text-foreground text-[20px] mb-2" style={{ fontWeight: 700 }}>
-                  You're All Set!
-                </h3>
-                <p className="text-muted-foreground text-[14px] mb-6 max-w-md">
-                  All your documents are uploaded and your profile is fully optimized.
-                  You're in the best position to get approved by landlords.
-                </p>
+            {/* Impact Summary - below header so section has visible content */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="bg-[#10B981]/10 rounded-2xl px-4 py-3.5 border border-[#10B981]/15 flex items-center justify-between gap-3 mb-6"
+            >
+              <div className="flex items-center gap-3">
+                <TrendingUp size={18} className="text-[#10B981]" />
+                <span className="text-[#10B981] text-[13px]" style={{ fontWeight: 600 }}>
+                  {allUploaded
+                    ? "All documents uploaded!"
+                    : `Potential: +${totalPotentialPoints} score points`}
+                </span>
+              </div>
+              {allUploaded && (
                 <button
                   onClick={() => navigate("/passport")}
-                  className="bg-[#10B981] text-white px-6 py-2.5 rounded-xl text-[14px] hover:bg-[#10B981]/90 transition-colors"
+                  className="bg-[#10B981] text-white px-5 py-2 rounded-xl text-[13px] hover:bg-[#10B981]/90 transition-colors shrink-0"
                   style={{ fontWeight: 600 }}
                 >
-                  View Your Passport
+                  View your passport
                 </button>
-              </motion.div>
-            ) : (
+              )}
+            </motion.div>
+
+            {allUploaded ? null : (
               <div className="flex flex-col gap-3">
                 {missingDocs.map((doc, i) => {
                   const scoreValue = DOCUMENT_SCORE_VALUES[doc.icon] || 0;

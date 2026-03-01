@@ -179,3 +179,12 @@
     line-height: 1.5;
   }
 }
+
+/* Hide scrollbar but keep scroll behavior (mouse wheel, touch, keyboard) */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
