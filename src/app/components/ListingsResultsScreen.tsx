@@ -4,6 +4,7 @@ import { Search, SlidersHorizontal, MapPin, Grid2x2, LayoutList, Loader2, Chevro
 import { ListingCard } from "./ListingCard";
 import { useSavedListings, useAppliedListings } from "../../hooks/useSupabaseData";
 import { useZillowListings } from "../../hooks/useZillowListings";
+import type { Listing } from "../../lib/supabase";
 import {
   defaultSearchFilters,
   buildSearchParams,
@@ -70,7 +71,7 @@ export function ListingsResultsScreen() {
     listings: zillowListings,
     totalResults: zillowTotal,
     totalPages: zillowTotalPages,
-    loading,
+    loading: zillowLoading,
     error,
   } = useZillowListings(zillowOpts);
 
@@ -87,15 +88,38 @@ export function ListingsResultsScreen() {
     }
   }, [zillowListings]);
 
+  // When viewing saved/applied without a city search, pull from sessionStorage cache
+  const isFilterOnlyMode = !filters.location.trim() && (filters.saved || filters.applied);
+
+  const cachedListings = useMemo(() => {
+    if (!isFilterOnlyMode) return [];
+    try {
+      const raw = sessionStorage.getItem("zillow_listings");
+      if (!raw) return [];
+      const parsed = JSON.parse(raw) as Listing[];
+      return parsed.filter((l) => {
+        const matchesSaved = !filters.saved || savedIds.has(l.id);
+        const matchesApplied = !filters.applied || appliedIds.has(l.id);
+        return matchesSaved && matchesApplied;
+      });
+    } catch {
+      return [];
+    }
+  }, [isFilterOnlyMode, filters.saved, filters.applied, savedIds, appliedIds]);
+
+  // Choose the right source of listings and loading state
+  const baseListings = isFilterOnlyMode ? cachedListings : zillowListings;
+  const loading = isFilterOnlyMode ? false : zillowLoading;
+
   // Client-side filters that the API doesn't handle (baths, sqft, saved/applied)
   const filteredListings = useMemo(() => {
-    let list = [...zillowListings];
+    let list = [...baseListings];
     if (filters.baths != null) list = list.filter((l) => l.baths >= filters.baths!);
     if (filters.minSqft != null) list = list.filter((l) => l.sqft >= filters.minSqft!);
-    if (filters.saved) list = list.filter((l) => savedIds.has(l.id));
-    if (filters.applied) list = list.filter((l) => appliedIds.has(l.id));
+    if (!isFilterOnlyMode && filters.saved) list = list.filter((l) => savedIds.has(l.id));
+    if (!isFilterOnlyMode && filters.applied) list = list.filter((l) => appliedIds.has(l.id));
     return list;
-  }, [zillowListings, filters, savedIds, appliedIds]);
+  }, [baseListings, filters, savedIds, appliedIds, isFilterOnlyMode]);
 
   // Typeahead: suggest popular California cities
   const popularCities = [
@@ -152,8 +176,7 @@ export function ListingsResultsScreen() {
 
   const updateFilters = (next: SearchFilters) => {
     setSearchInput(next.location);
-    const query = buildSearchParams(next).toString();
-    setSearchParams(query ? `?${query}` : "");
+    setSearchParams(buildSearchParams(next));
   };
 
   const handleSearch = () => {
@@ -170,7 +193,7 @@ export function ListingsResultsScreen() {
   };
 
   const displayLocation = filters.location || "all areas";
-  const hasSearched = filters.location.trim().length > 0;
+  const hasSearched = filters.location.trim().length > 0 || isFilterOnlyMode;
 
   return (
     <div className="min-h-screen bg-background">
@@ -233,7 +256,7 @@ export function ListingsResultsScreen() {
             </div>
             <button
               type="button"
-              onClick={() => updateFilters({ ...filters, saved: !filters.saved, applied: filters.saved ? false : filters.applied })}
+              onClick={() => updateFilters({ ...filters, saved: !filters.saved })}
               className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
                 filters.saved
                   ? "bg-[#10B981] text-white border-[#10B981]"
@@ -244,7 +267,7 @@ export function ListingsResultsScreen() {
             </button>
             <button
               type="button"
-              onClick={() => updateFilters({ ...filters, applied: !filters.applied, saved: filters.applied ? false : filters.saved })}
+              onClick={() => updateFilters({ ...filters, applied: !filters.applied })}
               className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
                 filters.applied
                   ? "bg-[#10B981] text-white border-[#10B981]"
@@ -413,12 +436,16 @@ export function ListingsResultsScreen() {
               <div className="flex items-center gap-2 flex-wrap">
                 <MapPin size={18} className="text-[#10B981]" />
                 <h2 className="text-foreground text-xl font-bold">
-                  {zillowTotal.toLocaleString()} rentals in {displayLocation}
+                  {isFilterOnlyMode
+                    ? `${filteredListings.length} ${filters.saved && filters.applied ? "saved & applied" : filters.saved ? "saved" : "applied"} ${filteredListings.length === 1 ? "listing" : "listings"}`
+                    : `${zillowTotal.toLocaleString()} rentals in ${displayLocation}`}
                 </h2>
-                <span className="inline-flex items-center gap-1 text-xs bg-[#10B981]/10 text-[#10B981] px-2 py-0.5 rounded-full font-medium">
-                  <Globe size={12} />
-                  Live from Zillow
-                </span>
+                {!isFilterOnlyMode && (
+                  <span className="inline-flex items-center gap-1 text-xs bg-[#10B981]/10 text-[#10B981] px-2 py-0.5 rounded-full font-medium">
+                    <Globe size={12} />
+                    Live from Zillow
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <div className="bg-card border border-border rounded-xl overflow-hidden flex">
@@ -467,7 +494,7 @@ export function ListingsResultsScreen() {
               ))}
             </div>
 
-            {zillowTotalPages > 1 && (
+            {!isFilterOnlyMode && zillowTotalPages > 1 && (
               <div className="flex items-center justify-center gap-3 pt-8 pb-4">
                 <button
                   type="button"
@@ -503,26 +530,44 @@ export function ListingsResultsScreen() {
             <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-5">
               <Home className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="text-foreground text-lg font-semibold mb-2">
-              No rentals found in {displayLocation}
-            </h3>
-            <p className="text-muted-foreground text-sm text-center max-w-md mb-2">
-              We searched Zillow but didn't find listings matching your criteria. Here are a few things to try:
-            </p>
-            <ul className="text-muted-foreground text-sm text-left space-y-1.5 mb-6">
-              <li className="flex items-start gap-2">
-                <MapPin size={14} className="text-[#10B981] mt-0.5 shrink-0" />
-                <span>Check the city spelling or try a nearby city</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <SlidersHorizontal size={14} className="text-[#10B981] mt-0.5 shrink-0" />
-                <span>Broaden your filters (higher max price, fewer bedrooms)</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Globe size={14} className="text-[#10B981] mt-0.5 shrink-0" />
-                <span>Include the state, e.g. "Austin, TX" or "Portland, OR"</span>
-              </li>
-            </ul>
+
+            {isFilterOnlyMode ? (
+              <>
+                <h3 className="text-foreground text-lg font-semibold mb-2">
+                  No {filters.saved && filters.applied ? "saved & applied" : filters.saved ? "saved" : "applied"} listings yet
+                </h3>
+                <p className="text-muted-foreground text-sm text-center max-w-md mb-6">
+                  {filters.saved && filters.applied
+                    ? "Listings that are both saved and applied will appear here."
+                    : filters.saved
+                      ? "Listings you save will appear here. Search for rentals and tap the heart icon to save them."
+                      : "Listings you apply to will appear here. Search for rentals and apply to get started."}
+                </p>
+              </>
+            ) : (
+              <>
+                <h3 className="text-foreground text-lg font-semibold mb-2">
+                  No rentals found in {displayLocation}
+                </h3>
+                <p className="text-muted-foreground text-sm text-center max-w-md mb-2">
+                  We searched Zillow but didn't find listings matching your criteria. Here are a few things to try:
+                </p>
+                <ul className="text-muted-foreground text-sm text-left space-y-1.5 mb-6">
+                  <li className="flex items-start gap-2">
+                    <MapPin size={14} className="text-[#10B981] mt-0.5 shrink-0" />
+                    <span>Check the city spelling or try a nearby city</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <SlidersHorizontal size={14} className="text-[#10B981] mt-0.5 shrink-0" />
+                    <span>Broaden your filters (higher max price, fewer bedrooms)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Globe size={14} className="text-[#10B981] mt-0.5 shrink-0" />
+                    <span>Include the state, e.g. "Austin, TX" or "Portland, OR"</span>
+                  </li>
+                </ul>
+              </>
+            )}
             <div className="flex gap-3">
               <button
                 type="button"
