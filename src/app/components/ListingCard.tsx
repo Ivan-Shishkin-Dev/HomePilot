@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import { MapPin, Bed, Bath, Clock, ExternalLink, Heart } from "lucide-react";
+import { MapPin, Bed, Bath, Clock, ExternalLink, Heart, ClipboardCheck } from "lucide-react";
 import { useAppliedListings } from "../../contexts/AppliedListingsContext";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { cn } from "./ui/utils";
@@ -34,7 +34,8 @@ export function ListingCard({
   onToggleSave?: (listingId: string) => void;
 }) {
   const navigate = useNavigate();
-  const { trackExternalLinkClick } = useAppliedListings();
+  const { trackExternalLinkClick, appliedIds, removeApplied } = useAppliedListings();
+  const isApplied = appliedIds.has(listing.id);
 
   const getMatchColor = (pct: number) => {
     if (pct >= 80) return "bg-[#10B981]";
@@ -85,6 +86,19 @@ export function ListingCard({
                 size={18}
                 className={isSaved ? "text-[#EF4444] fill-[#EF4444]" : "text-white"}
               />
+            </button>
+          )}
+          {isApplied && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                removeApplied(listing.id);
+              }}
+              className="w-8 h-8 rounded-lg bg-black/40 flex items-center justify-center hover:bg-black/60 transition-colors"
+              title="Mark as not applied"
+            >
+              <ClipboardCheck size={14} className="text-[#10B981] fill-[#10B981]" />
             </button>
           )}
         </div>

@@ -9,6 +9,7 @@ type AppliedListingsContextValue = {
   appliedIds: Set<string>;
   appliedCount: number;
   addApplied: (listingId: string) => Promise<void>;
+  removeApplied: (listingId: string) => Promise<void>;
   trackExternalLinkClick: (listing: { id: string; title: string; url: string }) => void;
   loading: boolean;
   refetch: () => Promise<void>;
@@ -92,6 +93,27 @@ export function AppliedListingsProvider({ children }: { children: React.ReactNod
     [user]
   );
 
+  const removeApplied = useCallback(
+    async (listingId: string) => {
+      if (!user) return;
+      try {
+        await supabase
+          .from("user_applied_listings")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("listing_id", listingId);
+        setAppliedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(listingId);
+          return next;
+        });
+      } catch (err) {
+        console.error("Remove applied:", err);
+      }
+    },
+    [user]
+  );
+
   const trackExternalLinkClick = useCallback((listing: { id: string; title: string; url: string }) => {
     if (user) {
       setPendingApply({ id: listing.id, title: listing.title });
@@ -157,6 +179,7 @@ export function AppliedListingsProvider({ children }: { children: React.ReactNod
     appliedIds,
     appliedCount: appliedIds.size,
     addApplied,
+    removeApplied,
     trackExternalLinkClick,
     loading,
     refetch: fetchApplied,

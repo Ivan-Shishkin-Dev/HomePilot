@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Search, SlidersHorizontal, MapPin, Loader2, ChevronDown } from "lucide-react";
-import { useListings } from "../../hooks/useSupabaseData";
+import { useListings, useSavedListings, useAppliedListings } from "../../hooks/useSupabaseData";
 import { motion, AnimatePresence } from "motion/react";
 
 export const MAX_PRICE_SLIDER = 10000;
@@ -14,6 +14,8 @@ export interface SearchFilters {
   maxPrice: number | null;
   petFriendly: boolean;
   studentFriendly: boolean;
+  saved: boolean;
+  applied: boolean;
 }
 
 export const defaultSearchFilters: SearchFilters = {
@@ -24,6 +26,8 @@ export const defaultSearchFilters: SearchFilters = {
   maxPrice: null,
   petFriendly: false,
   studentFriendly: false,
+  saved: false,
+  applied: false,
 };
 
 function buildSearchParams(f: SearchFilters): URLSearchParams {
@@ -35,6 +39,8 @@ function buildSearchParams(f: SearchFilters): URLSearchParams {
   if (f.maxPrice != null) p.set("maxPrice", String(f.maxPrice));
   if (f.petFriendly) p.set("petFriendly", "1");
   if (f.studentFriendly) p.set("studentFriendly", "1");
+  if (f.saved) p.set("saved", "1");
+  if (f.applied) p.set("applied", "1");
   return p;
 }
 
@@ -47,6 +53,8 @@ export function ListingsScreen() {
   const typeaheadRef = useRef<HTMLDivElement>(null);
 
   const { listings, loading } = useListings();
+  const { savedIds, savedCount } = useSavedListings();
+  const { appliedIds, appliedCount } = useAppliedListings();
 
   // Unique city names from listings data (from src/data/*.json)
   const cityNames = useMemo(() => {
@@ -189,6 +197,28 @@ export function ListingsScreen() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
+          <button
+            type="button"
+            onClick={() => setFilters((p) => ({ ...p, saved: !p.saved, applied: p.saved ? false : p.applied }))}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium shadow-lg border backdrop-blur-sm ${
+              filters.saved
+                ? "bg-[#10B981] text-white border-[#10B981]/50"
+                : "bg-white/95 dark:bg-white/90 text-gray-900 dark:text-gray-900 border-white/30"
+            }`}
+          >
+            Saved {savedCount > 0 && `(${savedCount})`}
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilters((p) => ({ ...p, applied: !p.applied, saved: p.applied ? false : p.saved }))}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium shadow-lg border backdrop-blur-sm ${
+              filters.applied
+                ? "bg-[#10B981] text-white border-[#10B981]/50"
+                : "bg-white/95 dark:bg-white/90 text-gray-900 dark:text-gray-900 border-white/30"
+            }`}
+          >
+            Applied {appliedCount > 0 && `(${appliedCount})`}
+          </button>
           <button
             type="button"
             onClick={() => setShowFiltersPanel(!showFiltersPanel)}

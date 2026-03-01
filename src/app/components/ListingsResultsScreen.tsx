@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import { Search, SlidersHorizontal, MapPin, Grid2x2, LayoutList, Loader2, ChevronDown } from "lucide-react";
 import { ListingCard } from "./ListingCard";
-import { useListings } from "../../hooks/useSupabaseData";
+import { useListings, useSavedListings, useAppliedListings } from "../../hooks/useSupabaseData";
 import {
   defaultSearchFilters,
   buildSearchParams,
@@ -22,6 +22,8 @@ function parseSearchParams(sp: URLSearchParams): SearchFilters {
     maxPrice: sp.get("maxPrice") != null ? +sp.get("maxPrice")! : null,
     petFriendly: sp.get("petFriendly") === "1",
     studentFriendly: sp.get("studentFriendly") === "1",
+    saved: sp.get("saved") === "1",
+    applied: sp.get("applied") === "1",
   };
 }
 
@@ -37,6 +39,8 @@ export function ListingsResultsScreen() {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
   const { listings, loading } = useListings();
+  const { savedIds, toggleSave } = useSavedListings();
+  const { appliedIds } = useAppliedListings();
 
   // Unique city names from listings data (same as main search page)
   const cityNames = useMemo(() => {
@@ -107,8 +111,10 @@ export function ListingsResultsScreen() {
     if (filters.studentFriendly) {
       list = list.filter((l) => l.student_friendly === true);
     }
+    if (filters.saved) list = list.filter((l) => savedIds.has(l.id));
+    if (filters.applied) list = list.filter((l) => appliedIds.has(l.id));
     return list;
-  }, [listings, filters]);
+  }, [listings, filters, savedIds, appliedIds]);
 
   const updateFilters = (next: SearchFilters) => {
     setSearchInput(next.location);
@@ -196,6 +202,28 @@ export function ListingsResultsScreen() {
                 Search
               </button>
             </div>
+            <button
+              type="button"
+              onClick={() => updateFilters({ ...filters, saved: !filters.saved, applied: filters.saved ? false : filters.applied })}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
+                filters.saved
+                  ? "bg-[#10B981] text-white border-[#10B981]"
+                  : "border-border bg-background text-foreground hover:bg-accent"
+              }`}
+            >
+              Saved {savedIds.size > 0 && `(${savedIds.size})`}
+            </button>
+            <button
+              type="button"
+              onClick={() => updateFilters({ ...filters, applied: !filters.applied, saved: filters.applied ? false : filters.saved })}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
+                filters.applied
+                  ? "bg-[#10B981] text-white border-[#10B981]"
+                  : "border-border bg-background text-foreground hover:bg-accent"
+              }`}
+            >
+              Applied {appliedIds.size > 0 && `(${appliedIds.size})`}
+            </button>
             <button
               type="button"
               onClick={() => setShowFiltersPanel(!showFiltersPanel)}
@@ -361,7 +389,12 @@ export function ListingsResultsScreen() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, delay: i * 0.05 }}
             >
-              <ListingCard listing={formatListing(listing)} className={viewMode === "grid" ? "h-full" : undefined} />
+              <ListingCard
+                listing={formatListing(listing)}
+                isSaved={savedIds.has(listing.id)}
+                onToggleSave={toggleSave}
+                className={viewMode === "grid" ? "h-full" : undefined}
+              />
             </motion.div>
           ))}
         </div>
