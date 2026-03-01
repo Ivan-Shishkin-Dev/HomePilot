@@ -23,8 +23,6 @@ function parseSearchParams(sp: URLSearchParams): SearchFilters {
     minSqft: sp.get("minSqft") != null ? +sp.get("minSqft")! : null,
     maxSqft: sp.get("maxSqft") != null ? +sp.get("maxSqft")! : null,
     maxPrice: sp.get("maxPrice") != null ? +sp.get("maxPrice")! : null,
-    petFriendly: sp.get("petFriendly") === "1",
-    studentFriendly: sp.get("studentFriendly") === "1",
     saved: sp.get("saved") === "1",
     applied: sp.get("applied") === "1",
   };
@@ -138,8 +136,6 @@ export function ListingsResultsScreen() {
       minSqft: overrides?.minSqft !== undefined ? overrides.minSqft : pendingMinSqft,
       maxSqft: overrides?.maxSqft !== undefined ? overrides.maxSqft : pendingMaxSqft,
       maxPrice: overrides?.maxPrice !== undefined ? overrides.maxPrice : pendingMaxPrice,
-      petFriendly: false,
-      studentFriendly: false,
       saved: overrides?.saved !== undefined ? overrides.saved : pendingSaved,
       applied: overrides?.applied !== undefined ? overrides.applied : pendingApplied,
     };
@@ -221,202 +217,199 @@ export function ListingsResultsScreen() {
     <div className="min-h-screen bg-background">
       {/* Search + filters */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-6 pb-2 sm:pt-8 sm:pb-3">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 flex gap-2 min-w-0" ref={typeaheadRef}>
-              <div className="flex-1 relative max-w-md">
-                <Search
-                  size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10"
-                />
-                <input
-                  type="text"
-                  placeholder="Search any city, e.g. Irvine, CA"
-                  value={searchInput}
-                  onChange={(e) => {
-                    setSearchInput(e.target.value);
-                    setTypeaheadOpen(true);
-                  }}
-                  onFocus={() => suggestions.length > 0 && setTypeaheadOpen(true)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleSearch();
-                  }}
-                  className="w-full bg-background border border-border rounded-xl pl-9 pr-3 py-2.5 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-[#10B981]/40"
-                />
-                <AnimatePresence>
-                  {typeaheadOpen && suggestions.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-xl shadow-xl overflow-hidden z-50"
-                    >
-                      <div className="py-1 max-h-64 overflow-auto">
-                        {suggestions.map((city) => (
-                          <button
-                            key={city}
-                            type="button"
-                            onClick={() => handleSelectSuggestion(city)}
-                            className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-accent text-foreground"
-                          >
-                            <MapPin size={14} className="text-[#10B981] shrink-0" />
-                            <span className="text-sm">{city}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-              <button
-                type="button"
-                onClick={handleSearch}
-                className={`shrink-0 px-4 py-2.5 rounded-xl text-white text-sm font-medium transition-colors flex items-center gap-2 ${
-                  hasPendingChanges
-                    ? "bg-[#10B981] hover:bg-[#0d9668] ring-2 ring-[#10B981]/30"
-                    : "bg-[#10B981] hover:bg-[#0d9668]"
-                }`}
-              >
-                <Search size={16} />
-                Search
-              </button>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1 flex gap-2 min-w-0" ref={typeaheadRef}>
+            <div className="flex-1 relative max-w-md">
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10"
+              />
+              <input
+                type="text"
+                placeholder="Search any city, e.g. Irvine, CA"
+                value={searchInput}
+                onChange={(e) => {
+                  setSearchInput(e.target.value);
+                  setTypeaheadOpen(true);
+                }}
+                onFocus={() => suggestions.length > 0 && setTypeaheadOpen(true)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSearch();
+                }}
+                className="w-full bg-background border border-border rounded-xl pl-9 pr-3 py-2.5 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-[#10B981]/40"
+              />
+              <AnimatePresence>
+                {typeaheadOpen && suggestions.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-xl shadow-xl overflow-hidden z-50"
+                  >
+                    <div className="py-1 max-h-64 overflow-auto">
+                      {suggestions.map((city) => (
+                        <button
+                          key={city}
+                          type="button"
+                          onClick={() => handleSelectSuggestion(city)}
+                          className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-accent text-foreground"
+                        >
+                          <MapPin size={14} className="text-[#10B981] shrink-0" />
+                          <span className="text-sm">{city}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
             <button
               type="button"
-              onClick={() => {
-                setPendingSaved(!pendingSaved);
-                commitSearch({ saved: !pendingSaved });
-              }}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
-                pendingSaved
-                  ? "bg-[#10B981] text-white border-[#10B981]"
-                  : "border-border bg-background text-foreground hover:bg-accent"
-              }`}
+              onClick={handleSearch}
+              className={`shrink-0 px-4 py-2.5 rounded-xl text-white text-sm font-medium transition-colors flex items-center gap-2 ${hasPendingChanges
+                  ? "bg-[#10B981] hover:bg-[#0d9668] ring-2 ring-[#10B981]/30"
+                  : "bg-[#10B981] hover:bg-[#0d9668]"
+                }`}
             >
-              Saved {savedIds.size > 0 && `(${savedIds.size})`}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setPendingApplied(!pendingApplied);
-                commitSearch({ applied: !pendingApplied });
-              }}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
-                pendingApplied
-                  ? "bg-[#10B981] text-white border-[#10B981]"
-                  : "border-border bg-background text-foreground hover:bg-accent"
-              }`}
-            >
-              Applied {appliedIds.size > 0 && `(${appliedIds.size})`}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowFiltersPanel(!showFiltersPanel)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm hover:bg-accent transition-colors"
-            >
-              <SlidersHorizontal size={16} />
-              Filters
-              <ChevronDown
-                size={14}
-                className={`transition-transform ${showFiltersPanel ? "rotate-180" : ""}`}
-              />
+              <Search size={16} />
+              Search
             </button>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              setPendingSaved(!pendingSaved);
+              commitSearch({ saved: !pendingSaved });
+            }}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors ${pendingSaved
+                ? "bg-[#10B981] text-white border-[#10B981]"
+                : "border-border bg-background text-foreground hover:bg-accent"
+              }`}
+          >
+            Saved {savedIds.size > 0 && `(${savedIds.size})`}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPendingApplied(!pendingApplied);
+              commitSearch({ applied: !pendingApplied });
+            }}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors ${pendingApplied
+                ? "bg-[#10B981] text-white border-[#10B981]"
+                : "border-border bg-background text-foreground hover:bg-accent"
+              }`}
+          >
+            Applied {appliedIds.size > 0 && `(${appliedIds.size})`}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowFiltersPanel(!showFiltersPanel)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm hover:bg-accent transition-colors"
+          >
+            <SlidersHorizontal size={16} />
+            Filters
+            <ChevronDown
+              size={14}
+              className={`transition-transform ${showFiltersPanel ? "rotate-180" : ""}`}
+            />
+          </button>
+        </div>
 
-          {showFiltersPanel && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              className="mt-4 pt-4 border-t border-border grid grid-cols-2 sm:grid-cols-4 gap-3"
-            >
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-muted-foreground">Beds (min)</span>
-                <select
-                  value={pendingBeds ?? ""}
-                  onChange={(e) => setPendingBeds(e.target.value === "" ? null : +e.target.value)}
-                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">Any</option>
-                  {[0, 1, 2, 3, 4].map((n) => (
-                    <option key={n} value={n}>{n === 0 ? "Studio" : n === 4 ? "4+" : String(n)}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-muted-foreground">Baths (min)</span>
-                <select
-                  value={pendingBaths ?? ""}
-                  onChange={(e) => setPendingBaths(e.target.value === "" ? null : +e.target.value)}
-                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">Any</option>
-                  {[1, 2, 3, 4].map((n) => (
-                    <option key={n} value={n}>{n === 4 ? "4+" : String(n)}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-muted-foreground">Min sq ft</span>
-                <input
-                  type="number"
-                  placeholder="e.g. 600"
-                  value={pendingMinSqft ?? ""}
-                  onChange={(e) => setPendingMinSqft(e.target.value === "" ? null : Math.max(0, +e.target.value))}
-                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                />
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-muted-foreground">Max sq ft</span>
-                <input
-                  type="number"
-                  placeholder="e.g. 1500"
-                  value={pendingMaxSqft ?? ""}
-                  onChange={(e) => setPendingMaxSqft(e.target.value === "" ? null : Math.max(0, +e.target.value))}
-                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                />
-              </label>
-              <label className="flex flex-col gap-1 sm:col-span-2">
-                <span className="text-xs text-muted-foreground">
-                  Max price: {pendingMaxPrice != null ? `$${pendingMaxPrice.toLocaleString()}` : `$${MAX_PRICE_SLIDER.toLocaleString()}`}
-                </span>
-                <input
-                  type="range"
-                  min={0}
-                  max={MAX_PRICE_SLIDER}
-                  step={100}
-                  value={pendingMaxPrice ?? MAX_PRICE_SLIDER}
-                  onChange={(e) => {
-                    const v = +e.target.value;
-                    setPendingMaxPrice(v >= MAX_PRICE_SLIDER ? null : v);
-                  }}
-                  className="w-full h-2 rounded-full appearance-none bg-muted [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#10B981] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#10B981] [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
-                />
-              </label>
+        {showFiltersPanel && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            className="mt-4 pt-4 border-t border-border grid grid-cols-2 sm:grid-cols-4 gap-3"
+          >
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-muted-foreground">Beds (min)</span>
+              <select
+                value={pendingBeds ?? ""}
+                onChange={(e) => setPendingBeds(e.target.value === "" ? null : +e.target.value)}
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              >
+                <option value="">Any</option>
+                {[0, 1, 2, 3, 4].map((n) => (
+                  <option key={n} value={n}>{n === 0 ? "Studio" : n === 4 ? "4+" : String(n)}</option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-muted-foreground">Baths (min)</span>
+              <select
+                value={pendingBaths ?? ""}
+                onChange={(e) => setPendingBaths(e.target.value === "" ? null : +e.target.value)}
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              >
+                <option value="">Any</option>
+                {[1, 2, 3, 4].map((n) => (
+                  <option key={n} value={n}>{n === 4 ? "4+" : String(n)}</option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-muted-foreground">Min sq ft</span>
+              <input
+                type="number"
+                placeholder="e.g. 600"
+                value={pendingMinSqft ?? ""}
+                onChange={(e) => setPendingMinSqft(e.target.value === "" ? null : Math.max(0, +e.target.value))}
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-muted-foreground">Max sq ft</span>
+              <input
+                type="number"
+                placeholder="e.g. 1500"
+                value={pendingMaxSqft ?? ""}
+                onChange={(e) => setPendingMaxSqft(e.target.value === "" ? null : Math.max(0, +e.target.value))}
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="flex flex-col gap-1 sm:col-span-2">
+              <span className="text-xs text-muted-foreground">
+                Max price: {pendingMaxPrice != null ? `$${pendingMaxPrice.toLocaleString()}` : `$${MAX_PRICE_SLIDER.toLocaleString()}`}
+              </span>
+              <input
+                type="range"
+                min={0}
+                max={MAX_PRICE_SLIDER}
+                step={100}
+                value={pendingMaxPrice ?? MAX_PRICE_SLIDER}
+                onChange={(e) => {
+                  const v = +e.target.value;
+                  setPendingMaxPrice(v >= MAX_PRICE_SLIDER ? null : v);
+                }}
+                className="w-full h-2 rounded-full appearance-none bg-muted [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#10B981] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#10B981] [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
+              />
+            </label>
 
-              <div className="col-span-2 sm:col-span-4 flex items-center gap-2 pt-1">
-                {hasPendingChanges && (
-                  <>
-                    <span className="text-xs text-[#F59E0B] font-medium">Filters changed</span>
-                    <span className="text-xs text-muted-foreground">— click Search to apply</span>
-                  </>
-                )}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPendingBeds(null);
-                    setPendingBaths(null);
-                    setPendingMinSqft(null);
-                    setPendingMaxSqft(null);
-                    setPendingMaxPrice(null);
-                    setPendingSaved(false);
-                    setPendingApplied(false);
-                  }}
-                  className="ml-auto rounded-lg border border-red-300 dark:border-red-500/40 bg-red-50 dark:bg-red-500/10 px-3 py-1.5 text-xs font-medium text-[#EF4444] hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors"
-                >
-                  Reset filters
-                </button>
-              </div>
-            </motion.div>
-          )}
+            <div className="col-span-2 sm:col-span-4 flex items-center gap-2 pt-1">
+              {hasPendingChanges && (
+                <>
+                  <span className="text-xs text-[#F59E0B] font-medium">Filters changed</span>
+                  <span className="text-xs text-muted-foreground">— click Search to apply</span>
+                </>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setPendingBeds(null);
+                  setPendingBaths(null);
+                  setPendingMinSqft(null);
+                  setPendingMaxSqft(null);
+                  setPendingMaxPrice(null);
+                  setPendingSaved(false);
+                  setPendingApplied(false);
+                }}
+                className="ml-auto rounded-lg border border-red-300 dark:border-red-500/40 bg-red-50 dark:bg-red-500/10 px-3 py-1.5 text-xs font-medium text-[#EF4444] hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors"
+              >
+                Reset filters
+              </button>
+            </div>
+          </motion.div>
+        )}
       </div>
 
       {/* Results */}
@@ -436,7 +429,7 @@ export function ListingsResultsScreen() {
             </div>
             <div className="text-center">
               <p className="text-foreground font-medium">Searching rentals in {displayLocation}...</p>
-              <p className="text-muted-foreground text-sm mt-1">Fetching live listings from Zillow. This may take a few seconds.</p>
+              <p className="text-muted-foreground text-sm mt-1">Fetching live listings from Zillow &amp; Apartments.com. This may take a few seconds.</p>
             </div>
           </motion.div>
         )}
@@ -455,7 +448,7 @@ export function ListingsResultsScreen() {
               Something went wrong
             </h3>
             <p className="text-muted-foreground text-sm text-center max-w-md mb-6">
-              We couldn't fetch listings for "{committedFilters.location}" right now. This is usually temporary — Zillow may be rate-limiting or the connection timed out.
+              We couldn't fetch listings for "{committedFilters.location}" right now. This is usually temporary — a provider may be rate-limiting or the connection timed out.
             </p>
             <div className="flex gap-3">
               <button
@@ -491,7 +484,7 @@ export function ListingsResultsScreen() {
                 {!isFilterOnlyMode && (
                   <span className="inline-flex items-center gap-1 text-xs bg-[#10B981]/10 text-[#10B981] px-2 py-0.5 rounded-full font-medium">
                     <Globe size={12} />
-                    Live from Zillow
+                    Live results
                   </span>
                 )}
               </div>
@@ -552,13 +545,13 @@ export function ListingsResultsScreen() {
                 >
                   Previous
                 </button>
-                <span className="text-sm text-muted-foreground">
-                  Page {zillowPage} of {zillowTotalPages}
+                <span className="text-sm font-medium text-foreground">
+                  Page {zillowPage}
                 </span>
                 <button
                   type="button"
-                  disabled={zillowPage >= zillowTotalPages}
-                  onClick={() => setZillowPage((p) => Math.min(zillowTotalPages, p + 1))}
+                  disabled={zillowPage >= Math.min(zillowTotalPages, 5)}
+                  onClick={() => setZillowPage((p) => Math.min(Math.min(zillowTotalPages, 5), p + 1))}
                   className="px-4 py-2 rounded-xl border border-border text-sm font-medium disabled:opacity-40 hover:bg-accent transition-colors"
                 >
                   Next
@@ -598,7 +591,7 @@ export function ListingsResultsScreen() {
                   No rentals found in {displayLocation}
                 </h3>
                 <p className="text-muted-foreground text-sm text-center max-w-md mb-2">
-                  We searched Zillow but didn't find listings matching your criteria. Here are a few things to try:
+                  We searched Zillow &amp; Apartments.com but didn't find listings matching your criteria. Here are a few things to try:
                 </p>
                 <ul className="text-muted-foreground text-sm text-left space-y-1.5 mb-6">
                   <li className="flex items-start gap-2">

@@ -150,7 +150,7 @@ export async function searchZillowRentals(
       proxyType: "residential",
       proxyCountry: "US",
       javascript: true,
-      delay: 5000,
+      delay: 2000,
       blockAds: true,
       blockImages: true,
       screenshot: false,
@@ -223,10 +223,14 @@ export async function searchZillowRentals(
     filtered = filtered.filter((l) => l.beds >= opts.beds!);
   }
 
+  const totalResults = searchList?.totalResultCount ?? filtered.length;
+  const totalPages = searchList?.totalPages
+    ?? (listResults.length >= 20 ? 5 : 1);
+
   return {
     listings: filtered,
-    totalResults: searchList?.totalResultCount ?? filtered.length,
-    totalPages: searchList?.totalPages ?? 1,
+    totalResults,
+    totalPages,
     currentPage: page,
   };
 }
