@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Bell, Sparkles, TrendingUp, Clock, ChevronRight, Zap, ArrowUpRight, Loader2 } from "lucide-react";
+import { Sparkles, TrendingUp, Clock, ChevronRight, Zap, ArrowUpRight, Loader2 } from "lucide-react";
 import { ScoreRing } from "./ScoreRing";
 import { ListingCard } from "./ListingCard";
 import { useSavedListings } from "../../hooks/useSupabaseData";
@@ -78,22 +78,11 @@ export function HomeScreen() {
     <div className="min-h-screen bg-background">
       {/* Page Header */}
       <div className="border-b border-white/[0.06] px-6 lg:px-10 py-5 lg:py-6">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <div>
-            <span className="text-[#8B95A5] text-[13px]">{getGreeting()}</span>
-            <h1 className="text-white text-[24px] lg:text-[28px]" style={{ fontWeight: 700, lineHeight: 1.2 }}>
-              Welcome back, {getUserFirstName()}
-            </h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate("/alert")}
-              className="relative w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center hover:bg-white/[0.1] transition-colors"
-            >
-              <Bell size={18} className="text-[#8B95A5]" />
-              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#EF4444] rounded-full border-2 border-background" />
-            </button>
-          </div>
+        <div className="max-w-7xl mx-auto">
+          <span className="text-[#8B95A5] text-[13px]">{getGreeting()}</span>
+          <h1 className="text-white text-[24px] lg:text-[28px]" style={{ fontWeight: 700, lineHeight: 1.2 }}>
+            Welcome back, {getUserFirstName()}
+          </h1>
         </div>
       </div>
 
@@ -110,14 +99,11 @@ export function HomeScreen() {
             <div className="flex items-center gap-6">
               <ScoreRing score={profile?.renter_score || 0} size={110} strokeWidth={7} />
               <div className="flex-1">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <TrendingUp size={14} className="text-[#10B981]" />
-                  <span className="text-[#10B981] text-[13px]" style={{ fontWeight: 600 }}>
-                    +12 pts this week
-                  </span>
-                </div>
+                <p className="text-foreground text-[14px] mb-1" style={{ fontWeight: 600 }}>
+                  Renter Score
+                </p>
                 <p className="text-muted-foreground text-[13px] mb-3">
-                  Top 15% of renters in your area. Your score unlocks priority applications.
+                  Rates how strong your application looks to landlords based on your profile, documents, and rental history.
                 </p>
                 <button
                   onClick={() => navigate("/optimize")}
@@ -218,7 +204,7 @@ export function HomeScreen() {
               change: appliedCount > 0 ? "View applied" : "Track applications",
               onClick: () => navigate("/listings?filter=applied"),
             },
-            { label: "Avg Match", value: "79%", icon: Zap, color: "#10B981", change: "+5% this week", onClick: undefined },
+            { label: "Avg Match", value: "79%", icon: Zap, color: "#10B981", change: "", onClick: undefined },
             {
               label: "Saved Listings",
               value: String(savedCount),

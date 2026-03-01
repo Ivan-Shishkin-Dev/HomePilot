@@ -383,7 +383,7 @@ export function UploadLetterDialog({ open, onOpenChange }: Props) {
                 <Textarea
                   value={originalText}
                   readOnly
-                  className="min-h-[200px] text-[13px] leading-relaxed font-mono opacity-80 bg-black text-white placeholder:text-neutral-400 scrollbar-hide"
+                  className="min-h-[200px] text-[13px] leading-relaxed font-mono opacity-80 bg-background text-foreground placeholder:text-muted-foreground scrollbar-hide"
                 />
               </div>
             )}
@@ -493,7 +493,7 @@ export function UploadLetterDialog({ open, onOpenChange }: Props) {
                             })
                           }
                           placeholder={`Type your ${p.label.toLowerCase()}...`}
-                          className="w-full mt-2 rounded-lg border border-input bg-black text-white px-3 py-2 text-sm placeholder:text-neutral-400 outline-none focus:border-ring focus:ring-ring/50 focus:ring-[3px] transition-[color,box-shadow]"
+                          className="w-full mt-2 rounded-lg border border-input bg-background text-foreground px-3 py-2 text-sm placeholder:text-muted-foreground outline-none focus:border-ring focus:ring-ring/50 focus:ring-[3px] transition-[color,box-shadow]"
                         />
                       )}
                     </>
@@ -526,7 +526,7 @@ export function UploadLetterDialog({ open, onOpenChange }: Props) {
             <Textarea
               value={improvedText}
               onChange={(e) => setImprovedText(e.target.value)}
-              className="min-h-[300px] text-[13px] leading-relaxed font-mono bg-black text-white placeholder:text-neutral-400 scrollbar-hide"
+              className="min-h-[300px] text-[13px] leading-relaxed font-mono bg-background text-foreground placeholder:text-muted-foreground scrollbar-hide"
               placeholder="Your improved letter — edit as needed"
             />
 

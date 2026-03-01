@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sun, Moon, Bell, LogOut, Menu } from "lucide-react";
+import { Sun, Moon, LogOut, Menu } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { useNavigate, useLocation } from "react-router";
 import { Logo } from "./Logo";
@@ -155,20 +155,6 @@ export function TopBar() {
               <Sun size={18} className="text-muted-foreground" />
             ) : (
               <Moon size={18} className="text-muted-foreground" />
-            )}
-          </button>
-
-          <button
-            onClick={() => navigate("/alert")}
-            className="relative w-10 h-10 rounded-xl bg-muted hover:bg-accent transition-colors flex items-center justify-center"
-            aria-label="AI Alerts"
-            title="AI Alerts"
-          >
-            <Bell size={18} className="text-muted-foreground" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#EF4444] text-white text-[10px] flex items-center justify-center border-2 border-background" style={{ fontWeight: 700 }}>
-                {unreadCount > 99 ? "99+" : unreadCount}
-              </span>
             )}
           </button>
 
