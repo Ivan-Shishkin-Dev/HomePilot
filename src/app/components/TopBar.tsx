@@ -23,7 +23,7 @@ const navItems = [
   { path: "/home", label: "Dashboard" },
   { path: "/listings", label: "Listings" },
   { path: "/passport", label: "Passport" },
-  { path: "/profile", label: "Optimize" },
+  { path: "/optimize", label: "Optimize" },
   { path: "/alert", label: "AI Alerts" },
 ];
 
