@@ -18,6 +18,7 @@ import { useUserDocuments, DOCUMENT_SCORE_VALUES } from "../../hooks/useSupabase
 import { useAuth } from "../../contexts/AuthContext";
 import { ScoreRing } from "./ScoreRing";
 import { motion } from "motion/react";
+import { CoverLetterSection } from "./cover-letter/CoverLetterSection";
 
 // Document metadata for display
 const DOCUMENT_META: Record<string, { label: string; category: string; icon: typeof FileText }> = {
@@ -229,6 +230,8 @@ export function ProfileScreen() {
               </div>
             )}
           </div>
+
+          <CoverLetterSection />
       </div>
     </div>
   );
