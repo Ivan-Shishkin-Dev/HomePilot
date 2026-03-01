@@ -107,7 +107,7 @@ export function HomeScreen() {
                   Top 15% of renters in your area. Your score unlocks priority applications.
                 </p>
                 <button
-                  onClick={() => navigate("/profile")}
+                  onClick={() => navigate("/optimize")}
                   className="flex items-center gap-1 text-[#10B981] text-[13px] hover:underline"
                   style={{ fontWeight: 600 }}
                 >

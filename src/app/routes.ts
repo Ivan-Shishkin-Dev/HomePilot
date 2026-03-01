@@ -9,6 +9,7 @@ import { ListingDetail } from "./components/ListingDetail";
 import { PassportScreen } from "./components/PassportScreen";
 import { AlertScreen } from "./components/AlertScreen";
 import { ProfileScreen } from "./components/ProfileScreen";
+import { MyProfileScreen } from "./components/MyProfileScreen";
 import { LoginScreen } from "./components/LoginScreen";
 import { SignupScreen } from "./components/SignupScreen";
 
@@ -29,7 +30,8 @@ export const router = createBrowserRouter([
       { path: "listings", Component: ListingsScreen },
       { path: "listing/:id", Component: ListingDetail },
       { path: "passport", Component: PassportScreen },
-      { path: "profile", Component: ProfileScreen },
+      { path: "optimize", Component: ProfileScreen },
+      { path: "profile", Component: MyProfileScreen },
       { path: "alert", Component: AlertScreen },
     ],
   },
