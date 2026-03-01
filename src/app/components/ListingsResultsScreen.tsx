@@ -392,12 +392,29 @@ export function ListingsResultsScreen() {
                 />
               </label>
 
-              {hasPendingChanges && (
-                <div className="col-span-2 sm:col-span-4 flex items-center gap-2 pt-1">
-                  <span className="text-xs text-[#F59E0B] font-medium">Filters changed</span>
-                  <span className="text-xs text-muted-foreground">— click Search to apply</span>
-                </div>
-              )}
+              <div className="col-span-2 sm:col-span-4 flex items-center gap-2 pt-1">
+                {hasPendingChanges && (
+                  <>
+                    <span className="text-xs text-[#F59E0B] font-medium">Filters changed</span>
+                    <span className="text-xs text-muted-foreground">— click Search to apply</span>
+                  </>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPendingBeds(null);
+                    setPendingBaths(null);
+                    setPendingMinSqft(null);
+                    setPendingMaxSqft(null);
+                    setPendingMaxPrice(null);
+                    setPendingSaved(false);
+                    setPendingApplied(false);
+                  }}
+                  className="ml-auto rounded-lg border border-red-300 dark:border-red-500/40 bg-red-50 dark:bg-red-500/10 px-3 py-1.5 text-xs font-medium text-[#EF4444] hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors"
+                >
+                  Reset filters
+                </button>
+              </div>
             </motion.div>
           )}
       </div>
@@ -469,7 +486,7 @@ export function ListingsResultsScreen() {
                 <h2 className="text-foreground text-xl font-bold">
                   {isFilterOnlyMode
                     ? `${filteredListings.length} ${committedFilters.saved && committedFilters.applied ? "saved & applied" : committedFilters.saved ? "saved" : "applied"} ${filteredListings.length === 1 ? "listing" : "listings"}`
-                    : `${zillowTotal.toLocaleString()} rentals in ${displayLocation}`}
+                    : `${filteredListings.length.toLocaleString()} rentals in ${displayLocation}`}
                 </h2>
                 {!isFilterOnlyMode && (
                   <span className="inline-flex items-center gap-1 text-xs bg-[#10B981]/10 text-[#10B981] px-2 py-0.5 rounded-full font-medium">
