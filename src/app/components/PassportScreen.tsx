@@ -68,8 +68,7 @@ function DocumentRow({
   const status = statusConfig[doc.status as keyof typeof statusConfig];
   const StatusIcon = status.icon;
   const isMissing = doc.status === "missing";
-  const { url: fileUrl, loading: urlLoading } = useDocumentFileUrl(doc.file_url);
-  const isImage = fileUrl && /\.(jpe?g|png|gif|webp)$/i.test(doc.file_url ?? "");
+  const { url: fileUrl } = useDocumentFileUrl(doc.file_url);
 
   return (
     <motion.div
@@ -81,14 +80,8 @@ function DocumentRow({
         !uploading ? "hover:border-[#10B981]/30 cursor-pointer" : "cursor-default"
       }`}
     >
-      <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center overflow-hidden shrink-0">
-        {urlLoading ? (
-          <Loader2 size={20} className="text-muted-foreground animate-spin" />
-        ) : fileUrl && isImage ? (
-          <img src={fileUrl} alt="" className="w-full h-full object-cover" />
-        ) : (
-          <Icon size={20} className="text-muted-foreground" />
-        )}
+      <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center shrink-0">
+        <Icon size={20} className="text-muted-foreground" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-foreground text-[14px]" style={{ fontWeight: 500 }}>

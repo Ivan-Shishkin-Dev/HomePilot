@@ -176,7 +176,7 @@ export function CreateLetterDialog({ open, onOpenChange }: Props) {
         onOpenChange(v);
       }}
     >
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-hide">
         <DialogHeader>
           <DialogTitle>Create Cover Letter</DialogTitle>
           <DialogDescription>
@@ -196,7 +196,7 @@ export function CreateLetterDialog({ open, onOpenChange }: Props) {
                 value={landlordName}
                 onChange={(e) => setLandlordName(e.target.value)}
                 placeholder="e.g. John Smith"
-                className="w-full rounded-lg border border-input bg-black text-white px-3 py-2 text-sm placeholder:text-neutral-400 outline-none focus:border-ring focus:ring-ring/50 focus:ring-[3px] transition-[color,box-shadow]"
+                className="w-full rounded-lg border border-input bg-background text-foreground px-3 py-2 text-sm placeholder:text-muted-foreground outline-none focus:border-ring focus:ring-ring/50 focus:ring-[3px] transition-[color,box-shadow]"
               />
             </div>
             <div>
@@ -209,7 +209,7 @@ export function CreateLetterDialog({ open, onOpenChange }: Props) {
                 value={propertyAddress}
                 onChange={(e) => setPropertyAddress(e.target.value)}
                 placeholder="e.g. 123 Main St, Apt 4B"
-                className="w-full rounded-lg border border-input bg-black text-white px-3 py-2 text-sm placeholder:text-neutral-400 outline-none focus:border-ring focus:ring-ring/50 focus:ring-[3px] transition-[color,box-shadow]"
+                className="w-full rounded-lg border border-input bg-background text-foreground px-3 py-2 text-sm placeholder:text-muted-foreground outline-none focus:border-ring focus:ring-ring/50 focus:ring-[3px] transition-[color,box-shadow]"
               />
             </div>
 
@@ -319,7 +319,7 @@ export function CreateLetterDialog({ open, onOpenChange }: Props) {
                             })
                           }
                           placeholder={`Type your ${p.label.toLowerCase()}...`}
-                          className="w-full mt-2 rounded-lg border border-input bg-black text-white px-3 py-2 text-sm placeholder:text-neutral-400 outline-none focus:border-ring focus:ring-ring/50 focus:ring-[3px] transition-[color,box-shadow]"
+                          className="w-full mt-2 rounded-lg border border-input bg-background text-foreground px-3 py-2 text-sm placeholder:text-muted-foreground outline-none focus:border-ring focus:ring-ring/50 focus:ring-[3px] transition-[color,box-shadow]"
                         />
                       )}
                     </>
@@ -359,7 +359,7 @@ export function CreateLetterDialog({ open, onOpenChange }: Props) {
             <Textarea
               value={letter}
               onChange={(e) => setLetter(e.target.value)}
-              className="min-h-[300px] text-[13px] leading-relaxed font-mono bg-black text-white placeholder:text-neutral-400"
+              className="min-h-[300px] text-[13px] leading-relaxed font-mono bg-background text-foreground placeholder:text-muted-foreground scrollbar-hide"
             />
 
             <DialogFooter>

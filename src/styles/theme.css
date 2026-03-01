@@ -19,7 +19,7 @@
   --destructive: #d4183d;
   --destructive-foreground: #ffffff;
   --border: rgba(0, 0, 0, 0.1);
-  --input: transparent;
+  --input: rgba(0, 0, 0, 0.15);
   --input-background: #f3f3f5;
   --switch-background: #cbced4;
   --font-weight-medium: 500;
@@ -178,13 +178,4 @@
     font-weight: var(--font-weight-normal);
     line-height: 1.5;
   }
-}
-
-/* Hide scrollbar but keep scroll behavior (mouse wheel, touch, keyboard) */
-.scrollbar-hide {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
 }
