@@ -18,7 +18,7 @@ export default defineConfig({
   },
 
   optimizeDeps: {
-    include: ['lucide-react', 'pdf-lib'],
+    include: ['lucide-react', 'pdf-lib', 'pdfjs-dist'],
   },
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.

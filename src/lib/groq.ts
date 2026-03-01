@@ -141,38 +141,82 @@ export interface ImprovementResult {
   changes: string[];
 }
 
+export interface ListingDetails {
+  landlordName?: string;
+  propertyAddress?: string;
+}
+
 export async function improveCoverLetter(
   existingLetter: string,
   profile: Profile | null,
-  documents: UserDocument[]
+  documents: UserDocument[],
+  listingDetails?: ListingDetails
 ): Promise<ImprovementResult> {
   const ctx = buildProfileContext(profile, documents);
   const today = formatDate();
+  const hasLandlord = listingDetails?.landlordName?.trim();
+  const hasAddress = listingDetails?.propertyAddress?.trim();
 
   const system = `You are an expert rental application assistant. Improve the provided cover letter to make it more professional, compelling, and tailored for rental applications.
 
 RULES:
 - Update the letter date to: ${today}
-- Incorporate any applicant data provided below that isn't already in the letter.
+- PRESERVE the original letter's structure. Do NOT move the sender's name, email, or contact info to the top unless they were already at the top. Keep the same general layout (e.g. date, greeting, body, closing, signature block).
+- Incorporate any applicant data provided below that isn't already in the letter. Weave it into the existing flow; do not add a new "header" block at the top with name/email.
+- Do NOT use titles like Mr., Mrs., or Ms. in the greeting or anywhere; use the person's or company name only.
+- If the user provides a landlord/property manager name or property address below, use them directly in the letter (in the greeting or where appropriate). Do NOT use placeholders for those.
 - For personal/sensitive info the applicant must fill in themselves (phone, current address, employer, salary), keep or add descriptive bracket placeholders using the format: [Label — reason it's needed]. E.g. [Your Phone Number — so the landlord can contact you directly], [Your Annual Salary — to demonstrate you can afford the rent].
-- Return your response as JSON with exactly this structure: { "improvedLetter": "the full improved letter text", "changes": ["change 1 description", "change 2 description", ...] }. List 3-5 specific changes you made. Do NOT wrap the JSON in markdown code blocks.`;
+- Return your response as JSON with exactly this structure: { "improvedLetter": "the full improved letter text", "changes": ["change 1 description", "change 2 description", ...] }. Do NOT wrap the JSON in markdown code blocks.
+- For "changes", list 3-5 short descriptions of what you did. Be specific and user-friendly, e.g.: "Made the tone more formal and professional", "Checked and corrected grammar, spelling, and punctuation", "Strengthened the opening to make a stronger first impression", "Tightened wording and removed redundancy", "Tailored phrases for a rental application". Use this style so the user sees clear, concrete improvements.`;
 
-  const user = `Improve this rental cover letter:\n\n---\n${existingLetter}\n---\n\nApplicant context:\n${ctx}`;
+  let user = `Improve this rental cover letter:\n\n---\n${existingLetter}\n---\n\nApplicant context:\n${ctx}`;
+  if (hasLandlord || hasAddress) {
+    user += `\n\nUse these in the letter (do not use placeholders for these):`;
+    if (hasLandlord) user += `\nLandlord/Property Manager name: ${listingDetails!.landlordName!.trim()}`;
+    if (hasAddress) user += `\nProperty address: ${listingDetails!.propertyAddress!.trim()}`;
+  }
 
   const raw = await callGroq([
     { role: "system", content: system },
     { role: "user", content: user },
   ]);
 
+  /** Strip any JSON/artifact so the letter is plain text only. */
+  function cleanLetter(s: string): string {
+    let out = s.trim();
+    out = out.replace(/\\n/g, "\n").replace(/\\"/g, '"');
+    out = out.replace(/^\s*\{\s*"improvedLetter"\s*:\s*"\s*/i, "");
+    out = out.replace(/"\s*,\s*"changes"\s*:[\s\S]*$/i, "");
+    out = out.replace(/"\s*"changes"\s*:[\s\S]*$/i, "");
+    out = out.replace(/"\s*\}\s*[\s\S]*$/i, "");
+    out = out.replace(/"changes"\s*:[\s\S]*$/i, "");
+    const tail = out.slice(-80);
+    if (/"changes"\s*:|\s*"\s*\}\s*$/.test(tail)) {
+      const ki = out.toLowerCase().lastIndexOf('"changes":');
+      if (ki !== -1) {
+        const before = out.slice(0, ki);
+        const quoteBefore = before.lastIndexOf('"');
+        if (quoteBefore !== -1) out = out.slice(0, quoteBefore);
+      }
+    }
+    out = out.replace(/"\s*\}\s*$/i, "").replace(/"\s*$/i, "");
+    return out.trim();
+  }
+
   try {
     const cleaned = raw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
     const parsed = JSON.parse(cleaned);
+    const letter = parsed.improvedLetter ?? raw;
+    const letterStr = typeof letter === "string" ? letter : String(letter);
     return {
-      improvedLetter: parsed.improvedLetter || raw,
+      improvedLetter: cleanLetter(letterStr),
       changes: Array.isArray(parsed.changes) ? parsed.changes : [],
     };
   } catch {
-    return { improvedLetter: raw, changes: ["General improvements applied"] };
+    return {
+      improvedLetter: cleanLetter(raw),
+      changes: ["General improvements applied"],
+    };
   }
 }
 
