@@ -1,9 +1,8 @@
 /** Priority for match scoring — separate from search filters */
-export type PriorityType = "cost" | "sqft" | "beds" | "baths" | "";
+export type PriorityType = "cost" | "beds" | "baths" | "";
 
 export const PRIORITY_LABELS: Record<Exclude<PriorityType, "">, string> = {
-  cost: "Cost (max rent)",
-  sqft: "Sq. ft. (min)",
+  cost: "Rent (max)",
   beds: "Beds (min)",
   baths: "Baths (min)",
 };
@@ -12,7 +11,6 @@ export const PRIORITY_LABELS: Record<Exclude<PriorityType, "">, string> = {
 export interface ListingForMatch {
   id: string;
   price: number;
-  sqft: number;
   beds: number;
   baths: number;
 }
@@ -20,7 +18,6 @@ export interface ListingForMatch {
 /**
  * Compute match % (0–100) for one listing based on priority and target value.
  * - cost: target = max budget; 100 if at or under, then decay above
- * - sqft: target = min sqft; 100 if listing.sqft >= target, else proportional
  * - beds/baths: target = min; 100 if listing >= target, else proportional
  */
 export function computeMatchPercent(
@@ -38,11 +35,6 @@ export function computeMatchPercent(
       }
       const over = (listing.price - priorityValue) / priorityValue;
       return Math.max(0, Math.round(100 - over * 80));
-    }
-    case "sqft": {
-      if (listing.sqft <= 0) return 50;
-      if (listing.sqft >= priorityValue) return 100;
-      return Math.round((listing.sqft / priorityValue) * 100);
     }
     case "beds": {
       const want = priorityValue;
@@ -64,7 +56,6 @@ export function computeMatchPercent(
 /** Multiple priorities: each key present with value > 0 is used. Match = average of each. */
 export interface PriorityValues {
   cost?: number;
-  sqft?: number;
   beds?: number;
   baths?: number;
 }
@@ -74,7 +65,7 @@ export function computeMatchPercentMulti(
   priorities: PriorityValues
 ): number {
   const entries = (
-    (["cost", "sqft", "beds", "baths"] as const).filter(
+    (["cost", "beds", "baths"] as const).filter(
       (k) => priorities[k] != null && priorities[k]! > 0
     ) as (Exclude<PriorityType, "">)[]
   ).map((priority) => ({
@@ -113,6 +104,9 @@ export interface LastTopMatchSnapshot {
 interface TopMatchesData {
   queue: LastTopMatchSnapshot[];
   searchParams: string;
+  averageMatchPercent?: number;
+  /** Top 5 by match when no 75%+ matches (for Atlas display). */
+  fallbackTop5?: LastTopMatchSnapshot[];
 }
 
 function getTopMatchesData(): TopMatchesData | null {
@@ -131,21 +125,47 @@ export function getTopMatchesQueue(): LastTopMatchSnapshot[] {
   return data?.queue ?? [];
 }
 
+/** List to show in Atlas card: queue if any 75%+, else top 5 from last search. */
+export function getAtlasDisplayList(): LastTopMatchSnapshot[] {
+  const data = getTopMatchesData();
+  if (!data) return [];
+  if (data.queue.length > 0) return data.queue;
+  return data.fallbackTop5 ?? [];
+}
+
+/** Average match % from last search, or null if no search yet. */
+export function getAverageMatchPercent(): number | null {
+  const data = getTopMatchesData();
+  return data?.averageMatchPercent ?? null;
+}
+
 /** Query string for latest search (e.g. "location=Irvine&priority=cost&priorityValue=2000"). */
 export function getLastSearchParams(): string | null {
   const data = getTopMatchesData();
   return data?.searchParams ?? null;
 }
 
-/** Save queue (only ≥75%, max 15) and last search params. */
+/** Save queue (only ≥75%, max 15), last search params, average match %, and fallback top 5. */
 export function setTopMatchesQueue(snapshots: LastTopMatchSnapshot[], searchParams: string): void {
   try {
     const queue = snapshots
       .filter((s) => s.matchPercent >= TOP_MATCHES_QUEUE_MIN_PERCENT)
       .slice(0, TOP_MATCHES_QUEUE_MAX_SIZE);
+    const fallbackTop5 = snapshots.slice(0, 5);
+    const averageMatchPercent =
+      snapshots.length > 0
+        ? Math.round(
+            snapshots.reduce((sum, s) => sum + s.matchPercent, 0) / snapshots.length
+          )
+        : undefined;
     localStorage.setItem(
       LAST_TOP_MATCHES_DATA_KEY,
-      JSON.stringify({ queue, searchParams } as TopMatchesData)
+      JSON.stringify({
+        queue,
+        searchParams,
+        averageMatchPercent,
+        fallbackTop5,
+      } as TopMatchesData)
     );
     // Keep legacy key in sync for any code still using it
     if (queue.length > 0) {
@@ -162,7 +182,12 @@ export function removeFirstFromQueue(): void {
   try {
     localStorage.setItem(
       LAST_TOP_MATCHES_DATA_KEY,
-      JSON.stringify({ queue: nextQueue, searchParams: data.searchParams } as TopMatchesData)
+      JSON.stringify({
+        queue: nextQueue,
+        searchParams: data.searchParams,
+        averageMatchPercent: data.averageMatchPercent,
+        fallbackTop5: data.fallbackTop5,
+      } as TopMatchesData)
     );
     if (nextQueue.length > 0) {
       localStorage.setItem(LAST_TOP_MATCH_KEY, JSON.stringify(nextQueue[0]));

@@ -104,7 +104,7 @@ export function LandingPage() {
           <div className="inline-flex items-center gap-2 bg-muted border border-border rounded-full px-4 py-1.5 mb-8">
             <Sparkles size={14} className="text-emerald-400" />
             <span className="text-[13px] text-muted-foreground" style={{ fontWeight: 500 }}>
-              AI-powered rental intelligence for Gen Z
+              Your AI rental coach for the next generation
             </span>
           </div>
           <h1

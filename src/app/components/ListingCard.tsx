@@ -13,7 +13,6 @@ interface Listing {
   price: number;
   beds: number;
   baths: number;
-  sqft: number;
   matchPercent: number;
   demand: string;
   image: string;
@@ -135,9 +134,6 @@ export function ListingCard({
             <Bath size={13} className="text-muted-foreground" />
             <span className="text-muted-foreground text-[12px]">{listing.baths} bath</span>
           </div>
-          {listing.sqft > 0 && (
-            <span className="text-muted-foreground text-[12px]">{listing.sqft} sqft</span>
-          )}
           <span className={`ml-auto text-[11px] ${getDemandColor(listing.demand)}`}>
             {listing.demand} Demand
           </span>

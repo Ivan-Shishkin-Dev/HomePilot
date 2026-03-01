@@ -10,11 +10,14 @@ import { useAuth } from "../../contexts/AuthContext";
 import { motion } from "motion/react";
 import {
   getTopMatchesQueue,
+  getAtlasDisplayList,
+  getAverageMatchPercent,
   getLastSearchParams,
   removeFirstFromQueue,
   ATLAS_INTRO_SEEN_KEY,
   MATCH_GREEN_MIN,
   MATCH_YELLOW_MIN,
+  type LastTopMatchSnapshot,
 } from "../lib/priorityMatch";
 
 function getMatchBadgeColor(pct: number): string {
@@ -39,6 +42,9 @@ export function HomeScreen() {
 
   const currentMatch = queue.length > 0 ? queue[0] : null;
   const lastSearchParams = typeof window !== "undefined" ? getLastSearchParams() : null;
+  const atlasDisplayList = typeof window !== "undefined" ? getAtlasDisplayList() : [];
+  const averageMatchPercent = typeof window !== "undefined" ? getAverageMatchPercent() : null;
+  const hasSearched = !!lastSearchParams;
 
   const handleDismiss = () => {
     removeFirstFromQueue();
@@ -92,6 +98,63 @@ export function HomeScreen() {
     return profile.first_name || "there";
   };
 
+  /** Build listing shape for ListingCard from Atlas snapshot (and optional full listing from sessionStorage). */
+  const snapshotToListing = (snap: LastTopMatchSnapshot): Parameters<typeof ListingCard>[0]["listing"] => {
+    try {
+      const raw = sessionStorage.getItem("zillow_listings");
+      if (raw) {
+        const arr: Array<{ id: string; title?: string; address?: string; city?: string; price?: number; beds?: number; baths?: number; image?: string; time_left?: string; demand?: string; competition_score?: number; crime_index?: number; rent_trend?: string; neighborhood_risk?: string; scam_score?: number; ai_suggestion?: string; features?: string[]; listing_url?: string; source?: string }> = JSON.parse(raw);
+        const full = arr.find((l) => l.id === snap.id);
+        if (full) {
+          return {
+            id: full.id,
+            title: full.title ?? snap.title,
+            address: full.address ?? snap.address,
+            city: full.city ?? snap.city,
+            price: full.price ?? snap.price,
+            beds: full.beds ?? 0,
+            baths: full.baths ?? 0,
+            matchPercent: snap.matchPercent,
+            demand: full.demand ?? (full.competition_score != null && full.competition_score > 70 ? "High" : "Low"),
+            image: full.image ?? snap.image,
+            timeLeft: full.time_left ?? snap.timeLeft,
+            crimeIndex: full.crime_index,
+            rentTrend: full.rent_trend ?? "",
+            neighborhoodRisk: full.neighborhood_risk ?? "Low",
+            scamScore: full.scam_score,
+            aiSuggestion: full.ai_suggestion ?? "",
+            competitionScore: full.competition_score,
+            features: full.features ?? [],
+            listingUrl: full.listing_url,
+            source: full.source,
+          };
+        }
+      }
+    } catch {}
+    return {
+      id: snap.id,
+      title: snap.title,
+      address: snap.address,
+      city: snap.city,
+      price: snap.price,
+      beds: 0,
+      baths: 0,
+      matchPercent: snap.matchPercent,
+      demand: "—",
+      image: snap.image,
+      timeLeft: snap.timeLeft,
+      crimeIndex: undefined,
+      rentTrend: "",
+      neighborhoodRisk: "Low",
+      scamScore: undefined,
+      aiSuggestion: "",
+      competitionScore: undefined,
+      features: [],
+      listingUrl: undefined,
+      source: undefined,
+    };
+  };
+
   // Convert listing format for ListingCard (using actual DB schema)
   const formatListing = (listing: typeof listings[0]) => ({
     id: listing.id,
@@ -101,7 +164,6 @@ export function HomeScreen() {
     price: listing.price,
     beds: listing.beds,
     baths: listing.baths,
-    sqft: listing.sqft,
     matchPercent: 85, // Default match percent
     demand: listing.demand || (listing.competition_score > 70 ? "High" : listing.competition_score > 40 ? "Medium" : "Low"),
     image: listing.image,
@@ -124,7 +186,7 @@ export function HomeScreen() {
         <div className="max-w-7xl mx-auto">
           <span className="text-[#8B95A5] text-[13px]">{getGreeting()}</span>
           <h1 className="text-white text-[24px] lg:text-[28px]" style={{ fontWeight: 700, lineHeight: 1.2 }}>
-            Welcome back, {getUserFirstName()}
+            Welcome, {getUserFirstName()}
           </h1>
         </div>
       </div>
@@ -160,141 +222,126 @@ export function HomeScreen() {
             </div>
           </motion.div>
 
-          {/* AI Alert Card */}
+          {/* Atlas' Alerts — unified card with glass-style CTA */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
             className="lg:col-span-2"
           >
-            {isFirstTime ? (
-              <div className="bg-gradient-to-r from-[#10B981]/15 to-[#10B981]/10 rounded-2xl p-5 lg:p-6 border border-[#10B981]/20 relative overflow-hidden h-full">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-[#10B981]/10 rounded-full blur-3xl" />
-                <div className="flex items-start gap-4 relative">
-                  <div className="w-11 h-11 rounded-xl bg-[#10B981]/20 flex items-center justify-center shrink-0">
-                    <Zap size={22} className="text-[#10B981]" />
+            <div className="rounded-2xl p-5 lg:p-6 border border-[#10B981]/20 relative overflow-hidden h-full bg-white/5 dark:bg-white/[0.03] backdrop-blur-sm">
+              <div className="absolute top-0 right-0 w-40 h-40 bg-[#10B981]/10 rounded-full blur-3xl" />
+              <div className="relative flex flex-col gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 rounded-xl bg-[#10B981]/20 flex items-center justify-center shrink-0">
+                    <Zap size={20} className="text-[#10B981]" />
                   </div>
-                  <div className="flex-1">
-                    <span className="text-muted-foreground text-[12px] block mb-1">Atlas</span>
-                    <p className="text-foreground text-[16px] lg:text-[18px] mb-3" style={{ fontWeight: 600 }}>
-                      Our AI, Atlas, is ready to hunt the best match for you based on your searches.
+                  <h3 className="text-foreground text-[18px]" style={{ fontWeight: 700 }}>Atlas&apos; Alerts</h3>
+                </div>
+
+                {!hasSearched ? (
+                  <>
+                    <p className="text-muted-foreground text-[15px]">
+                      Our AI, Atlas, is ready to hunt the best match for you. Run a search to see your top matches.
                     </p>
                     <button
                       onClick={handleSearchListings}
-                      className="bg-[#10B981] text-white px-6 py-2.5 rounded-xl text-[14px] hover:bg-[#059669] transition-colors"
+                      className="inline-flex items-center gap-2 self-start px-5 py-2.5 rounded-full text-[14px] font-medium bg-white/15 dark:bg-white/10 backdrop-blur-sm border border-white/20 dark:border-white/10 text-foreground hover:bg-white/25 dark:hover:bg-white/15 transition-colors"
                       style={{ fontWeight: 600 }}
                     >
                       Search listings
                     </button>
-                  </div>
-                </div>
-              </div>
-            ) : showAlert && currentMatch ? (
-              <div className="bg-gradient-to-r from-[#10B981]/15 to-[#10B981]/10 rounded-2xl p-5 lg:p-6 border border-[#10B981]/20 relative overflow-hidden h-full">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-[#10B981]/10 rounded-full blur-3xl" />
-                <div className="flex items-start gap-4 relative">
-                  <div className="w-11 h-11 rounded-xl bg-[#10B981]/20 flex items-center justify-center shrink-0">
-                    <Zap size={22} className="text-[#10B981]" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1.5">
+                  </>
+                ) : showAlert && currentMatch ? (
+                  <>
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className={`text-[12px] ${getMatchBadgeColor(currentMatch.matchPercent)}`} style={{ fontWeight: 700 }}>
-                        HIGH MATCH ({currentMatch.matchPercent}%)
+                        {currentMatch.matchPercent}% MATCH
                       </span>
                       <span className="w-1.5 h-1.5 bg-[#EF4444] rounded-full animate-pulse" />
-                      <span className="text-muted-foreground text-[12px] ml-auto hidden sm:block">
-                        AI Copilot Alert
-                      </span>
                     </div>
-                    <p className="text-foreground text-[16px] lg:text-[18px] mb-1" style={{ fontWeight: 600 }}>
+                    <p className="text-foreground text-[16px] lg:text-[18px]" style={{ fontWeight: 600 }}>
                       {currentMatch.title} — ${currentMatch.price.toLocaleString()}/mo
                     </p>
                     {currentMatch.timeLeft && (
-                      <div className="flex items-center gap-4 mb-4">
-                        <div className="flex items-center gap-1.5">
-                          <Clock size={13} className="text-[#F59E0B]" />
-                          <span className="text-[#F59E0B] text-[13px]" style={{ fontWeight: 500 }}>
-                            {currentMatch.timeLeft}
-                          </span>
-                        </div>
+                      <div className="flex items-center gap-1.5">
+                        <Clock size={13} className="text-[#F59E0B]" />
+                        <span className="text-[#F59E0B] text-[13px]" style={{ fontWeight: 500 }}>{currentMatch.timeLeft}</span>
                       </div>
                     )}
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-3">
                       <button
                         onClick={() => navigate(`/listing/${currentMatch.id}`)}
-                        className="bg-[#10B981] text-white px-6 py-2.5 rounded-xl text-[14px] hover:bg-[#059669] transition-colors"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-[14px] font-medium bg-white/15 dark:bg-white/10 backdrop-blur-sm border border-white/20 dark:border-white/10 text-foreground hover:bg-white/25 dark:hover:bg-white/15 transition-colors"
                         style={{ fontWeight: 600 }}
                       >
                         View Listing
                       </button>
                       <button
                         onClick={handleDismiss}
-                        className="px-5 bg-muted text-muted-foreground py-2.5 rounded-xl text-[14px] hover:bg-accent transition-colors"
-                        style={{ fontWeight: 500 }}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-[14px] font-medium bg-white/10 dark:bg-white/5 border border-border text-muted-foreground hover:bg-white/15 transition-colors"
                       >
                         Dismiss
                       </button>
+                      <button
+                        onClick={handleDismiss}
+                        className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                        aria-label="Dismiss"
+                      >
+                        &times;
+                      </button>
                     </div>
-                  </div>
-                  <button
-                    onClick={handleDismiss}
-                    className="text-muted-foreground text-[20px] leading-none hover:text-foreground transition-colors"
-                  >
-                    &times;
-                  </button>
-                </div>
-              </div>
-            ) : showAlert && queue.length === 0 && lastSearchParams ? (
-              <div className="bg-card rounded-2xl p-6 border border-border h-full flex items-center justify-center">
-                <div className="text-center">
-                  <Sparkles size={24} className="text-[#10B981] mx-auto mb-2" />
-                  <p className="text-muted-foreground text-[14px] mb-3">
-                    No more high matches from your last search.
-                  </p>
-                  <button
-                    onClick={handleViewLatestSearch}
-                    className="bg-[#10B981] text-white px-6 py-2.5 rounded-xl text-[14px] hover:bg-[#059669] transition-colors font-medium"
-                  >
-                    View latest search results
-                  </button>
-                </div>
-              </div>
-            ) : showAlert && queue.length === 0 ? (
-              <div className="bg-gradient-to-r from-[#10B981]/15 to-[#10B981]/10 rounded-2xl p-5 lg:p-6 border border-[#10B981]/20 relative overflow-hidden h-full">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-[#10B981]/10 rounded-full blur-3xl" />
-                <div className="flex items-start gap-4 relative">
-                  <div className="w-11 h-11 rounded-xl bg-[#10B981]/20 flex items-center justify-center shrink-0">
-                    <Zap size={22} className="text-[#10B981]" />
-                  </div>
-                  <div className="flex-1">
-                    <span className="text-muted-foreground text-[12px] block mb-1">Atlas</span>
-                    <p className="text-foreground text-[16px] lg:text-[18px] mb-3" style={{ fontWeight: 600 }}>
-                      Our AI, Atlas, is ready to hunt the best match for you based on your searches.
+                  </>
+                ) : showAlert && atlasDisplayList.length > 0 ? (
+                  <>
+                    <p className="text-muted-foreground text-[14px]">
+                      {queue.length > 0 ? "Your next-in-line matches from your last search." : "Top matches from your last search."}
                     </p>
+                    <div className="flex flex-wrap gap-2">
+                      {atlasDisplayList.slice(0, 5).map((snap) => (
+                        <button
+                          key={snap.id}
+                          onClick={() => navigate(`/listing/${snap.id}`)}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-[13px] bg-white/10 dark:bg-white/5 border border-white/10 text-foreground hover:bg-white/15 transition-colors"
+                        >
+                          <span className={getMatchBadgeColor(snap.matchPercent)} style={{ fontWeight: 700 }}>{snap.matchPercent}%</span>
+                          <span className="truncate max-w-[120px]">{snap.title}</span>
+                        </button>
+                      ))}
+                    </div>
                     <button
-                      onClick={handleSearchListings}
-                      className="bg-[#10B981] text-white px-6 py-2.5 rounded-xl text-[14px] hover:bg-[#059669] transition-colors"
+                      onClick={handleViewLatestSearch}
+                      className="inline-flex items-center gap-2 self-start px-5 py-2.5 rounded-full text-[14px] font-medium bg-white/15 dark:bg-white/10 backdrop-blur-sm border border-white/20 dark:border-white/10 text-foreground hover:bg-white/25 dark:hover:bg-white/15 transition-colors"
                       style={{ fontWeight: 600 }}
                     >
-                      Search listings
+                      View latest search results
                     </button>
-                  </div>
-                </div>
+                  </>
+                ) : showAlert && lastSearchParams ? (
+                  <>
+                    <p className="text-muted-foreground text-[14px]">No more high matches from your last search.</p>
+                    <button
+                      onClick={handleViewLatestSearch}
+                      className="inline-flex items-center gap-2 self-start px-5 py-2.5 rounded-full text-[14px] font-medium bg-white/15 dark:bg-white/10 backdrop-blur-sm border border-white/20 dark:border-white/10 text-foreground hover:bg-white/25 dark:hover:bg-white/15 transition-colors"
+                      style={{ fontWeight: 600 }}
+                    >
+                      View latest search results
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-muted-foreground text-[14px]">Run a search to see your top matches.</p>
+                    <button
+                      onClick={lastSearchParams ? handleViewLatestSearch : handleSearchListings}
+                      className="inline-flex items-center gap-2 self-start px-5 py-2.5 rounded-full text-[14px] font-medium bg-white/15 dark:bg-white/10 backdrop-blur-sm border border-white/20 dark:border-white/10 text-foreground hover:bg-white/25 dark:hover:bg-white/15 transition-colors"
+                      style={{ fontWeight: 600 }}
+                    >
+                      {lastSearchParams ? "View latest search results" : "Search listings"}
+                    </button>
+                  </>
+                )}
               </div>
-            ) : (
-              <div className="bg-card rounded-2xl p-6 border border-border h-full flex items-center justify-center">
-                <div className="text-center">
-                  <Sparkles size={24} className="text-[#10B981] mx-auto mb-2" />
-                  <p className="text-muted-foreground text-[14px]">AI is hunting for your next match...</p>
-                  <button
-                    onClick={lastSearchParams ? handleViewLatestSearch : handleSearchListings}
-                    className="mt-3 text-[#10B981] text-[13px] hover:underline font-medium"
-                  >
-                    {lastSearchParams ? "View latest search results" : "Search listings"}
-                  </button>
-                </div>
-              </div>
-            )}
+            </div>
           </motion.div>
         </div>
 
@@ -314,7 +361,14 @@ export function HomeScreen() {
               change: appliedCount > 0 ? "View applied" : "Track applications",
               onClick: () => navigate("/listings?filter=applied"),
             },
-            { label: "Avg Match", value: "79%", icon: Zap, color: "#10B981", change: "", onClick: undefined },
+            {
+              label: "Avg Match",
+              value: hasSearched && averageMatchPercent != null ? `${averageMatchPercent}%` : "—",
+              icon: Zap,
+              color: "#10B981",
+              change: hasSearched ? "Avg of recent search" : "Search to view the average match percent",
+              onClick: hasSearched ? undefined : () => navigate("/listings"),
+            },
             {
               label: "Saved Listings",
               value: String(savedCount),
@@ -343,55 +397,32 @@ export function HomeScreen() {
           ))}
         </motion.div>
 
-        {/* Listings Feed */}
+        {/* Top Matches */}
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-foreground text-[20px]" style={{ fontWeight: 700 }}>
             Top Matches
           </h2>
-          <button
-            onClick={() => navigate("/listings")}
-            className="text-[#10B981] text-[14px] hover:underline"
-            style={{ fontWeight: 500 }}
-          >
-            View All
-          </button>
+          {hasSearched && atlasDisplayList.length > 0 && (
+            <button
+              onClick={handleViewLatestSearch}
+              className="text-[#10B981] text-[14px] hover:underline"
+              style={{ fontWeight: 500 }}
+            >
+              View All
+            </button>
+          )}
+          {!hasSearched && (
+            <button
+              onClick={() => navigate("/listings")}
+              className="text-[#10B981] text-[14px] hover:underline"
+              style={{ fontWeight: 500 }}
+            >
+              Search
+            </button>
+          )}
         </div>
 
-        {loading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="bg-card rounded-2xl border border-border overflow-hidden animate-pulse">
-                <div className="h-44 bg-muted" />
-                <div className="p-4 space-y-3">
-                  <div className="h-4 bg-muted rounded w-3/4" />
-                  <div className="h-3 bg-muted rounded w-1/2" />
-                  <div className="h-6 bg-muted rounded w-1/3" />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {!loading && listings.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {listings.slice(0, 3).map((listing, i) => (
-              <motion.div
-                key={listing.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.3 + i * 0.1 }}
-              >
-                <ListingCard
-                  listing={formatListing(listing)}
-                  isSaved={savedIds.has(listing.id)}
-                  onToggleSave={toggleSave}
-                />
-              </motion.div>
-            ))}
-          </div>
-        )}
-
-        {!loading && listings.length === 0 && (
+        {!hasSearched && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -400,16 +431,49 @@ export function HomeScreen() {
             <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
               <Sparkles size={24} className="text-muted-foreground" />
             </div>
-            <h3 className="text-foreground font-semibold mb-1">No listings available yet</h3>
-            <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-4">
-              We're having trouble loading rental listings right now. Search directly to find rentals in any city.
+            <p className="text-muted-foreground text-[15px] mb-4">
+              Make a search to view your top matches.
             </p>
             <button
               onClick={() => navigate("/listings")}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#10B981] text-white text-sm font-medium hover:bg-[#0d9668] transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-[14px] font-medium bg-white/15 dark:bg-white/10 backdrop-blur-sm border border-white/20 dark:border-white/10 text-foreground hover:bg-white/25 dark:hover:bg-white/15 transition-colors"
             >
-              <ArrowUpRight size={15} />
-              Search Rentals
+              Search listings
+            </button>
+          </motion.div>
+        )}
+
+        {hasSearched && atlasDisplayList.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {atlasDisplayList.slice(0, 3).map((snap, i) => (
+              <motion.div
+                key={snap.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 + i * 0.08 }}
+              >
+                <ListingCard
+                  listing={snapshotToListing(snap)}
+                  isSaved={savedIds.has(snap.id)}
+                  onToggleSave={toggleSave}
+                />
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        {hasSearched && atlasDisplayList.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-card rounded-2xl border border-border p-8 text-center"
+          >
+            <p className="text-muted-foreground text-[15px] mb-4">No matches from your last search.</p>
+            <button
+              onClick={handleViewLatestSearch}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-[14px] font-medium bg-white/15 dark:bg-white/10 backdrop-blur-sm border border-white/20 dark:border-white/10 text-foreground hover:bg-white/25 dark:hover:bg-white/15 transition-colors"
+            >
+              View latest search results
             </button>
           </motion.div>
         )}

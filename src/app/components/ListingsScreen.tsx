@@ -12,8 +12,6 @@ export interface SearchFilters {
   location: string;
   beds: number | null;
   baths: number | null;
-  minSqft: number | null;
-  maxSqft: number | null;
   maxPrice: number | null;
   petFriendly: boolean;
   studentFriendly: boolean;
@@ -25,8 +23,6 @@ export const defaultSearchFilters: SearchFilters = {
   location: "",
   beds: null,
   baths: null,
-  minSqft: null,
-  maxSqft: null,
   maxPrice: null,
   petFriendly: false,
   studentFriendly: false,
@@ -41,15 +37,12 @@ function buildSearchParams(f: SearchFilters, priorityParams?: PriorityParams): U
   if (f.location) p.set("location", f.location);
   if (f.beds != null) p.set("beds", String(f.beds));
   if (f.baths != null) p.set("baths", String(f.baths));
-  if (f.minSqft != null) p.set("minSqft", String(f.minSqft));
-  if (f.maxSqft != null) p.set("maxSqft", String(f.maxSqft));
   if (f.maxPrice != null) p.set("maxPrice", String(f.maxPrice));
   if (f.petFriendly) p.set("petFriendly", "1");
   if (f.studentFriendly) p.set("studentFriendly", "1");
   if (f.saved) p.set("saved", "1");
   if (f.applied) p.set("applied", "1");
   if (priorityParams?.cost != null && priorityParams.cost > 0) p.set("priorityCost", String(priorityParams.cost));
-  if (priorityParams?.sqft != null && priorityParams.sqft > 0) p.set("prioritySqft", String(priorityParams.sqft));
   if (priorityParams?.beds != null && priorityParams.beds > 0) p.set("priorityBeds", String(priorityParams.beds));
   if (priorityParams?.baths != null && priorityParams.baths > 0) p.set("priorityBaths", String(priorityParams.baths));
   return p;
@@ -57,7 +50,6 @@ function buildSearchParams(f: SearchFilters, priorityParams?: PriorityParams): U
 
 const PRIORITY_FIELDS: { key: keyof PriorityValues; label: string; placeholder: string }[] = [
   { key: "cost", label: PRIORITY_LABELS.cost, placeholder: "e.g. 2000" },
-  { key: "sqft", label: PRIORITY_LABELS.sqft, placeholder: "e.g. 800" },
   { key: "beds", label: PRIORITY_LABELS.beds, placeholder: "e.g. 2" },
   { key: "baths", label: PRIORITY_LABELS.baths, placeholder: "e.g. 1" },
 ];
@@ -66,7 +58,6 @@ type PriorityState = { checked: boolean; value: string };
 
 const initialPriorityState = (): Record<keyof PriorityValues, PriorityState> => ({
   cost: { checked: false, value: "" },
-  sqft: { checked: false, value: "" },
   beds: { checked: false, value: "" },
   baths: { checked: false, value: "" },
 });
@@ -122,7 +113,7 @@ export function ListingsScreen() {
     setFilters(next);
     setTypeaheadOpen(false);
     const priorityParams: PriorityParams = {};
-    (["cost", "sqft", "beds", "baths"] as const).forEach((k) => {
+    (["cost", "beds", "baths"] as const).forEach((k) => {
       if (priorities[k].checked && priorities[k].value.trim()) {
         const n = parseInt(priorities[k].value, 10);
         if (!isNaN(n) && n > 0) priorityParams[k] = n;
@@ -277,7 +268,7 @@ export function ListingsScreen() {
         >
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Set priority</h3>
             <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-              Check at least one priority and enter a value. Match % will be based on these.
+              Check at least one priority and enter a value. Match percent will be based on these.
             </p>
             {touched && !priorityValuesValid && (
               <p className="text-xs text-red-500 dark:text-red-400 mb-2">
@@ -359,21 +350,6 @@ export function ListingsScreen() {
                     <option key={n} value={n}>{n === 4 ? "4+" : String(n)}</option>
                   ))}
                 </select>
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-gray-600">Min sq ft</span>
-                <input
-                  type="number"
-                  placeholder="e.g. 600"
-                  value={filters.minSqft ?? ""}
-                  onChange={(e) =>
-                    setFilters((p) => ({
-                      ...p,
-                      minSqft: e.target.value === "" ? null : Math.max(0, +e.target.value),
-                    }))
-                  }
-                  className="rounded-lg border border-gray-200 bg-gray-100 text-gray-900 px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#10B981]/40"
-                />
               </label>
               <label className="flex flex-col gap-1 sm:col-span-2">
                 <span className="text-xs text-gray-600">

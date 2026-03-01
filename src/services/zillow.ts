@@ -254,7 +254,17 @@ function zillowResultToListing(
 
   const beds = r.beds ?? homeInfo?.bedrooms ?? (r.units?.[0]?.beds != null ? parseInt(r.units[0].beds, 10) : 0);
   const baths = r.baths ?? homeInfo?.bathrooms ?? 1;
-  const sqft = r.area ?? homeInfo?.livingArea ?? 0;
+  // Sqft: list result can have area, or hdpData.homeInfo.livingArea, or top-level livingArea / resoFacts
+  const raw = r as unknown as Record<string, unknown>;
+  const sqftCandidates = [
+    r.area,
+    homeInfo?.livingArea,
+    typeof raw.livingArea === "number" ? raw.livingArea : null,
+    raw.resoFacts && typeof (raw.resoFacts as Record<string, unknown>).livingArea === "number"
+      ? (raw.resoFacts as Record<string, unknown>).livingArea as number
+      : null,
+  ];
+  const sqft = (sqftCandidates.find((n) => typeof n === "number" && n > 0) as number | undefined) ?? 0;
 
   // Build image URL
   let image = r.imgSrc ?? "";
