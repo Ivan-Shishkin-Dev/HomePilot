@@ -74,14 +74,6 @@ export function HomeScreen() {
     source: listing.source,
   });
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background">
       {/* Page Header */}
@@ -269,22 +261,63 @@ export function HomeScreen() {
             View All
           </button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {listings.slice(0, 3).map((listing, i) => (
-            <motion.div
-              key={listing.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.3 + i * 0.1 }}
+
+        {loading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="bg-card rounded-2xl border border-border overflow-hidden animate-pulse">
+                <div className="h-44 bg-muted" />
+                <div className="p-4 space-y-3">
+                  <div className="h-4 bg-muted rounded w-3/4" />
+                  <div className="h-3 bg-muted rounded w-1/2" />
+                  <div className="h-6 bg-muted rounded w-1/3" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!loading && listings.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {listings.slice(0, 3).map((listing, i) => (
+              <motion.div
+                key={listing.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.3 + i * 0.1 }}
+              >
+                <ListingCard
+                  listing={formatListing(listing)}
+                  isSaved={savedIds.has(listing.id)}
+                  onToggleSave={toggleSave}
+                />
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        {!loading && listings.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-card rounded-2xl border border-border p-8 text-center"
+          >
+            <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+              <Sparkles size={24} className="text-muted-foreground" />
+            </div>
+            <h3 className="text-foreground font-semibold mb-1">No listings available yet</h3>
+            <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-4">
+              We're having trouble loading rental listings right now. Search directly to find rentals in any city.
+            </p>
+            <button
+              onClick={() => navigate("/listings")}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#10B981] text-white text-sm font-medium hover:bg-[#0d9668] transition-colors"
             >
-              <ListingCard
-              listing={formatListing(listing)}
-              isSaved={savedIds.has(listing.id)}
-              onToggleSave={toggleSave}
-            />
-            </motion.div>
-          ))}
-        </div>
+              <ArrowUpRight size={15} />
+              Search Rentals
+            </button>
+          </motion.div>
+        )}
       </div>
     </div>
   );

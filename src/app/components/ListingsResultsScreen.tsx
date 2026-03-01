@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router";
-import { Search, SlidersHorizontal, MapPin, Grid2x2, LayoutList, Loader2, ChevronDown, Globe } from "lucide-react";
+import { Search, SlidersHorizontal, MapPin, Grid2x2, LayoutList, Loader2, ChevronDown, Globe, Home, SlidersHorizontal as Sliders, RefreshCw, AlertTriangle } from "lucide-react";
 import { ListingCard } from "./ListingCard";
 import { useSavedListings, useAppliedListings } from "../../hooks/useSupabaseData";
 import { useZillowListings } from "../../hooks/useZillowListings";
@@ -350,17 +350,67 @@ export function ListingsResultsScreen() {
 
       {/* Results */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-6">
+
+        {/* --- Loading state --- */}
         {loading && (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <Loader2 className="w-8 h-8 text-[#10B981] animate-spin" />
-            <p className="text-muted-foreground text-sm">Searching Zillow rentals...</p>
-          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-col items-center justify-center py-24 gap-4"
+          >
+            <div className="relative">
+              <div className="w-16 h-16 rounded-2xl bg-[#10B981]/10 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-[#10B981] animate-spin" />
+              </div>
+            </div>
+            <div className="text-center">
+              <p className="text-foreground font-medium">Searching rentals in {displayLocation}...</p>
+              <p className="text-muted-foreground text-sm mt-1">Fetching live listings from Zillow. This may take a few seconds.</p>
+            </div>
+          </motion.div>
         )}
 
-        {!loading && hasSearched && (
+        {/* --- Error state --- */}
+        {!loading && hasSearched && error && filteredListings.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center justify-center py-20"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-[#F59E0B]/10 flex items-center justify-center mb-5">
+              <AlertTriangle className="w-8 h-8 text-[#F59E0B]" />
+            </div>
+            <h3 className="text-foreground text-lg font-semibold mb-2">
+              Something went wrong
+            </h3>
+            <p className="text-muted-foreground text-sm text-center max-w-md mb-6">
+              We couldn't fetch listings for "{filters.location}" right now. This is usually temporary — Zillow may be rate-limiting or the connection timed out.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => handleSearch()}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#10B981] text-white text-sm font-medium hover:bg-[#0d9668] transition-colors"
+              >
+                <RefreshCw size={15} />
+                Try Again
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/listings")}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-accent transition-colors"
+              >
+                New Search
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* --- Results found --- */}
+        {!loading && hasSearched && filteredListings.length > 0 && (
           <>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <MapPin size={18} className="text-[#10B981]" />
                 <h2 className="text-foreground text-xl font-bold">
                   {zillowTotal.toLocaleString()} rentals in {displayLocation}
@@ -392,13 +442,6 @@ export function ListingsResultsScreen() {
               </div>
             </div>
 
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6">
-                <p className="text-red-400 text-sm font-medium">Search failed: {error.message}</p>
-                <p className="text-red-400/70 text-xs mt-1">Please try again or check your API key configuration.</p>
-              </div>
-            )}
-
             <div
               className={
                 viewMode === "grid"
@@ -423,13 +466,6 @@ export function ListingsResultsScreen() {
                 </motion.div>
               ))}
             </div>
-
-            {filteredListings.length === 0 && !error && (
-              <div className="text-center py-12 text-muted-foreground">
-                <p className="font-medium">No listings match your filters.</p>
-                <p className="text-sm mt-1">Try adjusting your search or filters.</p>
-              </div>
-            )}
 
             {zillowTotalPages > 1 && (
               <div className="flex items-center justify-center gap-3 pt-8 pb-4">
@@ -457,12 +493,91 @@ export function ListingsResultsScreen() {
           </>
         )}
 
+        {/* --- No results (searched but nothing came back, no error) --- */}
+        {!loading && hasSearched && !error && filteredListings.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center justify-center py-20"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-5">
+              <Home className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-foreground text-lg font-semibold mb-2">
+              No rentals found in {displayLocation}
+            </h3>
+            <p className="text-muted-foreground text-sm text-center max-w-md mb-2">
+              We searched Zillow but didn't find listings matching your criteria. Here are a few things to try:
+            </p>
+            <ul className="text-muted-foreground text-sm text-left space-y-1.5 mb-6">
+              <li className="flex items-start gap-2">
+                <MapPin size={14} className="text-[#10B981] mt-0.5 shrink-0" />
+                <span>Check the city spelling or try a nearby city</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <SlidersHorizontal size={14} className="text-[#10B981] mt-0.5 shrink-0" />
+                <span>Broaden your filters (higher max price, fewer bedrooms)</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Globe size={14} className="text-[#10B981] mt-0.5 shrink-0" />
+                <span>Include the state, e.g. "Austin, TX" or "Portland, OR"</span>
+              </li>
+            </ul>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  updateFilters({ ...defaultSearchFilters, location: "" });
+                  setSearchInput("");
+                }}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#10B981] text-white text-sm font-medium hover:bg-[#0d9668] transition-colors"
+              >
+                <Search size={15} />
+                New Search
+              </button>
+              {(filters.beds != null || filters.baths != null || filters.maxPrice != null || filters.minSqft != null) && (
+                <button
+                  type="button"
+                  onClick={() => updateFilters({ ...defaultSearchFilters, location: filters.location })}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-accent transition-colors"
+                >
+                  Clear Filters
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* --- Initial state (no search yet) --- */}
         {!loading && !hasSearched && (
-          <div className="text-center py-20 text-muted-foreground">
-            <Search size={40} className="mx-auto mb-4 text-muted-foreground/40" />
-            <p className="font-medium text-lg">Search for rentals</p>
-            <p className="text-sm mt-1">Enter a city name above to find available rentals on Zillow.</p>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center justify-center py-24"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-[#10B981]/10 flex items-center justify-center mb-5">
+              <Search size={28} className="text-[#10B981]" />
+            </div>
+            <h3 className="text-foreground text-lg font-semibold mb-2">
+              Search for rentals
+            </h3>
+            <p className="text-muted-foreground text-sm text-center max-w-sm mb-6">
+              Enter a city name above to find available rentals. Try "Irvine", "Los Angeles", or "San Diego, CA".
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {["Irvine", "Los Angeles", "San Diego", "San Francisco", "Newport Beach"].map((city) => (
+                <button
+                  key={city}
+                  type="button"
+                  onClick={() => handleSelectSuggestion(city)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-card border border-border text-sm text-foreground hover:border-[#10B981]/40 hover:bg-[#10B981]/5 transition-colors"
+                >
+                  <MapPin size={13} className="text-[#10B981]" />
+                  {city}
+                </button>
+              ))}
+            </div>
+          </motion.div>
         )}
       </div>
     </div>
