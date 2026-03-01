@@ -11,6 +11,7 @@ export interface SearchFilters {
   beds: number | null;
   baths: number | null;
   minSqft: number | null;
+  maxSqft: number | null;
   maxPrice: number | null;
   petFriendly: boolean;
   studentFriendly: boolean;
@@ -23,6 +24,7 @@ export const defaultSearchFilters: SearchFilters = {
   beds: null,
   baths: null,
   minSqft: null,
+  maxSqft: null,
   maxPrice: null,
   petFriendly: false,
   studentFriendly: false,
@@ -36,6 +38,7 @@ function buildSearchParams(f: SearchFilters): URLSearchParams {
   if (f.beds != null) p.set("beds", String(f.beds));
   if (f.baths != null) p.set("baths", String(f.baths));
   if (f.minSqft != null) p.set("minSqft", String(f.minSqft));
+  if (f.maxSqft != null) p.set("maxSqft", String(f.maxSqft));
   if (f.maxPrice != null) p.set("maxPrice", String(f.maxPrice));
   if (f.petFriendly) p.set("petFriendly", "1");
   if (f.studentFriendly) p.set("studentFriendly", "1");

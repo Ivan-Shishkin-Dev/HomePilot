@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router";
-import { Search, SlidersHorizontal, MapPin, Grid2x2, LayoutList, Loader2, ChevronDown, Globe, Home, SlidersHorizontal as Sliders, RefreshCw, AlertTriangle } from "lucide-react";
+import { Search, SlidersHorizontal, MapPin, Grid2x2, LayoutList, Loader2, ChevronDown, Globe, Home, RefreshCw, AlertTriangle } from "lucide-react";
 import { ListingCard } from "./ListingCard";
 import { useSavedListings, useAppliedListings } from "../../hooks/useSupabaseData";
 import { useZillowListings } from "../../hooks/useZillowListings";
@@ -21,6 +21,7 @@ function parseSearchParams(sp: URLSearchParams): SearchFilters {
     beds: sp.get("beds") != null ? +sp.get("beds")! : null,
     baths: sp.get("baths") != null ? +sp.get("baths")! : null,
     minSqft: sp.get("minSqft") != null ? +sp.get("minSqft")! : null,
+    maxSqft: sp.get("maxSqft") != null ? +sp.get("maxSqft")! : null,
     maxPrice: sp.get("maxPrice") != null ? +sp.get("maxPrice")! : null,
     petFriendly: sp.get("petFriendly") === "1",
     studentFriendly: sp.get("studentFriendly") === "1",
@@ -42,30 +43,35 @@ function parseStateFromLocation(location: string): { city: string; state: string
 export function ListingsResultsScreen() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const filters = useMemo(() => parseSearchParams(searchParams), [searchParams]);
+  const initialFilters = useMemo(() => parseSearchParams(searchParams), []);
 
-  const [searchInput, setSearchInput] = useState(filters.location);
+  // ---- Pending (draft) filter state — updated instantly by controls, no API call ----
+  const [searchInput, setSearchInput] = useState(initialFilters.location);
+  const [pendingBeds, setPendingBeds] = useState<number | null>(initialFilters.beds);
+  const [pendingBaths, setPendingBaths] = useState<number | null>(initialFilters.baths);
+  const [pendingMinSqft, setPendingMinSqft] = useState<number | null>(initialFilters.minSqft);
+  const [pendingMaxSqft, setPendingMaxSqft] = useState<number | null>(initialFilters.maxSqft);
+  const [pendingMaxPrice, setPendingMaxPrice] = useState<number | null>(initialFilters.maxPrice);
+  const [pendingSaved, setPendingSaved] = useState(initialFilters.saved);
+  const [pendingApplied, setPendingApplied] = useState(initialFilters.applied);
+
   const [showFiltersPanel, setShowFiltersPanel] = useState(false);
   const [typeaheadOpen, setTypeaheadOpen] = useState(false);
   const typeaheadRef = useRef<HTMLDivElement>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
-  const [zillowPage, setZillowPage] = useState(1);
 
   const { savedIds, toggleSave } = useSavedListings();
   const { appliedIds } = useAppliedListings();
 
-  // Zillow search — fires when location is set
+  // ---- Committed state — only changes when Search is clicked ----
+  const [committedFilters, setCommittedFilters] = useState<SearchFilters>(initialFilters);
+  const [zillowPage, setZillowPage] = useState(1);
+
   const zillowOpts = useMemo(() => {
-    if (!filters.location.trim()) return null;
-    const { city, state } = parseStateFromLocation(filters.location);
-    return {
-      city,
-      state,
-      page: zillowPage,
-      maxPrice: filters.maxPrice ?? undefined,
-      beds: filters.beds ?? undefined,
-    };
-  }, [filters.location, filters.maxPrice, filters.beds, zillowPage]);
+    if (!committedFilters.location.trim()) return null;
+    const { city, state } = parseStateFromLocation(committedFilters.location);
+    return { city, state, page: zillowPage };
+  }, [committedFilters.location, zillowPage]);
 
   const {
     listings: zillowListings,
@@ -75,7 +81,7 @@ export function ListingsResultsScreen() {
     error,
   } = useZillowListings(zillowOpts);
 
-  // Persist fetched listings to sessionStorage so useListing (detail page) can find them
+  // Persist fetched listings to sessionStorage for detail page
   useEffect(() => {
     if (zillowListings.length > 0) {
       try {
@@ -84,12 +90,12 @@ export function ListingsResultsScreen() {
         const merged = [...prev, ...zillowListings];
         const unique = Array.from(new Map(merged.map((l: any) => [l.id, l])).values());
         sessionStorage.setItem("zillow_listings", JSON.stringify(unique.slice(-200)));
-      } catch { /* quota exceeded — harmless */ }
+      } catch { /* quota exceeded */ }
     }
   }, [zillowListings]);
 
-  // When viewing saved/applied without a city search, pull from sessionStorage cache
-  const isFilterOnlyMode = !filters.location.trim() && (filters.saved || filters.applied);
+  // Saved/applied without a city: pull from sessionStorage cache
+  const isFilterOnlyMode = !committedFilters.location.trim() && (committedFilters.saved || committedFilters.applied);
 
   const cachedListings = useMemo(() => {
     if (!isFilterOnlyMode) return [];
@@ -98,30 +104,59 @@ export function ListingsResultsScreen() {
       if (!raw) return [];
       const parsed = JSON.parse(raw) as Listing[];
       return parsed.filter((l) => {
-        const matchesSaved = !filters.saved || savedIds.has(l.id);
-        const matchesApplied = !filters.applied || appliedIds.has(l.id);
+        const matchesSaved = !committedFilters.saved || savedIds.has(l.id);
+        const matchesApplied = !committedFilters.applied || appliedIds.has(l.id);
         return matchesSaved && matchesApplied;
       });
     } catch {
       return [];
     }
-  }, [isFilterOnlyMode, filters.saved, filters.applied, savedIds, appliedIds]);
+  }, [isFilterOnlyMode, committedFilters.saved, committedFilters.applied, savedIds, appliedIds]);
 
-  // Choose the right source of listings and loading state
   const baseListings = isFilterOnlyMode ? cachedListings : zillowListings;
   const loading = isFilterOnlyMode ? false : zillowLoading;
 
-  // Client-side filters that the API doesn't handle (baths, sqft, saved/applied)
+  // Client-side filtering using COMMITTED filters (not pending)
   const filteredListings = useMemo(() => {
     let list = [...baseListings];
-    if (filters.baths != null) list = list.filter((l) => l.baths >= filters.baths!);
-    if (filters.minSqft != null) list = list.filter((l) => l.sqft >= filters.minSqft!);
-    if (!isFilterOnlyMode && filters.saved) list = list.filter((l) => savedIds.has(l.id));
-    if (!isFilterOnlyMode && filters.applied) list = list.filter((l) => appliedIds.has(l.id));
+    if (committedFilters.beds != null) list = list.filter((l) => l.beds >= committedFilters.beds!);
+    if (committedFilters.baths != null) list = list.filter((l) => l.baths >= committedFilters.baths!);
+    if (committedFilters.minSqft != null) list = list.filter((l) => l.sqft >= committedFilters.minSqft!);
+    if (committedFilters.maxSqft != null) list = list.filter((l) => l.sqft > 0 && l.sqft <= committedFilters.maxSqft!);
+    if (committedFilters.maxPrice != null) list = list.filter((l) => l.price <= committedFilters.maxPrice!);
+    if (!isFilterOnlyMode && committedFilters.saved) list = list.filter((l) => savedIds.has(l.id));
+    if (!isFilterOnlyMode && committedFilters.applied) list = list.filter((l) => appliedIds.has(l.id));
     return list;
-  }, [baseListings, filters, savedIds, appliedIds, isFilterOnlyMode]);
+  }, [baseListings, committedFilters, savedIds, appliedIds, isFilterOnlyMode]);
 
-  // Typeahead: suggest popular California cities
+  // ---- Commit: build current pending state into filters, fire search ----
+  const commitSearch = (overrides?: Partial<SearchFilters>) => {
+    const next: SearchFilters = {
+      location: overrides?.location ?? searchInput.trim(),
+      beds: overrides?.beds !== undefined ? overrides.beds : pendingBeds,
+      baths: overrides?.baths !== undefined ? overrides.baths : pendingBaths,
+      minSqft: overrides?.minSqft !== undefined ? overrides.minSqft : pendingMinSqft,
+      maxSqft: overrides?.maxSqft !== undefined ? overrides.maxSqft : pendingMaxSqft,
+      maxPrice: overrides?.maxPrice !== undefined ? overrides.maxPrice : pendingMaxPrice,
+      petFriendly: false,
+      studentFriendly: false,
+      saved: overrides?.saved !== undefined ? overrides.saved : pendingSaved,
+      applied: overrides?.applied !== undefined ? overrides.applied : pendingApplied,
+    };
+    setCommittedFilters(next);
+    setZillowPage(1);
+    setSearchParams(buildSearchParams(next));
+    setTypeaheadOpen(false);
+  };
+
+  const handleSearch = () => commitSearch();
+
+  const handleSelectSuggestion = (city: string) => {
+    setSearchInput(city);
+    commitSearch({ location: city });
+  };
+
+  // Typeahead
   const popularCities = [
     "Irvine", "Los Angeles", "San Diego", "San Francisco", "Newport Beach",
     "Anaheim", "Santa Ana", "Long Beach", "Pasadena", "Burbank",
@@ -143,10 +178,6 @@ export function ListingsResultsScreen() {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
-
-  useEffect(() => {
-    setSearchInput(filters.location);
-  }, [filters.location]);
 
   const formatListing = (listing: (typeof zillowListings)[0]) => ({
     id: listing.id,
@@ -174,26 +205,17 @@ export function ListingsResultsScreen() {
     source: listing.source,
   });
 
-  const updateFilters = (next: SearchFilters) => {
-    setSearchInput(next.location);
-    setSearchParams(buildSearchParams(next));
-  };
+  const displayLocation = committedFilters.location || "all areas";
+  const hasSearched = committedFilters.location.trim().length > 0 || isFilterOnlyMode;
 
-  const handleSearch = () => {
-    setTypeaheadOpen(false);
-    setZillowPage(1);
-    updateFilters({ ...filters, location: searchInput.trim() });
-  };
-
-  const handleSelectSuggestion = (city: string) => {
-    setSearchInput(city);
-    setTypeaheadOpen(false);
-    setZillowPage(1);
-    updateFilters({ ...filters, location: city });
-  };
-
-  const displayLocation = filters.location || "all areas";
-  const hasSearched = filters.location.trim().length > 0 || isFilterOnlyMode;
+  // Check if pending filters differ from committed (to hint the user to click Search)
+  const hasPendingChanges =
+    searchInput.trim() !== committedFilters.location ||
+    pendingBeds !== committedFilters.beds ||
+    pendingBaths !== committedFilters.baths ||
+    pendingMinSqft !== committedFilters.minSqft ||
+    pendingMaxSqft !== committedFilters.maxSqft ||
+    pendingMaxPrice !== committedFilters.maxPrice;
 
   return (
     <div className="min-h-screen bg-background">
@@ -248,7 +270,11 @@ export function ListingsResultsScreen() {
               <button
                 type="button"
                 onClick={handleSearch}
-                className="shrink-0 px-4 py-2.5 rounded-xl bg-[#10B981] text-white text-sm font-medium hover:bg-[#0d9668] transition-colors flex items-center gap-2"
+                className={`shrink-0 px-4 py-2.5 rounded-xl text-white text-sm font-medium transition-colors flex items-center gap-2 ${
+                  hasPendingChanges
+                    ? "bg-[#10B981] hover:bg-[#0d9668] ring-2 ring-[#10B981]/30"
+                    : "bg-[#10B981] hover:bg-[#0d9668]"
+                }`}
               >
                 <Search size={16} />
                 Search
@@ -256,9 +282,12 @@ export function ListingsResultsScreen() {
             </div>
             <button
               type="button"
-              onClick={() => updateFilters({ ...filters, saved: !filters.saved })}
+              onClick={() => {
+                setPendingSaved(!pendingSaved);
+                commitSearch({ saved: !pendingSaved });
+              }}
               className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
-                filters.saved
+                pendingSaved
                   ? "bg-[#10B981] text-white border-[#10B981]"
                   : "border-border bg-background text-foreground hover:bg-accent"
               }`}
@@ -267,9 +296,12 @@ export function ListingsResultsScreen() {
             </button>
             <button
               type="button"
-              onClick={() => updateFilters({ ...filters, applied: !filters.applied })}
+              onClick={() => {
+                setPendingApplied(!pendingApplied);
+                commitSearch({ applied: !pendingApplied });
+              }}
               className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
-                filters.applied
+                pendingApplied
                   ? "bg-[#10B981] text-white border-[#10B981]"
                   : "border-border bg-background text-foreground hover:bg-accent"
               }`}
@@ -299,13 +331,8 @@ export function ListingsResultsScreen() {
               <label className="flex flex-col gap-1">
                 <span className="text-xs text-muted-foreground">Beds (min)</span>
                 <select
-                  value={filters.beds ?? ""}
-                  onChange={(e) =>
-                    updateFilters({
-                      ...filters,
-                      beds: e.target.value === "" ? null : +e.target.value,
-                    })
-                  }
+                  value={pendingBeds ?? ""}
+                  onChange={(e) => setPendingBeds(e.target.value === "" ? null : +e.target.value)}
                   className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
                 >
                   <option value="">Any</option>
@@ -317,13 +344,8 @@ export function ListingsResultsScreen() {
               <label className="flex flex-col gap-1">
                 <span className="text-xs text-muted-foreground">Baths (min)</span>
                 <select
-                  value={filters.baths ?? ""}
-                  onChange={(e) =>
-                    updateFilters({
-                      ...filters,
-                      baths: e.target.value === "" ? null : +e.target.value,
-                    })
-                  }
+                  value={pendingBaths ?? ""}
+                  onChange={(e) => setPendingBaths(e.target.value === "" ? null : +e.target.value)}
                   className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
                 >
                   <option value="">Any</option>
@@ -337,36 +359,45 @@ export function ListingsResultsScreen() {
                 <input
                   type="number"
                   placeholder="e.g. 600"
-                  value={filters.minSqft ?? ""}
-                  onChange={(e) =>
-                    updateFilters({
-                      ...filters,
-                      minSqft: e.target.value === "" ? null : Math.max(0, +e.target.value),
-                    })
-                  }
+                  value={pendingMinSqft ?? ""}
+                  onChange={(e) => setPendingMinSqft(e.target.value === "" ? null : Math.max(0, +e.target.value))}
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-muted-foreground">Max sq ft</span>
+                <input
+                  type="number"
+                  placeholder="e.g. 1500"
+                  value={pendingMaxSqft ?? ""}
+                  onChange={(e) => setPendingMaxSqft(e.target.value === "" ? null : Math.max(0, +e.target.value))}
                   className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
                 />
               </label>
               <label className="flex flex-col gap-1 sm:col-span-2">
                 <span className="text-xs text-muted-foreground">
-                  Max price: {filters.maxPrice != null ? `$${filters.maxPrice.toLocaleString()}` : `$${MAX_PRICE_SLIDER.toLocaleString()}`}
+                  Max price: {pendingMaxPrice != null ? `$${pendingMaxPrice.toLocaleString()}` : `$${MAX_PRICE_SLIDER.toLocaleString()}`}
                 </span>
                 <input
                   type="range"
                   min={0}
                   max={MAX_PRICE_SLIDER}
                   step={100}
-                  value={filters.maxPrice ?? MAX_PRICE_SLIDER}
+                  value={pendingMaxPrice ?? MAX_PRICE_SLIDER}
                   onChange={(e) => {
                     const v = +e.target.value;
-                    updateFilters({
-                      ...filters,
-                      maxPrice: v >= MAX_PRICE_SLIDER ? null : v,
-                    });
+                    setPendingMaxPrice(v >= MAX_PRICE_SLIDER ? null : v);
                   }}
                   className="w-full h-2 rounded-full appearance-none bg-muted [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#10B981] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#10B981] [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
                 />
               </label>
+
+              {hasPendingChanges && (
+                <div className="col-span-2 sm:col-span-4 flex items-center gap-2 pt-1">
+                  <span className="text-xs text-[#F59E0B] font-medium">Filters changed</span>
+                  <span className="text-xs text-muted-foreground">— click Search to apply</span>
+                </div>
+              )}
             </motion.div>
           )}
       </div>
@@ -407,7 +438,7 @@ export function ListingsResultsScreen() {
               Something went wrong
             </h3>
             <p className="text-muted-foreground text-sm text-center max-w-md mb-6">
-              We couldn't fetch listings for "{filters.location}" right now. This is usually temporary — Zillow may be rate-limiting or the connection timed out.
+              We couldn't fetch listings for "{committedFilters.location}" right now. This is usually temporary — Zillow may be rate-limiting or the connection timed out.
             </p>
             <div className="flex gap-3">
               <button
@@ -437,7 +468,7 @@ export function ListingsResultsScreen() {
                 <MapPin size={18} className="text-[#10B981]" />
                 <h2 className="text-foreground text-xl font-bold">
                   {isFilterOnlyMode
-                    ? `${filteredListings.length} ${filters.saved && filters.applied ? "saved & applied" : filters.saved ? "saved" : "applied"} ${filteredListings.length === 1 ? "listing" : "listings"}`
+                    ? `${filteredListings.length} ${committedFilters.saved && committedFilters.applied ? "saved & applied" : committedFilters.saved ? "saved" : "applied"} ${filteredListings.length === 1 ? "listing" : "listings"}`
                     : `${zillowTotal.toLocaleString()} rentals in ${displayLocation}`}
                 </h2>
                 {!isFilterOnlyMode && (
@@ -534,12 +565,12 @@ export function ListingsResultsScreen() {
             {isFilterOnlyMode ? (
               <>
                 <h3 className="text-foreground text-lg font-semibold mb-2">
-                  No {filters.saved && filters.applied ? "saved & applied" : filters.saved ? "saved" : "applied"} listings yet
+                  No {committedFilters.saved && committedFilters.applied ? "saved & applied" : committedFilters.saved ? "saved" : "applied"} listings yet
                 </h3>
                 <p className="text-muted-foreground text-sm text-center max-w-md mb-6">
-                  {filters.saved && filters.applied
+                  {committedFilters.saved && committedFilters.applied
                     ? "Listings that are both saved and applied will appear here."
-                    : filters.saved
+                    : committedFilters.saved
                       ? "Listings you save will appear here. Search for rentals and tap the heart icon to save them."
                       : "Listings you apply to will appear here. Search for rentals and apply to get started."}
                 </p>
@@ -572,23 +603,22 @@ export function ListingsResultsScreen() {
               <button
                 type="button"
                 onClick={() => {
-                  updateFilters({ ...defaultSearchFilters, location: "" });
                   setSearchInput("");
+                  setPendingBeds(null);
+                  setPendingBaths(null);
+                  setPendingMinSqft(null);
+                  setPendingMaxSqft(null);
+                  setPendingMaxPrice(null);
+                  setPendingSaved(false);
+                  setPendingApplied(false);
+                  setCommittedFilters(defaultSearchFilters);
+                  setSearchParams(new URLSearchParams());
                 }}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#10B981] text-white text-sm font-medium hover:bg-[#0d9668] transition-colors"
               >
                 <Search size={15} />
                 New Search
               </button>
-              {(filters.beds != null || filters.baths != null || filters.maxPrice != null || filters.minSqft != null) && (
-                <button
-                  type="button"
-                  onClick={() => updateFilters({ ...defaultSearchFilters, location: filters.location })}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-accent transition-colors"
-                >
-                  Clear Filters
-                </button>
-              )}
             </div>
           </motion.div>
         )}
