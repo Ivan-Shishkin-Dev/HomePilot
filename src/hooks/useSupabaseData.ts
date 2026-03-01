@@ -134,7 +134,15 @@ export function useUserDocuments() {
   return { documents, setDocuments, loading, error, refetch: fetchDocuments };
 }
 
-// Hook for document upload with file picker
+const DOCUMENTS_BUCKET = "documents";
+
+/** Sanitize filename for storage path (remove path segments, keep extension) */
+function sanitizeFileName(name: string): string {
+  const base = name.replace(/^.*[/\\]/, "").replace(/[^a-zA-Z0-9._-]/g, "_");
+  return base || "document";
+}
+
+// Hook for document upload with file picker — uploads file to Supabase Storage and saves path in documents.file_url
 export function useDocumentUpload() {
   const { user, refreshProfile } = useAuth();
   const [uploading, setUploading] = useState(false);
@@ -152,22 +160,43 @@ export function useDocumentUpload() {
     const file = e.target.files?.[0];
     const docId = pendingDocIdRef.current;
     if (!file || !docId || !user) {
-      // Reset input so the same file can be re-selected
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
 
     setUploading(true);
     try {
-      // Update document status to pending
+      // Fetch current document to replace existing file in storage if any
+      const { data: currentDoc } = await supabase
+        .from("documents")
+        .select("file_url")
+        .eq("id", docId)
+        .single();
+
+      if (currentDoc?.file_url) {
+        await supabase.storage.from(DOCUMENTS_BUCKET).remove([currentDoc.file_url]);
+      }
+
+      const fileName = sanitizeFileName(file.name);
+      const storagePath = `${user.id}/${docId}/${Date.now()}-${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from(DOCUMENTS_BUCKET)
+        .upload(storagePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
       const { error: docError } = await supabase
         .from("documents")
-        .update({ status: "pending", uploaded_at: new Date().toISOString() })
+        .update({
+          status: "pending",
+          uploaded_at: new Date().toISOString(),
+          file_url: storagePath,
+        })
         .eq("id", docId);
 
       if (docError) throw docError;
 
-      // Fetch all documents to recalculate score
       const { data: allDocs, error: fetchError } = await supabase
         .from("documents")
         .select("*")
@@ -179,7 +208,6 @@ export function useDocumentUpload() {
       const newScore = calculateRenterScore(docs);
       const newCompletion = calculateProfileCompletion(docs);
 
-      // Update profile with new score and completion
       const { error: profileError } = await supabase
         .from("profiles")
         .update({
@@ -191,34 +219,28 @@ export function useDocumentUpload() {
 
       if (profileError) throw profileError;
 
-      // Refresh profile in auth context
       await refreshProfile();
+      const refetchAfterVerify = onCompleteRef.current;
+      refetchAfterVerify?.();
 
-      // Call completion callback (e.g., refetch documents)
-      const onComplete = onCompleteRef.current;
-      onComplete?.();
-
-      // Simulate verification after 5 seconds
       const verifyDocId = docId;
-      const verifyUserId = user.id;
       setTimeout(async () => {
         try {
           await supabase
             .from("documents")
             .update({ status: "verified", verified_at: new Date().toISOString() })
             .eq("id", verifyDocId);
-          onComplete?.();
+          refetchAfterVerify?.();
         } catch (err) {
           console.error("Auto-verify error:", err);
         }
-      }, 5000);
+      }, 3000);
     } catch (err) {
       console.error("Document upload error:", err);
     } finally {
       setUploading(false);
       pendingDocIdRef.current = null;
       onCompleteRef.current = null;
-      // Reset input so the same file can be re-selected
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -226,9 +248,24 @@ export function useDocumentUpload() {
   const removeDocument = async (docId: string, onComplete?: () => void) => {
     if (!user) return;
     try {
+      const { data: doc } = await supabase
+        .from("documents")
+        .select("file_url")
+        .eq("id", docId)
+        .single();
+
+      if (doc?.file_url) {
+        await supabase.storage.from(DOCUMENTS_BUCKET).remove([doc.file_url]);
+      }
+
       const { error: docError } = await supabase
         .from("documents")
-        .update({ status: "missing", uploaded_at: null, verified_at: null })
+        .update({
+          status: "missing",
+          uploaded_at: null,
+          verified_at: null,
+          file_url: null,
+        })
         .eq("id", docId);
 
       if (docError) throw docError;
@@ -261,6 +298,43 @@ export function useDocumentUpload() {
   };
 
   return { triggerUpload, uploading, fileInputRef, handleFileChange, removeDocument };
+}
+
+/** Get a signed URL for a document file path (for display). Returns null if path is null or on error. */
+export async function getDocumentSignedUrl(filePath: string | null): Promise<string | null> {
+  if (!filePath) return null;
+  const { data, error } = await supabase.storage
+    .from(DOCUMENTS_BUCKET)
+    .createSignedUrl(filePath, 3600);
+  if (error) return null;
+  return data?.signedUrl ?? null;
+}
+
+/** Hook to resolve a document's file_url to a signed URL for display (e.g. thumbnail). */
+export function useDocumentFileUrl(filePath: string | null) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(!!filePath);
+
+  useEffect(() => {
+    if (!filePath) {
+      setUrl(null);
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    getDocumentSignedUrl(filePath).then((signed) => {
+      if (!cancelled) {
+        setUrl(signed);
+        setLoading(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [filePath]);
+
+  return { url, loading };
 }
 
 // Hook to fetch profile suggestions
