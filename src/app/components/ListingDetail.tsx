@@ -7,6 +7,7 @@ import {
   Heart,
   Share2,
   Shield,
+  ClipboardCheck,
   TrendingUp,
   AlertTriangle,
   MapPin,
@@ -28,8 +29,9 @@ export function ListingDetail() {
   const navigate = useNavigate();
   const { listing, loading } = useListing(id);
   const { savedIds, toggleSave } = useSavedListings();
-  const { trackExternalLinkClick } = useAppliedListings();
+  const { trackExternalLinkClick, appliedIds, removeApplied } = useAppliedListings();
   const isSaved = id ? savedIds.has(id) : false;
+  const isApplied = id ? appliedIds.has(id) : false;
   const [showCopied, setShowCopied] = useState(false);
 
   const handleShare = async () => {
@@ -141,6 +143,15 @@ export function ListingDetail() {
                 className={isSaved ? "text-[#EF4444] fill-[#EF4444]" : "text-[#8B95A5]"}
               />
             </button>
+            {isApplied && (
+              <button
+                onClick={() => id && removeApplied(id)}
+                className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center hover:bg-white/[0.1] transition-colors"
+                title="Mark as not applied"
+              >
+                <ClipboardCheck size={18} className="text-[#10B981] fill-[#10B981]" />
+              </button>
+            )}
             <button
               onClick={handleShare}
               className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center hover:bg-white/[0.1] transition-colors"
