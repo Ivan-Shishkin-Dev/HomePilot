@@ -1,5 +1,11 @@
+import { useState } from "react";
 import { Link } from "react-router";
 import { motion } from "motion/react";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "./ui/dialog";
 import {
   Shield,
   Sparkles,
@@ -23,8 +29,12 @@ import { listings } from "./data";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useTheme } from "./ThemeProvider";
 
+const DEMO_VIDEO_ID = "IzSE1hVkwic";
+const DEMO_VIDEO_EMBED = `https://www.youtube.com/embed/${DEMO_VIDEO_ID}?autoplay=1`;
+
 export function LandingPage() {
   const { theme, toggleTheme } = useTheme();
+  const [demoVideoOpen, setDemoVideoOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -117,16 +127,33 @@ export function LandingPage() {
               Create Renter Passport
               <ArrowRight className="w-5 h-5" />
             </Link>
-            <Link
-              to="/home"
+            <button
+              type="button"
+              onClick={() => setDemoVideoOpen(true)}
               className="inline-flex items-center gap-2 px-6 py-4 rounded-xl bg-muted border border-border hover:bg-accent transition-all text-muted-foreground hover:text-foreground text-[16px]"
               style={{ fontWeight: 500 }}
             >
               <Eye size={18} />
               View Demo
-            </Link>
+            </button>
           </div>
         </motion.div>
+
+        {/* Demo video modal */}
+        <Dialog open={demoVideoOpen} onOpenChange={setDemoVideoOpen}>
+          <DialogContent className="sm:max-w-4xl max-h-[90vh] p-0 gap-0 overflow-hidden bg-black border-border">
+            <DialogTitle className="sr-only">Watch Demo</DialogTitle>
+            <div className="relative w-full pt-[56.25%]">
+              <iframe
+                src={demoVideoOpen ? DEMO_VIDEO_EMBED : undefined}
+                title="HomePilot Demo"
+                className="absolute inset-0 w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Live Dashboard Preview */}
         <motion.div
