@@ -51,6 +51,8 @@ interface ZillowListResult {
   unformattedPrice?: number;
   beds?: number;
   baths?: number;
+  bedrooms?: number;
+  bathrooms?: number;
   area?: number;
   latLong?: { latitude: number; longitude: number };
   buildingName?: string;
@@ -203,12 +205,29 @@ export async function searchZillowRentals(
     throw new Error("Failed to parse Zillow __NEXT_DATA__ JSON");
   }
 
-  const searchState = nextData.props?.pageProps?.searchPageState;
-  const listResults = searchState?.cat1?.searchResults?.listResults ?? [];
-  const searchList = searchState?.searchList;
+  const searchState = nextData.props?.pageProps?.searchPageState as Record<string, unknown> | undefined;
+  const searchList = searchState?.searchList as { totalResultCount?: number; totalPages?: number } | undefined;
+  // Try multiple possible paths for list results (Zillow structure varies)
+  const listResults =
+    (searchState?.cat1 as { searchResults?: { listResults?: unknown[] } })?.searchResults?.listResults ??
+    (searchState?.cat2 as { searchResults?: { listResults?: unknown[] } })?.searchResults?.listResults ??
+    (searchState?.rentals as { searchResults?: { listResults?: unknown[] } })?.searchResults?.listResults ??
+    [];
+
+  // Dev: log first result structure to diagnose beds/baths (open DevTools Console)
+  if (listResults.length > 0 && typeof window !== "undefined") {
+    try {
+      const s = listResults[0] as unknown as Record<string, unknown>;
+      const keys = Object.keys(s).filter((k) => /bed|bath|room|unit|reso|hdp/i.test(k));
+      if (keys.length > 0) {
+        console.log("[Zillow] Beds/baths keys:", keys.join(", "));
+        keys.forEach((k) => console.log(`  ${k}:`, s[k]));
+      }
+    } catch (_) {}
+  }
 
   const listings = listResults
-    .map((r) => zillowResultToListing(r, opts))
+    .map((r) => zillowResultToListing(r as ZillowListResult, opts))
     .filter((l): l is Listing => l !== null);
 
   // Apply client-side price/beds filters if specified
@@ -252,10 +271,75 @@ function zillowResultToListing(
   }
   if (price === 0) return null;
 
-  const beds = r.beds ?? homeInfo?.bedrooms ?? (r.units?.[0]?.beds != null ? parseInt(r.units[0].beds, 10) : 0);
-  const baths = r.baths ?? homeInfo?.bathrooms ?? 1;
-  // Sqft: list result can have area, or hdpData.homeInfo.livingArea, or top-level livingArea / resoFacts
   const raw = r as unknown as Record<string, unknown>;
+  const reso = raw.resoFacts as Record<string, unknown> | undefined;
+
+  const parseBeds = (v: unknown): number | null => {
+    if (typeof v === "number" && !isNaN(v) && v >= 0) return Math.floor(v);
+    if (typeof v === "string") {
+      const n = parseInt(v.replace(/[^0-9]/g, ""), 10);
+      return !isNaN(n) && n >= 0 ? n : null;
+    }
+    return null;
+  };
+  const parseBaths = (v: unknown): number | null => {
+    if (typeof v === "number" && !isNaN(v) && v > 0) return v;
+    if (typeof v === "string") {
+      const n = parseFloat(v.replace(/[^0-9.]/g, ""));
+      return !isNaN(n) && n > 0 ? n : null;
+    }
+    return null;
+  };
+
+  // Beds: try r.beds, r.bedrooms, homeInfo.bedrooms, resoFacts, raw, units (max across all)
+  const bedsFromUnits =
+    r.units?.length
+      ? Math.max(
+          ...r.units.map((u) => parseInt(String(u.beds ?? 0), 10)).filter((n) => !isNaN(n) && n > 0),
+          0
+        ) || null
+      : null;
+  const bedsParsed =
+    parseBeds(r.beds) ??
+    parseBeds(r.bedrooms) ??
+    parseBeds(homeInfo?.bedrooms) ??
+    parseBeds(reso?.bedrooms) ??
+    parseBeds(raw.bedrooms) ??
+    (r.units?.[0]?.beds != null ? parseInt(String(r.units[0].beds), 10) : null) ??
+    bedsFromUnits;
+  let beds = bedsParsed != null && bedsParsed >= 0 ? bedsParsed : 0;
+
+  // Baths: try r.baths, r.bathrooms, homeInfo.bathrooms, resoFacts, raw
+  const bathsParsed =
+    parseBaths(r.baths) ??
+    parseBaths(r.bathrooms) ??
+    parseBaths(homeInfo?.bathrooms) ??
+    parseBaths(reso?.bathrooms) ??
+    parseBaths(reso?.bathroomCount) ??
+    parseBaths(raw.bathrooms);
+  let baths = bathsParsed != null && bathsParsed > 0 ? bathsParsed : 1;
+
+  // Last resort: parse from display text (e.g. "2 bd, 2 ba" or "3 bd · 2 ba")
+  if (bedsParsed == null || bathsParsed == null) {
+    const displayParts = [
+      r.statusText,
+      r.buildingName,
+      ...(r.listCardRecommendation?.flexFieldRecommendations ?? []).map((x) => x.displayString),
+    ].filter(Boolean) as string[];
+    const combined = displayParts.join(" ");
+    const bdMatch = combined.match(/(\d+)\s*bd/i) ?? combined.match(/(\d+)\s*bed/i);
+    const baMatch = combined.match(/(\d+)\s*ba\b/i) ?? combined.match(/(\d+)\s*bath/i);
+    if (bedsParsed == null && bdMatch) {
+      const n = parseInt(bdMatch[1], 10);
+      beds = !isNaN(n) && n >= 0 ? n : 0;
+    }
+    if (bathsParsed == null && baMatch) {
+      const n = parseFloat(baMatch[1]);
+      baths = !isNaN(n) && n > 0 ? n : 1;
+    }
+  }
+
+  // Sqft: list result can have area, or hdpData.homeInfo.livingArea, or top-level livingArea / resoFacts
   const sqftCandidates = [
     r.area,
     homeInfo?.livingArea,

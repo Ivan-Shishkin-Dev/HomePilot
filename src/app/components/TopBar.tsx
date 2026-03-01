@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Sun, Moon, LogOut, Menu } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
-import { useNavigate, useLocation } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
 import { Logo } from "./Logo";
 import { useAuth } from "../../contexts/AuthContext";
 import { useUserAlerts } from "../../hooks/useSupabaseData";
@@ -25,7 +25,7 @@ const navItems = [
   { path: "/listings", label: "Listings" },
   { path: "/passport", label: "Passport" },
   { path: "/optimize", label: "Optimize" },
-  { path: "/alert", label: "AI Alerts" },
+  { path: "/alert", label: "Matches" },
 ];
 
 export function TopBar() {
@@ -83,9 +83,9 @@ export function TopBar() {
         {/* Nav links - same style as landing page (desktop) */}
         <nav className="hidden md:flex items-center gap-6">
           {navItems.map((item) => (
-            <button
+            <Link
               key={item.path}
-              onClick={() => navigate(item.path)}
+              to={item.path}
               className={`text-[14px] transition-colors ${
                 isActive(item.path)
                   ? "text-foreground"
@@ -94,7 +94,7 @@ export function TopBar() {
               style={{ fontWeight: isActive(item.path) ? 500 : 400 }}
             >
               {item.label}
-            </button>
+            </Link>
           ))}
         </nav>
 
@@ -117,12 +117,10 @@ export function TopBar() {
                 {navItems.map((item) => {
                   const active = isActive(item.path);
                   return (
-                    <button
+                    <Link
                       key={item.path}
-                      onClick={() => {
-                        navigate(item.path);
-                        setMobileNavOpen(false);
-                      }}
+                      to={item.path}
+                      onClick={() => setMobileNavOpen(false)}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left ${
                         active
                           ? "text-foreground bg-[#10B981]/15 border border-[#10B981]/20"
@@ -136,7 +134,7 @@ export function TopBar() {
                           {unreadCount}
                         </span>
                       )}
-                    </button>
+                    </Link>
                   );
                 })}
               </div>
@@ -193,7 +191,7 @@ export function TopBar() {
               <DropdownMenuItem
                 onClick={handleSignOut}
                 variant="destructive"
-                className="cursor-pointer"
+                className="cursor-pointer dark:!text-red-400 dark:focus:!text-red-400 [&_svg]:dark:!text-red-400"
               >
                 <LogOut className="mr-2 size-4" />
                 Sign out

@@ -1,15 +1,23 @@
 "use client";
 
-import { useTheme } from "next-themes";
+import { useTheme } from "../ThemeProvider";
 import { Toaster as Sonner, ToasterProps } from "sonner";
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme();
+  const { theme = "dark" } = useTheme();
 
   return (
     <Sonner
       theme={theme as ToasterProps["theme"]}
-      className="toaster group"
+      className="toaster group hp-toaster"
+      closeButton
+      toastOptions={{
+        classNames: {
+          toast: "hp-toast",
+          actionButton: "hp-toast-action",
+          closeButton: "hp-toast-close",
+        },
+      }}
       style={
         {
           "--normal-bg": "var(--popover)",

@@ -136,6 +136,61 @@ Always use the format: [Label — reason it's needed]. This helps the user under
   ]);
 }
 
+/** Context for listing-specific livability data used in tailored cover letters */
+export interface LivabilityContext {
+  crime_index: number;
+  crime_description: string;
+  rent_trend: string;
+  rent_trend_description: string;
+  competition_score: number;
+  competition_label: string;
+}
+
+export async function generateTailoredCoverLetter(
+  profile: Profile | null,
+  documents: UserDocument[],
+  propertyAddress: string,
+  livabilityContext: LivabilityContext,
+  atlasSuggestion: string,
+  landlordName?: string
+): Promise<string> {
+  const ctx = buildProfileContext(profile, documents);
+  const today = formatDate();
+
+  const livabilityBlock = `
+LIVABILITY DATA FOR THIS LISTING (use specific details in the letter to show you've researched the property):
+- Property Address: ${propertyAddress}
+- Crime Index: ${livabilityContext.crime_index}/100 — ${livabilityContext.crime_description}
+- Rent Trend: ${livabilityContext.rent_trend} — ${livabilityContext.rent_trend_description}
+- Competition: ${livabilityContext.competition_score}/100 — ${livabilityContext.competition_label}
+
+ATLAS' AI INSIGHT (synthesize into your letter naturally):
+${atlasSuggestion}
+`;
+
+  const system = `You are an expert rental application assistant. Write a professional, warm cover letter tailored to a SPECIFIC rental listing. The applicant has researched this property and you have livability data — USE IT.
+
+RULES:
+- The letter date MUST be: ${today}
+- Keep it concise (250-350 words). Use proper letter formatting: date, greeting, body paragraphs, and closing.
+- Use the EXACT property address: ${propertyAddress}. Reference it in the greeting or early in the letter.
+- WEAVE IN SPECIFIC LIVABILITY DETAILS to praise the listing/landlord naturally. For example: "I appreciate the ${livabilityContext.crime_description.toLowerCase()} in this area and the ${livabilityContext.rent_trend.toLowerCase()} rent trend", "the ${livabilityContext.competition_label.toLowerCase()} aligns well with my timeline", etc. Make it clear you're writing about THIS property, not a generic one.
+- Use ALL the applicant data provided below. Reference their renter score, verified documents, budget, etc.
+- Incorporate themes from Atlas' insight where relevant — it summarizes why this listing is a good fit.
+- Do NOT use bracket placeholders for the property address (it's provided). Use [Landlord/Property Manager Name] only if not provided.
+- For other missing personal details, use descriptive bracket placeholders: [Label — reason it's needed].
+- Be warm but professional. Show genuine interest in the specific property based on the data.`;
+
+  const user = `Write a rental cover letter using this applicant info:\n\n${ctx}\n\n${livabilityBlock}${
+    landlordName ? `\n\nLandlord/Property Manager: ${landlordName}` : ""
+  }`;
+
+  return callGroq([
+    { role: "system", content: system },
+    { role: "user", content: user },
+  ]);
+}
+
 export interface ImprovementResult {
   improvedLetter: string;
   changes: string[];
@@ -293,21 +348,27 @@ export async function generateListingSuggestion(
   const baths = profile?.preferred_baths != null ? `${profile.preferred_baths} bath(s)` : null;
   const priorities = [budget, beds, baths].filter(Boolean).join("; ") || "Not specified";
 
-  const system = `You are Atlas, a rental assistant. Give the renter 2-3 short, punchy suggestions or opinions about this listing. Be warm and direct.
+  const system = `You are Atlas, a rental assistant. Give the renter 2-3 short, punchy suggestions about this listing. Be warm and direct.
 
-STYLE: Use phrases like "This might be a safe pick", "This could be your highest priority", "Worth applying", "One to watch", "Strong match for your priorities", etc. Mix a clear take (e.g. safe pick, high priority) with one concrete reason. Keep each suggestion to one short sentence. You can use 2-3 sentences total.
+Your response MUST explicitly mention these data points so the user sees we're using their real data:
+1) Profile completion (from Optimize tab): ${profileCompletion}%
+2) Crime index (from Livability Analysis): ${listing.crime_index}/100
+3) Rent trend (from Livability Analysis): "${rentTrend}"
+4) Competition (from Livability Analysis): ${competition}/100 (${competitionLabel})
+5) Priority match (how well listing fits their budget/beds/baths): ${matchPercent}%
+6) Their priorities: ${priorities}
 
-CRITICAL: Use ONLY the exact numbers provided below. Do NOT invent, estimate, round, or substitute. The user sees these same numbers on the page — any mismatch will break trust. Mention at least 2-3 of: profile completion %, match %, priorities, crime index (exact X/100), rent trend (exact string), competition. No bullet list, no preamble. Max 60 words.`;
+Use ONLY these exact numbers. Do NOT invent or substitute. Weave 3-4 of them into your suggestions naturally so the user knows we processed their data. Example: "With your ${profileCompletion}% profile and ${matchPercent}% priority match, this listing's crime index (${listing.crime_index}/100) and ${competitionLabel} competition make it worth considering." Style: safe pick, highest priority, worth applying, etc. Max 65 words.`;
 
-  const user = `FACTS — use these exact values only:
-- crime_index: ${listing.crime_index}/100 (description: ${crimeDesc})
-- rent_trend: "${rentTrend}" (${rentTrendDesc})
-- competition: ${competitionLabel} (${competition}/100)
-- profile_completion: ${profileCompletion}%
-- match_percent: ${matchPercent}%
+  const user = `Write 2-3 suggestion lines. Use these exact values:
+- profile_completion: ${profileCompletion}% (Optimize tab)
+- crime_index: ${listing.crime_index}/100 (Livability Analysis)
+- rent_trend: "${rentTrend}" (Livability Analysis)
+- competition: ${competition}/100 ${competitionLabel} (Livability Analysis)
+- priority_match: ${matchPercent}% (based on their budget/beds/baths)
 - priorities: ${priorities}
 
-Write 2-3 short suggestion lines (e.g. safe pick, highest priority, worth applying) using these exact numbers.`;
+Mention at least 3-4 of these in your response to prove we're processing their data.`;
 
   try {
     const raw = await callGroq(
@@ -319,6 +380,80 @@ Write 2-3 short suggestion lines (e.g. safe pick, highest priority, worth applyi
     );
     const line = raw.trim().replace(/^["']|["']$/g, "").slice(0, 520);
     return line || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Input for pre-apply tips (shown when user clicks View on Zillow). */
+export interface PreApplyTipsInput {
+  source: "zillow" | "apartments" | string;
+  competition_score: number;
+  crime_index: number;
+  rent_trend: string | null;
+  match_percent: number;
+  profile_completion: number;
+  crime_description?: string | null;
+  rent_trend_description?: string | null;
+  uncompleted_suggestions: { action: string; impact: number }[];
+}
+
+/**
+ * Generate 3-5 short pre-apply tips using listing data (competition, crime, rent trend, match %),
+ * profile completion, uncompleted Optimize suggestions, and Zillow/scam tips.
+ */
+export async function generatePreApplyTips(input: PreApplyTipsInput): Promise<string[] | null> {
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+  if (!apiKey) return null;
+
+  const sourceLabel = input.source === "apartments" ? "Apartments.com" : "Zillow";
+  const uncompleted = input.uncompleted_suggestions
+    .slice(0, 2)
+    .map((s) => `${s.action} (impact +${s.impact}%)`)
+    .join("; ");
+  const competitionLabel =
+    input.competition_score >= 70 ? "High" : input.competition_score >= 40 ? "Medium" : "Low";
+
+  const system = `You are Atlas, a rental assistant. The user is about to apply on ${sourceLabel}. Give 3-5 varied, practical bullets (one line each).
+
+CRITICAL: Use ONLY the exact numbers and facts provided below. Do NOT invent data. Reference the actual competition (X/100), crime index (X/100), rent trend, match %. E.g. "With ${input.competition_score}/100 competition, apply soon" — use the real number.
+Profile/optimize suggestions: ONLY if explicitly provided. Use the EXACT action text. Do NOT invent (no profile picture, no generic "complete your profile" unless in the list).
+
+Tailor tips to THIS listing's data:
+- Competition ${input.competition_score}/100 (${competitionLabel}) → e.g. "Competition is ${competitionLabel} (${input.competition_score}/100) — apply soon if interested."
+- Crime index ${input.crime_index}/100 → safety/verification tips if relevant
+- Rent trend "${input.rent_trend || "Stable"}" → e.g. mention if rising (lock in) or stable
+- Match ${input.match_percent}% → brief note if strong match
+- Platform: ${sourceLabel} — docs to have ready, fees, flow
+
+Also include: verify listing/landlord, never wire before viewing, pay stubs/ID. Each bullet max 22 words. No preamble. Return ONLY the bullet list, one per line.`;
+
+  const user = `FACTS — use these exact values only:
+- competition_score: ${input.competition_score}/100 (${competitionLabel})
+- crime_index: ${input.crime_index}/100 (${input.crime_description ?? "see value"})
+- rent_trend: "${input.rent_trend || "Stable"}" (${input.rent_trend_description ?? "—"})
+- match_percent: ${input.match_percent}%
+- profile_completion: ${input.profile_completion}%
+- platform: ${sourceLabel}
+- uncompleted_suggestions: ${uncompleted || "None — do not mention profile tips"}
+
+Output 3-5 bullets that reference these numbers. E.g. "With ${input.competition_score}% competition, apply soon." or "Crime index ${input.crime_index}/100 — verify the area before committing."`;
+
+  try {
+    const raw = await callGroq(
+      [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+      2
+    );
+    const lines = raw
+      .trim()
+      .split("\n")
+      .map((s) => s.replace(/^[-*•]\s*/, "").trim())
+      .filter(Boolean)
+      .slice(0, 5);
+    return lines.length >= 3 ? lines : null;
   } catch {
     return null;
   }

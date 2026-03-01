@@ -3,6 +3,7 @@ import { router } from "./routes";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { SavedListingsProvider } from "../contexts/SavedListingsContext";
 import { AppliedListingsProvider } from "../contexts/AppliedListingsContext";
+import { Toaster } from "./components/ui/sonner";
 
 function App() {
   return (
@@ -10,6 +11,7 @@ function App() {
       <SavedListingsProvider>
         <AppliedListingsProvider>
           <RouterProvider router={router} />
+          <Toaster position="bottom-right" />
         </AppliedListingsProvider>
       </SavedListingsProvider>
     </ThemeProvider>
