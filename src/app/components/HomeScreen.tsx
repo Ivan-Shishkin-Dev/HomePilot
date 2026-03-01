@@ -1,6 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Bell, Sparkles, TrendingUp, Clock, ChevronRight, Zap, ArrowUpRight, Loader2 } from "lucide-react";
+import {
+  Bell,
+  Sparkles,
+  TrendingUp,
+  Clock,
+  ChevronRight,
+  Zap,
+  ArrowUpRight,
+  Loader2,
+} from "lucide-react";
 import { ScoreRing } from "./ScoreRing";
 import { ListingCard } from "./ListingCard";
 import { useListings } from "../../hooks/useSupabaseData";
@@ -26,7 +35,7 @@ export function HomeScreen() {
   };
 
   // Convert listing format for ListingCard (using actual DB schema)
-  const formatListing = (listing: typeof listings[0]) => ({
+  const formatListing = (listing: (typeof listings)[0]) => ({
     id: listing.id,
     title: listing.title,
     address: listing.address,
@@ -36,7 +45,13 @@ export function HomeScreen() {
     baths: listing.baths,
     sqft: listing.sqft,
     matchPercent: 85, // Default match percent
-    demand: listing.demand || (listing.competition_score > 70 ? "High" : listing.competition_score > 40 ? "Medium" : "Low"),
+    demand:
+      listing.demand ||
+      (listing.competition_score > 70
+        ? "High"
+        : listing.competition_score > 40
+          ? "Medium"
+          : "Low"),
     image: listing.image,
     crimeIndex: listing.crime_index,
     rentTrend: listing.rent_trend || "",
@@ -65,7 +80,10 @@ export function HomeScreen() {
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div>
             <span className="text-[#8B95A5] text-[13px]">{getGreeting()}</span>
-            <h1 className="text-white text-[24px] lg:text-[28px]" style={{ fontWeight: 700, lineHeight: 1.2 }}>
+            <h1
+              className="text-foreground text-[24px] lg:text-[28px]"
+              style={{ fontWeight: 700, lineHeight: 1.2 }}
+            >
               Welcome back, {getUserFirstName()}
             </h1>
           </div>
@@ -92,16 +110,24 @@ export function HomeScreen() {
             className="bg-card rounded-2xl p-6 border border-border"
           >
             <div className="flex items-center gap-6">
-              <ScoreRing score={profile?.renter_score || 0} size={110} strokeWidth={7} />
+              <ScoreRing
+                score={profile?.renter_score || 0}
+                size={110}
+                strokeWidth={7}
+              />
               <div className="flex-1">
                 <div className="flex items-center gap-1.5 mb-2">
                   <TrendingUp size={14} className="text-[#10B981]" />
-                  <span className="text-[#10B981] text-[13px]" style={{ fontWeight: 600 }}>
+                  <span
+                    className="text-[#10B981] text-[13px]"
+                    style={{ fontWeight: 600 }}
+                  >
                     +12 pts this week
                   </span>
                 </div>
                 <p className="text-muted-foreground text-[13px] mb-3">
-                  Top 15% of renters in your area. Your score unlocks priority applications.
+                  Top 15% of renters in your area. Your score unlocks priority
+                  applications.
                 </p>
                 <button
                   onClick={() => navigate("/profile")}
@@ -131,7 +157,10 @@ export function HomeScreen() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1.5">
-                      <span className="text-[#F59E0B] text-[12px]" style={{ fontWeight: 700 }}>
+                      <span
+                        className="text-[#F59E0B] text-[12px]"
+                        style={{ fontWeight: 700 }}
+                      >
                         HIGH MATCH (82%)
                       </span>
                       <span className="w-1.5 h-1.5 bg-[#EF4444] rounded-full animate-pulse" />
@@ -139,13 +168,19 @@ export function HomeScreen() {
                         AI Copilot Alert
                       </span>
                     </div>
-                    <p className="text-foreground text-[16px] lg:text-[18px] mb-1" style={{ fontWeight: 600 }}>
+                    <p
+                      className="text-foreground text-[16px] lg:text-[18px] mb-1"
+                      style={{ fontWeight: 600 }}
+                    >
                       Sunny 2BR Near Campus — $1,450/mo
                     </p>
                     <div className="flex items-center gap-4 mb-4">
                       <div className="flex items-center gap-1.5">
                         <Clock size={13} className="text-[#F59E0B]" />
-                        <span className="text-[#F59E0B] text-[13px]" style={{ fontWeight: 500 }}>
+                        <span
+                          className="text-[#F59E0B] text-[13px]"
+                          style={{ fontWeight: 500 }}
+                        >
                           Apply within 2 hours
                         </span>
                       </div>
@@ -179,7 +214,9 @@ export function HomeScreen() {
               <div className="bg-card rounded-2xl p-6 border border-border h-full flex items-center justify-center">
                 <div className="text-center">
                   <Sparkles size={24} className="text-[#10B981] mx-auto mb-2" />
-                  <p className="text-muted-foreground text-[14px]">AI is hunting for your next match...</p>
+                  <p className="text-muted-foreground text-[14px]">
+                    AI is hunting for your next match...
+                  </p>
                 </div>
               </div>
             )}
@@ -191,13 +228,30 @@ export function HomeScreen() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
-          className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8"
+          className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8"
         >
           {[
-            { label: "Active Hunts", value: "12", icon: Sparkles, color: "#10B981", change: "+3 today" },
-            { label: "Applications", value: "3", icon: TrendingUp, color: "#10B981", change: "1 pending" },
-            { label: "Avg Match", value: "79%", icon: Zap, color: "#10B981", change: "+5% this week" },
-            { label: "Saved Listings", value: "8", icon: ArrowUpRight, color: "#10B981", change: "2 expiring" },
+            {
+              label: "Applications",
+              value: "3",
+              icon: TrendingUp,
+              color: "#10B981",
+              change: "1 pending",
+            },
+            {
+              label: "Avg Match",
+              value: "79%",
+              icon: Zap,
+              color: "#10B981",
+              change: "+5% this week",
+            },
+            {
+              label: "Saved Listings",
+              value: "8",
+              icon: ArrowUpRight,
+              color: "#10B981",
+              change: "2 expiring",
+            },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -205,19 +259,29 @@ export function HomeScreen() {
             >
               <div className="flex items-center justify-between mb-3">
                 <stat.icon size={18} style={{ color: stat.color }} />
-                <span className="text-muted-foreground text-[11px]">{stat.change}</span>
+                <span className="text-muted-foreground text-[11px]">
+                  {stat.change}
+                </span>
               </div>
-              <p className="text-foreground text-[24px] lg:text-[28px]" style={{ fontWeight: 700, lineHeight: 1 }}>
+              <p
+                className="text-foreground text-[24px] lg:text-[28px]"
+                style={{ fontWeight: 700, lineHeight: 1 }}
+              >
                 {stat.value}
               </p>
-              <p className="text-muted-foreground text-[12px] mt-1">{stat.label}</p>
+              <p className="text-muted-foreground text-[12px] mt-1">
+                {stat.label}
+              </p>
             </div>
           ))}
         </motion.div>
 
         {/* Listings Feed */}
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-foreground text-[20px]" style={{ fontWeight: 700 }}>
+          <h2
+            className="text-foreground text-[20px]"
+            style={{ fontWeight: 700 }}
+          >
             Top Matches
           </h2>
           <button
