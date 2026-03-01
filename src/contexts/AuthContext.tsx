@@ -23,6 +23,7 @@ interface AuthContextType {
     email: string,
     password: string
   ) => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -49,6 +50,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return data as Profile;
   };
 
+  /** Sync profile first_name, last_name, avatar_url from Google (or other OAuth) user_metadata when missing. */
+  const syncProfileFromProvider = async (
+    user: User,
+    profile: Profile | null
+  ): Promise<Profile | null> => {
+    if (!profile) return null;
+    const provider = user.app_metadata?.provider as string | undefined;
+    if (provider !== "google") return profile;
+    const meta = user.user_metadata || {};
+    const fullName = (meta.full_name ?? meta.name) ?? "";
+    const picture = meta.avatar_url ?? meta.picture;
+    const needsName =
+      (!profile.first_name && !profile.last_name && fullName.trim()) || false;
+    const needsAvatar = !profile.avatar_url && !!picture;
+    if (!needsName && !needsAvatar) return profile;
+    const updates: Partial<Profile> = {};
+    if (needsName && fullName.trim()) {
+      const parts = fullName.trim().split(/\s+/);
+      updates.first_name = parts[0] ?? null;
+      updates.last_name =
+        parts.length > 1 ? parts.slice(1).join(" ") : null;
+    }
+    if (needsAvatar && picture) updates.avatar_url = picture;
+    if (Object.keys(updates).length === 0) return profile;
+    const { data, error } = await supabase
+      .from("profiles")
+      .update(updates)
+      .eq("id", user.id)
+      .select()
+      .single();
+    if (error) return profile;
+    return data as Profile;
+  };
+
   const refreshProfile = async () => {
     if (user) {
       const profileData = await fetchProfile(user.id);
@@ -58,14 +93,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Get initial session - clear loading as soon as we have session; fetch profile in background
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-      if (session?.user) {
-        fetchProfile(session.user.id).then(setProfile);
-      }
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+        if (session?.user) {
+          fetchProfile(session.user.id).then(async (p) => {
+            const synced = await syncProfileFromProvider(session!.user, p);
+            setProfile(synced);
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Auth getSession error:", err);
+        setLoading(false);
+      });
 
     // Listen for auth changes - set session/user and clear loading immediately so UI doesn't hang; fetch profile in background
     const {
@@ -77,7 +121,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
 
       if (session?.user) {
-        fetchProfile(session.user.id).then(setProfile);
+        fetchProfile(session.user.id).then(async (p) => {
+          const synced = await syncProfileFromProvider(session!.user, p);
+          setProfile(synced);
+        });
       }
     });
 
@@ -116,6 +163,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error as Error | null };
   };
 
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/home`,
+        queryParams: {
+          prompt: "select_account", // always show Google account picker so user can switch accounts
+        },
+      },
+    });
+    return { error: error as Error | null };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -132,6 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         signUp,
         signIn,
+        signInWithGoogle,
         signOut,
         refreshProfile,
       }}
